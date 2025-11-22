@@ -14,7 +14,9 @@ function App() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(false)
   const inputRef = useRef(null)
+  const saveTimeoutRef = useRef(null)
 
   // Get user from URL parameter (e.g., /liste?user=catjo)
   const urlParams = new URLSearchParams(window.location.search)
@@ -71,10 +73,22 @@ function App() {
     }
   }, [user])
 
-  // Save todos to gist whenever they change
+  // Save todos to gist whenever they change (debounced)
   useEffect(() => {
     if (!loading && todos.length >= 0) {
-      saveTodos()
+      // Clear previous timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+      // Set new timeout to save after 500ms
+      saveTimeoutRef.current = setTimeout(() => {
+        saveTodos()
+      }, 500)
+    }
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
     }
   }, [todos, loading])
 
@@ -102,7 +116,14 @@ function App() {
   }
 
   const saveTodos = async () => {
+    if (!GITHUB_TOKEN) {
+      console.warn('No GitHub token available, only saving to localStorage')
+      localStorage.setItem('todos', JSON.stringify(todos))
+      return
+    }
+
     try {
+      setSaving(true)
       // Save to localStorage as backup
       localStorage.setItem('todos', JSON.stringify(todos))
       
@@ -127,6 +148,8 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to save todos:', err)
+    } finally {
+      setSaving(false)
     }
   }
 
