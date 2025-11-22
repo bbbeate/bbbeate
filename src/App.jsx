@@ -29,7 +29,7 @@ function App() {
     const handleUserSelect = (e) => {
       const selectedUser = e.target.value
       if (selectedUser) {
-        window.location.search = `?user=${selectedUser}`
+        window.location.href = `/bbbeate/liste/?user=${selectedUser}`
       }
     }
 
