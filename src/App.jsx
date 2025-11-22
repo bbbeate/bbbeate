@@ -117,17 +117,13 @@ function App() {
 
   const saveTodos = async () => {
     if (!GITHUB_TOKEN) {
-      console.warn('No GitHub token available, only saving to localStorage')
-      localStorage.setItem('todos', JSON.stringify(todos))
+      console.warn('No GitHub token available')
       return
     }
 
     try {
       setSaving(true)
-      // Save to localStorage as backup
-      localStorage.setItem('todos', JSON.stringify(todos))
       
-      // Update gist
       const response = await fetch(`https://api.github.com/gists/${gistId}`, {
         method: 'PATCH',
         headers: {
