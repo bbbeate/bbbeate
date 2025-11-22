@@ -22,7 +22,7 @@
   background: transparent;
   border: none;
   outline: none;
-  color: var(--primary-color);
+  color: var(--first);
 }
 
 .todo-list {
@@ -67,11 +67,11 @@
   line-height: 1;
   display: flex;
   align-items: center;
-  color: var(--primary-color);
+  color: var(--first);
   justify-content: center;
 }
 
 .todo-list li button:hover {
-  background-color: var(--primary-color);
-  color: var(--primary-color);
+  background-color: var(--first);
+  color: var(--background);
 }
