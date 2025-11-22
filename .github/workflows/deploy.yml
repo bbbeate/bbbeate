@@ -29,8 +29,8 @@ jobs:
       run: |
         npm run build
         mkdir -p dist/liste
-        mv dist/assets dist/liste/
-        mv dist/index.html dist/liste/
+        cp -r dist/assets dist/liste/
+        cp dist/index.html dist/liste/
         cp public/index-redirect.html dist/index.html
       
     - name: Deploy to gh-pages
