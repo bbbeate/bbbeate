@@ -1,9 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
 function App() {
   const [todos, setTodos] = useState([])
   const [input, setInput] = useState('')
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    const handleClick = () => {
+      inputRef.current?.focus()
+    }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [])
 
   const addTodo = () => {
     if (input.trim()) {
@@ -31,8 +40,17 @@ function App() {
   return (
     <>
       <div className="todo-app">
+        <ul className="todo-list">
+          {todos.map(todo => (
+            <li key={todo.id} className={todo.completed ? 'completed' : ''}>
+              <span onClick={() => toggleTodo(todo.id)}>{todo.text}</span>
+              <button onClick={() => deleteTodo(todo.id)}>×</button>
+            </li>
+          ))}
+        </ul>
         <div className="todo-input">
           <input 
+            ref={inputRef}
             type="text" 
             placeholder="..." 
             value={input}
@@ -40,19 +58,6 @@ function App() {
             onKeyPress={handleKeyPress}
           />
         </div>
-        <ul className="todo-list">
-          {todos.map(todo => (
-            <li key={todo.id} className={todo.completed ? 'completed' : ''}>
-              <input 
-                type="checkbox" 
-                checked={todo.completed}
-                onChange={() => toggleTodo(todo.id)}
-              />
-              <span>{todo.text}</span>
-              <button onClick={() => deleteTodo(todo.id)}>×</button>
-            </li>
-          ))}
-        </ul>
       </div>
     </>
   )
