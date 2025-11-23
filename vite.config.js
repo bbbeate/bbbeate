@@ -32,5 +32,8 @@ export default defineConfig({
       }
     })
   ],
-  base: '/bbbeate/'
+  base: '/bbbeate/liste/',
+  build: {
+    outDir: 'dist'
+  }
 })
