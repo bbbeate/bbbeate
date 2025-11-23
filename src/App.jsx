@@ -31,13 +31,13 @@ function App() {
     const handleUserSelect = (e) => {
       const selectedUser = e.target.value
       if (selectedUser) {
-        window.location.href = `/bbbeate/liste/?user=${selectedUser}`
+        window.location.href = `/bbbeate/liste?user=${selectedUser}`
       }
     }
 
     return (
       <div className="todo-app" style={{ textAlign: 'center', paddingTop: '4rem' }}>
-        <h2>who are you</h2>
+        <h2>hvem der?</h2>
         <select 
           onChange={handleUserSelect}
           style={{

@@ -32,9 +32,7 @@ jobs:
     - name: Build with secrets
       env:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
-      run: |
-        npm run build
-        cp public/index-redirect.html dist/index-redirect.html
+      run: npm run build
     
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
