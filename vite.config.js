@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['beate.png'],
+      includeAssets: ['boris.PNG'],
       manifest: {
         name: 'liste',
         short_name: 'liste',
@@ -16,16 +16,15 @@ export default defineConfig({
         theme_color: '#b7b7ff',
         background_color: '#b7b7ff',
         display: 'standalone',
-        start_url: '/bbbeate/liste/?user=catjo',
         scope: '/bbbeate/liste/',
         icons: [
           {
-            src: '/bbbeate/liste/beate.png',
+            src: '/bbbeate/liste/boris.PNG',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/bbbeate/liste/beate.png',
+            src: '/bbbeate/liste/boris.PNG',
             sizes: '512x512',
             type: 'image/png'
           }
