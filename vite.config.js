@@ -13,17 +13,19 @@ export default defineConfig({
         name: 'liste',
         short_name: 'liste',
         description: 'todo list',
-        theme_color: '#000000',
-        background_color: '#000000',
+        theme_color: '#b7b7ff',
+        background_color: '#b7b7ff',
         display: 'standalone',
+        start_url: '/bbbeate/liste/?user=catjo',
+        scope: '/bbbeate/liste/',
         icons: [
           {
-            src: 'beate.png',
+            src: '/bbbeate/liste/beate.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'beate.png',
+            src: '/bbbeate/liste/beate.png',
             sizes: '512x512',
             type: 'image/png'
           }
