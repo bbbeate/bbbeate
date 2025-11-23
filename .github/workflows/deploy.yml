@@ -34,14 +34,12 @@ jobs:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
       run: |
         npm run build
-        mkdir -p dist-final/liste
-        cp -r dist/* dist-final/liste/
-        cp public/index-redirect.html dist-final/index.html
+        cp public/index-redirect.html dist/index-redirect.html
     
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: ./dist-final
+        path: ./dist
 
   deploy:
     environment:
