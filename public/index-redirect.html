@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="refresh" content="0; url=/bbbeate/liste/">
+  <title>Redirecting...</title>
 </head>
 <body>
-  <script>window.location.href = '/bbbeate/liste/';</script>
+  <script>
+    // Only redirect if not already at /liste/
+    if (!window.location.pathname.includes('/liste')) {
+      window.location.href = '/liste/';
+    }
+  </script>
 </body>
 </html>
