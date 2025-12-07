@@ -13,10 +13,10 @@ export default defineConfig({
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
-        scope: '/',
+        scope: '/bbbeate/',
         icons: [
           {
-            src: '/discoball-icon.png',
+            src: '/bbbeate/discoball-icon.png',
             sizes: '512x512',
             type: 'image/png'
           }
@@ -24,5 +24,5 @@ export default defineConfig({
       }
     })
   ],
-  base: '/',
+  base: '/bbbeate/',
 })
