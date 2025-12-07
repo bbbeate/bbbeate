@@ -1,4 +1,9 @@
+import discoballGif from './assets/discoball.gif';
+
 const cursor = document.querySelector('.custom-cursor');
+const cursorImg = document.getElementById('cursor-img');
+cursorImg.src = discoballGif;
+
 let mouseX = 0;
 let mouseY = 0;
 let cursorX = 0;
@@ -194,7 +199,7 @@ document.addEventListener('dblclick', (e) => {
 function placeDisco(x, y) {
     const discoball = document.createElement('div');
     discoball.className = 'placed-disco';
-    discoball.innerHTML = '<img src="/assets/discoball.gif" alt="disco">';
+    discoball.innerHTML = `<img src="${discoballGif}" alt="disco">`;
     discoball.style.left = x + 'px';
     discoball.style.top = y + 'px';
     
