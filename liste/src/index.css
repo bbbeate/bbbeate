@@ -1,4 +1,4 @@
-@import url('../../shared/colors.css');
+@import url('@shared/colors.css');
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
