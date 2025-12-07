@@ -194,7 +194,7 @@ document.addEventListener('dblclick', (e) => {
 function placeDisco(x, y) {
     const discoball = document.createElement('div');
     discoball.className = 'placed-disco';
-    discoball.innerHTML = '<img src="assets/discoball.gif" alt="disco">';
+    discoball.innerHTML = '<img src="/bbbeate/assets/discoball.gif" alt="disco">';
     discoball.style.left = x + 'px';
     discoball.style.top = y + 'px';
     
