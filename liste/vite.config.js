@@ -22,15 +22,15 @@ export default defineConfig({
         theme_color: '#b7b7ff',
         background_color: '#b7b7ff',
         display: 'standalone',
-        scope: '/bbbeate/liste/',
+        scope: '/liste/',
         icons: [
           {
-            src: '/bbbeate/liste/boris.PNG',
+            src: '/liste/boris.PNG',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/bbbeate/liste/boris.PNG',
+            src: '/liste/boris.PNG',
             sizes: '512x512',
             type: 'image/png'
           }
@@ -38,5 +38,5 @@ export default defineConfig({
       }
     })
   ],
-  base: '/bbbeate/liste/'
+  base: '/liste/'
 })
