@@ -49,9 +49,9 @@ jobs:
     - name: Create combined dist
       run: |
         mkdir -p combined_dist
-        cp -r ./liste/dist/* combined_dist/
-        mkdir -p combined_dist/space
-        cp -r ./space/dist/* combined_dist/space/
+        cp -r ./space/dist/* combined_dist/
+        mkdir -p combined_dist/liste
+        cp -r ./liste/dist/* combined_dist/liste/
     
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3

@@ -345,11 +345,18 @@ async function saveContent() {
 }
 
 // Manual save button
-document.getElementById('save-btn').addEventListener('click', () => {
-    saveContent();
+document.getElementById('save-btn').addEventListener('click', async () => {
     const btn = document.getElementById('save-btn');
-    btn.textContent = '✓ Saved';
-    setTimeout(() => btn.textContent = '💾 Save', 1500);
+    const originalText = btn.textContent;
+    btn.textContent = '💾';
+    btn.disabled = true;
+    btn.classList.add('spinning');
+    
+    await saveContent();
+    
+    btn.classList.remove('spinning');
+    btn.textContent = originalText;
+    btn.disabled = false;
 });
 
 // Load content on page load

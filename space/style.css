@@ -92,9 +92,24 @@ body {
     font-size: 3rem;
     font-weight: bold;
     border-radius: 8px;
-    cursor: pointer;
+    cursor: none;
     z-index: 1000;
     transition: all 0.2s;
+    min-width: 60px;
+    text-align: center;
+}
+
+.save-button:disabled {
+    opacity: 0.6;
+}
+
+.save-button.spinning {
+    animation: spin 0.5s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .save-button:hover {
