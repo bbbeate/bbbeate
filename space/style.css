@@ -99,6 +99,14 @@ body {
     text-align: center;
 }
 
+@media (max-width: 768px) {
+    .save-button {
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
 .save-button:disabled {
     opacity: 0.6;
 }

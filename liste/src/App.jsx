@@ -31,7 +31,9 @@ function App() {
     const handleUserSelect = (e) => {
       const selectedUser = e.target.value
       if (selectedUser) {
-        window.location.href = `/liste?user=${selectedUser}`
+        const params = new URLSearchParams()
+        params.set('user', selectedUser)
+        window.location.search = params.toString()
       }
     }
 

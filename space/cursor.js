@@ -121,7 +121,7 @@ function createTextInput(x, y) {
         if (event.key === 'Enter') {
             isHandled = true;
             const text = inputBox.value.trim();
-            if (text && userName) {
+            if (text) {
                 const container = document.createElement('div');
                 container.className = 'text-container';
                 container.style.left = x + 'px';
@@ -129,7 +129,8 @@ function createTextInput(x, y) {
                 
                 const nameLabel = document.createElement('div');
                 nameLabel.className = 'text-name';
-                nameLabel.textContent = userName;
+                nameLabel.textContent = '';
+                nameLabel.style.display = 'none'; // Hide until saved
                 
                 const textElement = document.createElement('div');
                 textElement.className = 'placed-text';
@@ -141,6 +142,7 @@ function createTextInput(x, y) {
                 // Make text editable on click
                 textElement.addEventListener('click', (clickEvent) => {
                     clickEvent.stopPropagation();
+                    
                     const editInput = document.createElement('input');
                     editInput.type = 'text';
                     editInput.className = 'text-input';
@@ -229,7 +231,7 @@ animateCursor();
 const GIST_ID = 'c0644353ef70721d4fb81dd8b65b044d';
 const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 const GIST_FILENAME = 'space.json';
-let userName = localStorage.getItem('space-username') || null;
+let userName = null;
 
 // Load saved content on page load
 async function loadContent() {
@@ -266,6 +268,7 @@ async function loadContent() {
             // Make text editable on click (same as before)
             textElement.addEventListener('click', (clickEvent) => {
                 clickEvent.stopPropagation();
+                
                 const editInput = document.createElement('input');
                 editInput.type = 'text';
                 editInput.className = 'text-input';
@@ -310,15 +313,20 @@ async function loadContent() {
 
 // Save content to gist
 async function saveContent() {
-    if (!userName) {
-        userName = prompt('Enter your name:');
-        if (!userName) return;
-        localStorage.setItem('space-username', userName);
-    }
+    const enteredName = prompt('Enter your name:');
+    if (!enteredName) return;
     
     const texts = Array.from(document.querySelectorAll('.text-container')).map(container => {
         const textEl = container.querySelector('.placed-text');
         const nameEl = container.querySelector('.text-name');
+        const currentName = nameEl.textContent;
+        
+        // Only update name if it's empty or matches entered name
+        if (!currentName || currentName === enteredName) {
+            nameEl.textContent = enteredName;
+            nameEl.style.display = ''; // Show name after saving
+        }
+        
         return {
             text: textEl.textContent,
             name: nameEl.textContent,
