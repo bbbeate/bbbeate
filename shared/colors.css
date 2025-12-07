@@ -1,0 +1,17 @@
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark theme colors */
+    --first: #b7b7ff;
+    --second: #a5a5ff;
+    --background: #242424;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    /* Light theme colors */
+    --first: #4a4aff;
+    --second: #3636cc;
+    --background: #d3d3ff;
+  }
+}

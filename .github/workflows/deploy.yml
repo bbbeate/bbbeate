@@ -26,20 +26,37 @@ jobs:
       with:
         node-version: '20'
         
-    - name: Install dependencies
+    - name: Install dependencies for liste
       working-directory: ./liste
       run: npm ci
       
-    - name: Build with secrets
+    - name: Build liste with secrets
       working-directory: ./liste
       env:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
       run: npm run build
     
+    - name: Install dependencies for space
+      working-directory: ./space
+      run: npm ci
+      
+    - name: Build space with secrets
+      working-directory: ./space
+      env:
+        VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
+      run: npm run build
+    
+    - name: Create combined dist
+      run: |
+        mkdir -p combined_dist
+        cp -r ./liste/dist/* combined_dist/
+        mkdir -p combined_dist/space
+        cp -r ./space/dist/* combined_dist/space/
+    
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: ./liste/dist
+        path: ./combined_dist
 
   deploy:
     environment:
