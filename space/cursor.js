@@ -236,7 +236,11 @@ let userName = null;
 // Load saved content on page load
 async function loadContent() {
     try {
-        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`
+            }
+        });
         const gist = await response.json();
         
         // Check if the file exists in the gist
