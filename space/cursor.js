@@ -153,6 +153,7 @@ function createEditInput(x, y, initialValue = '', onSave, onCancel) {
     editInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
+            event.stopPropagation();
             handleSubmit();
         } else if (event.key === 'Escape') {
             isHandled = true;
@@ -164,10 +165,9 @@ function createEditInput(x, y, initialValue = '', onSave, onCancel) {
     editInput.addEventListener('blur', () => {
         setTimeout(() => {
             if (!isHandled && form.parentNode) {
-                form.remove();
-                if (onCancel) onCancel();
+                handleSubmit();
             }
-        }, 100);
+        }, 150);
     });
 }
 

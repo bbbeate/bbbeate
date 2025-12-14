@@ -113,8 +113,8 @@ body {
 @media (hover: none) and (pointer: coarse), (max-width: 768px) {
     .button-container {
         bottom: 80px !important;
-        left: 20px;
-        right: 20px;
+        left: 80px  !important;;
+        right: 80px  !important;;
     }
     
     .action-button {
