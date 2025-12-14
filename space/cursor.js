@@ -98,99 +98,86 @@ document.addEventListener('touchend', (e) => {
     lastTapY = touch.clientY;
 });
 
-function createTextInput(x, y) {
-    // Create input box at click location
-    const inputBox = document.createElement('input');
-    inputBox.type = 'text';
-    inputBox.className = 'text-input';
-    inputBox.style.left = x + 'px';
-    inputBox.style.top = y + 'px';
+function createEditInput(x, y, initialValue = '', onSave, onCancel) {
+    const editInput = document.createElement('input');
+    editInput.type = 'text';
+    editInput.className = 'text-input';
+    editInput.value = initialValue;
+    editInput.style.left = x + 'px';
+    editInput.style.top = y + 'px';
     
-    // Use native mobile keyboard if available
     if (isMobile) {
-        inputBox.setAttribute('autocapitalize', 'sentences');
-        inputBox.setAttribute('autocorrect', 'on');
+        editInput.setAttribute('enterkeyhint', 'done');
     }
     
-    document.body.appendChild(inputBox);
-    inputBox.focus();
+    document.body.appendChild(editInput);
+    editInput.focus();
+    if (initialValue) editInput.select();
     
     let isHandled = false;
     
-    inputBox.addEventListener('keydown', (event) => {
+    editInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
+            event.preventDefault();
             isHandled = true;
-            const text = inputBox.value.trim();
-            if (text) {
-                const container = document.createElement('div');
-                container.className = 'text-container';
-                container.style.left = x + 'px';
-                container.style.top = y + 'px';
-                
-                const nameLabel = document.createElement('div');
-                nameLabel.className = 'text-name';
-                nameLabel.textContent = '';
-                nameLabel.style.display = 'none'; // Hide until saved
-                
-                const textElement = document.createElement('div');
-                textElement.className = 'placed-text';
-                textElement.textContent = text;
-                
-                container.appendChild(nameLabel);
-                container.appendChild(textElement);
-                
-                // Make text editable on click
-                textElement.addEventListener('click', (clickEvent) => {
-                    clickEvent.stopPropagation();
-                    
-                    const editInput = document.createElement('input');
-                    editInput.type = 'text';
-                    editInput.className = 'text-input';
-                    editInput.value = textElement.textContent;
-                    editInput.style.left = container.style.left;
-                    editInput.style.top = container.style.top;
-                    document.body.appendChild(editInput);
-                    editInput.focus();
-                    editInput.select();
-                    
-                    let isEditHandled = false;
-                    
-                    editInput.addEventListener('keydown', (editEvent) => {
-                        if (editEvent.key === 'Enter') {
-                            isEditHandled = true;
-                            const newText = editInput.value.trim();
-                            if (newText) {
-                                textElement.textContent = newText;
-                            } else {
-                                container.remove();
-                            }
-                            if (editInput.parentNode) editInput.remove();
-                        } else if (editEvent.key === 'Escape') {
-                            isEditHandled = true;
-                            if (editInput.parentNode) editInput.remove();
-                        }
-                    });
-                    
-                    editInput.addEventListener('blur', () => {
-                        if (!isEditHandled && editInput.parentNode) {
-                            editInput.remove();
-                        }
-                    });
-                });
-                
-                document.body.appendChild(container);
-            }
-            if (inputBox.parentNode) inputBox.remove();
+            const text = editInput.value.trim();
+            if (editInput.parentNode) editInput.remove();
+            if (onSave) onSave(text);
         } else if (event.key === 'Escape') {
             isHandled = true;
-            if (inputBox.parentNode) inputBox.remove();
+            if (editInput.parentNode) editInput.remove();
+            if (onCancel) onCancel();
         }
     });
     
-    inputBox.addEventListener('blur', () => {
-        if (!isHandled && inputBox.parentNode) {
-            inputBox.remove();
+    editInput.addEventListener('blur', () => {
+        if (!isHandled && editInput.parentNode) {
+            editInput.remove();
+            if (onCancel) onCancel();
         }
+    });
+}
+
+function createTextInput(x, y) {
+    createEditInput(x, y, '', (text) => {
+        if (!text) return;
+        
+        const container = document.createElement('div');
+        container.className = 'text-container';
+        container.style.left = x + 'px';
+        container.style.top = y + 'px';
+        
+        const nameLabel = document.createElement('div');
+        nameLabel.className = 'text-name';
+        nameLabel.textContent = '';
+        nameLabel.style.display = 'none'; // Hide until saved
+        
+        const textElement = document.createElement('div');
+        textElement.className = 'placed-text';
+        textElement.textContent = text;
+        
+        container.appendChild(nameLabel);
+        container.appendChild(textElement);
+        
+        // Make text editable on click
+        textElement.addEventListener('click', (clickEvent) => {
+            clickEvent.stopPropagation();
+            
+            createEditInput(
+                parseInt(container.style.left),
+                parseInt(container.style.top),
+                textElement.textContent,
+                (newText) => {
+                    if (newText) {
+                        textElement.textContent = newText;
+                    } else {
+                        container.remove();
+                    }
+                }
+            );
+        });
+        
+        document.body.appendChild(container);
     });
 }
 
@@ -269,43 +256,22 @@ async function loadContent() {
             container.appendChild(nameLabel);
             container.appendChild(textElement);
             
-            // Make text editable on click (same as before)
+            // Make text editable on click
             textElement.addEventListener('click', (clickEvent) => {
                 clickEvent.stopPropagation();
                 
-                const editInput = document.createElement('input');
-                editInput.type = 'text';
-                editInput.className = 'text-input';
-                editInput.value = textElement.textContent;
-                editInput.style.left = container.style.left;
-                editInput.style.top = container.style.top;
-                document.body.appendChild(editInput);
-                editInput.focus();
-                editInput.select();
-                
-                let isEditHandled = false;
-                
-                editInput.addEventListener('keydown', (editEvent) => {
-                    if (editEvent.key === 'Enter') {
-                        isEditHandled = true;
-                        const newText = editInput.value.trim();
+                createEditInput(
+                    parseInt(container.style.left),
+                    parseInt(container.style.top),
+                    textElement.textContent,
+                    (newText) => {
                         if (newText) {
                             textElement.textContent = newText;
                         } else {
                             container.remove();
                         }
-                        if (editInput.parentNode) editInput.remove();
-                    } else if (editEvent.key === 'Escape') {
-                        isEditHandled = true;
-                        if (editInput.parentNode) editInput.remove();
                     }
-                });
-                
-                editInput.addEventListener('blur', () => {
-                    if (!isEditHandled && editInput.parentNode) {
-                        editInput.remove();
-                    }
-                });
+                );
             });
             
             document.body.appendChild(container);
@@ -374,6 +340,41 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     btn.classList.remove('spinning');
     btn.textContent = originalText;
     btn.disabled = false;
+});
+
+// Refresh button - show disco balls and reload content
+document.getElementById('refresh-btn').addEventListener('click', async () => {
+    const centerX = window.innerWidth / 2 + window.scrollX;
+    const centerY = window.innerHeight / 2 + window.scrollY;
+    
+    // Create three large disco balls in center
+    [-150, 0, 150].forEach((offset, index) => {
+        setTimeout(() => {
+            const largeDisco = document.createElement('div');
+            largeDisco.className = 'placed-disco';
+            largeDisco.style.width = '200px';
+            largeDisco.style.height = '200px';
+            largeDisco.innerHTML = `<img src="${discoballGif}" alt="disco" style="width: 100%; height: 100%;">`;
+            largeDisco.style.left = (centerX + offset) + 'px';
+            largeDisco.style.top = centerY + 'px';
+            largeDisco.style.position = 'absolute';
+            largeDisco.style.transform = 'translate(-50%, -50%)';
+            
+            document.body.appendChild(largeDisco);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                largeDisco.style.opacity = '0';
+                setTimeout(() => largeDisco.remove(), 300);
+            }, 3000);
+        }, index * 100);
+    });
+    
+    // Clear existing text containers
+    document.querySelectorAll('.text-container').forEach(el => el.remove());
+    
+    // Reload content from gist
+    await loadContent();
 });
 
 // Load content on page load

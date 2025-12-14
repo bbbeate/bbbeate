@@ -7,11 +7,14 @@
 }
 
 body {
-    overflow: hidden;
+    overflow: auto;
+    min-width: 100vw;
+    min-height: 100vh;
     background: var(--background);
     font-family: system-ui, -apple-system, sans-serif;
     color: var(--first);
     cursor: none;
+    position: relative;
 }
 
 .custom-cursor {
@@ -53,7 +56,7 @@ body {
 }
 
 .text-container {
-    position: fixed;
+    position: absolute;
     transform: translate(-50%, -50%);
     display: flex;
     flex-direction: column;
@@ -69,7 +72,7 @@ body {
 }
 
 .text-input {
-    position: fixed;
+    position: absolute;
     transform: translate(-50%, -50%);
     padding: 0.5rem;
     font-size: 1.5rem;
@@ -81,10 +84,17 @@ body {
     font-family: inherit;
 }
 
-.save-button {
+.button-container {
     position: fixed;
     bottom: 20px;
     left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 1000;
+}
+
+.action-button {
     padding: 0.75rem 1.5rem;
     background: var(--background);
     border: 2px solid var(--first);
@@ -92,26 +102,25 @@ body {
     font-size: 3rem;
     font-weight: bold;
     border-radius: 8px;
-    cursor: none;
-    z-index: 1000;
+    cursor: pointer;
     transition: all 0.2s;
     min-width: 60px;
     text-align: center;
 }
 
 @media (max-width: 768px) {
-    .save-button {
+    .button-container {
         bottom: 40px;
-        left: 50%;
-        transform: translateX(-50%);
+        left: 20px;
+        right: 20px;
     }
 }
 
-.save-button:disabled {
+.action-button:disabled {
     opacity: 0.6;
 }
 
-.save-button.spinning {
+.action-button.spinning {
     animation: spin 0.5s linear infinite;
 }
 
@@ -120,7 +129,7 @@ body {
     to { transform: rotate(360deg); }
 }
 
-.save-button:hover {
+.action-button:hover {
     background: var(--first);
     color: var(--background);
 }
