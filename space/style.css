@@ -110,7 +110,7 @@ body {
 
 @media (max-width: 768px) {
     .button-container {
-        bottom: 40px;
+        bottom: 80px;
         left: 20px;
         right: 20px;
     }

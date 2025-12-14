@@ -99,42 +99,61 @@ document.addEventListener('touchend', (e) => {
 });
 
 function createEditInput(x, y, initialValue = '', onSave, onCancel) {
+    const form = document.createElement('form');
+    form.style.position = 'absolute';
+    form.style.left = x + 'px';
+    form.style.top = y + 'px';
+    form.style.transform = 'translate(-50%, -50%)';
+    
     const editInput = document.createElement('input');
     editInput.type = 'text';
     editInput.className = 'text-input';
     editInput.value = initialValue;
-    editInput.style.left = x + 'px';
-    editInput.style.top = y + 'px';
+    editInput.style.position = 'static';
+    editInput.style.transform = 'none';
     
     if (isMobile) {
         editInput.setAttribute('enterkeyhint', 'done');
     }
     
-    document.body.appendChild(editInput);
+    form.appendChild(editInput);
+    document.body.appendChild(form);
     editInput.focus();
     if (initialValue) editInput.select();
     
     let isHandled = false;
     
+    const handleSubmit = () => {
+        if (isHandled) return;
+        isHandled = true;
+        const text = editInput.value.trim();
+        if (form.parentNode) form.remove();
+        if (onSave) onSave(text);
+    };
+    
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleSubmit();
+    });
+    
     editInput.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
-            isHandled = true;
-            const text = editInput.value.trim();
-            if (editInput.parentNode) editInput.remove();
-            if (onSave) onSave(text);
+            handleSubmit();
         } else if (event.key === 'Escape') {
             isHandled = true;
-            if (editInput.parentNode) editInput.remove();
+            if (form.parentNode) form.remove();
             if (onCancel) onCancel();
         }
     });
     
     editInput.addEventListener('blur', () => {
-        if (!isHandled && editInput.parentNode) {
-            editInput.remove();
-            if (onCancel) onCancel();
-        }
+        setTimeout(() => {
+            if (!isHandled && form.parentNode) {
+                form.remove();
+                if (onCancel) onCancel();
+            }
+        }, 100);
     });
 }
 
