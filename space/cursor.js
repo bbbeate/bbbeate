@@ -51,6 +51,10 @@ document.addEventListener('click', (e) => {
 let isTouching = false;
 
 document.addEventListener('touchstart', (e) => {
+    // Don't place disco balls if touching a button or input
+    if (e.target.closest('button, input, .text-container')) {
+        return;
+    }
     isTouching = true;
     const touch = e.touches[0];
     placeDisco(touch.clientX, touch.clientY);
@@ -58,6 +62,11 @@ document.addEventListener('touchstart', (e) => {
 
 document.addEventListener('touchmove', (e) => {
     if (isTouching) {
+        // Don't place disco balls if over a button
+        if (e.target.closest('button, input')) {
+            return;
+        }
+        e.preventDefault(); // Prevent scrolling while drawing
         const touch = e.touches[0];
         const now = Date.now();
         if (now - lastPlaceTime > 50) {
@@ -79,6 +88,11 @@ const DOUBLE_TAP_DELAY = 300; // milliseconds
 const DOUBLE_TAP_DISTANCE = 50; // pixels
 
 document.addEventListener('touchend', (e) => {
+    // Don't trigger double-tap for buttons or inputs
+    if (e.target.closest('button, input, .text-container')) {
+        return;
+    }
+    
     const touch = e.changedTouches[0];
     const currentTime = Date.now();
     const timeDiff = currentTime - lastTapTime;
@@ -347,8 +361,10 @@ async function saveContent() {
 }
 
 // Manual save button
-document.getElementById('save-btn').addEventListener('click', async () => {
+const handleSave = async () => {
     const btn = document.getElementById('save-btn');
+    if (btn.disabled) return;
+    
     const originalText = btn.textContent;
     btn.textContent = '💾';
     btn.disabled = true;
@@ -359,10 +375,16 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     btn.classList.remove('spinning');
     btn.textContent = originalText;
     btn.disabled = false;
+};
+
+document.getElementById('save-btn').addEventListener('click', handleSave);
+document.getElementById('save-btn').addEventListener('touchend', (e) => {
+    e.preventDefault();
+    handleSave();
 });
 
 // Refresh button - show disco balls and reload content
-document.getElementById('refresh-btn').addEventListener('click', async () => {
+const handleRefresh = async () => {
     const centerX = window.innerWidth / 2 + window.scrollX;
     const centerY = window.innerHeight / 2 + window.scrollY;
     
@@ -394,6 +416,12 @@ document.getElementById('refresh-btn').addEventListener('click', async () => {
     
     // Reload content from gist
     await loadContent();
+};
+
+document.getElementById('refresh-btn').addEventListener('click', handleRefresh);
+document.getElementById('refresh-btn').addEventListener('touchend', (e) => {
+    e.preventDefault();
+    handleRefresh();
 });
 
 // Load content on page load
