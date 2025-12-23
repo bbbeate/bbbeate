@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
-// Simple hash function for todo text
-const hashText = (text) => {
-  let hash = 0
-  for (let i = 0; i < text.length; i++) {
-    const char = text.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash // Convert to 32bit integer
+// Parse gist content - handles both old array format and new {nextId, todos} format
+const parseGistContent = (content) => {
+  const data = JSON.parse(content)
+  if (Array.isArray(data)) {
+    // Old format: migrate to new format with nextId
+    const maxId = data.reduce((max, t) => Math.max(max, typeof t.id === 'number' ? t.id : 0), 0)
+    return { nextId: maxId + 1, todos: data }
   }
-  return hash.toString(36)
+  return data // Already new format: { nextId, todos }
 }
 
 // Map of filename to gist ID (keep this secret!)
@@ -22,6 +22,7 @@ const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN
 
 function App() {
   const [todos, setTodos] = useState([])
+  const [nextId, setNextId] = useState(1)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -104,7 +105,7 @@ function App() {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [todos, loading, error])
+  }, [todos, nextId, loading, error])
 
   useEffect(() => {
     const handleClick = () => {
@@ -127,7 +128,9 @@ function App() {
       const data = await response.json()
       const content = data.files[filename]?.content
       if (content) {
-        setTodos(JSON.parse(content))
+        const parsed = parseGistContent(content)
+        setTodos(parsed.todos)
+        setNextId(parsed.nextId)
       }
       setLoading(false)
     } catch (err) {
@@ -151,36 +154,31 @@ function App() {
         headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
       })
 
-      let mergedTodos = todos
-      let remoteContent = null
+      let remoteData = { nextId: 1, todos: [] }
       if (fetchResponse.ok) {
         const data = await fetchResponse.json()
-        remoteContent = data.files[filename]?.content
-        if (remoteContent) {
-          const remoteTodos = JSON.parse(remoteContent)
-          // Build map of local todos by hash
-          const localByHash = new Map()
-          todos.forEach(todo => {
-            const id = todo.id || hashText(todo.thing)
-            localByHash.set(id, todo)
-          })
-          // Add remote items not in local
-          remoteTodos.forEach(todo => {
-            const id = todo.id || hashText(todo.thing)
-            if (!localByHash.has(id)) {
-              localByHash.set(id, { ...todo, id })
-            }
-          })
-          // Ensure all todos have ids
-          mergedTodos = Array.from(localByHash.values()).map(todo => ({
-            ...todo,
-            id: todo.id || hashText(todo.thing)
-          }))
+        const content = data.files[filename]?.content
+        if (content) {
+          remoteData = parseGistContent(content)
         }
       }
 
+      // Merge: take higher nextId, merge todos by id
+      const mergedNextId = Math.max(nextId, remoteData.nextId)
+
+      // Merge: local todos win, but include NEW remote todos (id >= local nextId)
+      // This allows adds from other devices while respecting local deletes
+      const localIds = new Set(todos.map(t => t.id))
+      const mergedTodos = [
+        ...todos,
+        ...remoteData.todos.filter(t => !localIds.has(t.id) && t.id >= nextId)
+      ]
+
+      const saveData = { nextId: mergedNextId, todos: mergedTodos }
+      const newContent = JSON.stringify(saveData, null, 2)
+
       // Skip save if no changes
-      const newContent = JSON.stringify(mergedTodos, null, 2)
+      const remoteContent = JSON.stringify(remoteData, null, 2)
       if (newContent === remoteContent) {
         return
       }
@@ -194,7 +192,7 @@ function App() {
         body: JSON.stringify({
           files: {
             [filename]: {
-              content: JSON.stringify(mergedTodos, null, 2)
+              content: newContent
             }
           }
         })
@@ -202,9 +200,10 @@ function App() {
 
       if (!response.ok) {
         console.error('Failed to save to gist:', await response.text())
-      } else if (mergedTodos !== todos) {
+      } else if (mergedTodos.length !== todos.length || mergedNextId !== nextId) {
         // Update local state with merged data
         setTodos(mergedTodos)
+        setNextId(mergedNextId)
       }
     } catch (err) {
       console.error('Failed to save todos:', err)
@@ -216,7 +215,8 @@ function App() {
   const addTodo = () => {
     if (input.trim()) {
       const thing = input.trim()
-      setTodos([...todos, { id: hashText(thing), thing, done: false }])
+      setTodos([...todos, { id: nextId, thing, done: false }])
+      setNextId(nextId + 1)
       setInput('')
     }
   }
@@ -254,7 +254,7 @@ function App() {
             </li>
           ))}
         </ul>
-        <form className="todo-input" onSubmit={(e) => { e.preventDefault(); addTodo(); }}>
+        <form className="todo-input" action="#" onSubmit={(e) => { e.preventDefault(); addTodo(); }}>
           <input
             id="todo-input"
             name="todo-input"
@@ -264,14 +264,8 @@ function App() {
             enterKeyHint="done"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                e.stopPropagation()
-                addTodo()
-              }
-            }}
           />
+          <button type="submit" style={{ display: 'none' }} />
         </form>
       </div>
       {refreshing ? (
