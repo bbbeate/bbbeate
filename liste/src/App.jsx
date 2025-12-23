@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
+// Simple hash function for todo text
+const hashText = (text) => {
+  let hash = 0
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  return hash.toString(36)
+}
+
 // Map of filename to gist ID (keep this secret!)
 const GIST_MAP = {
   'catjo': 'bf00c9605fd01b610fb0db24d667ee64',
@@ -15,6 +26,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const inputRef = useRef(null)
   const saveTimeoutRef = useRef(null)
 
@@ -77,7 +89,7 @@ function App() {
 
   // Save todos to gist whenever they change (debounced)
   useEffect(() => {
-    if (!loading && todos.length >= 0) {
+    if (!loading && !error && todos.length >= 0) {
       // Clear previous timeout
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)
@@ -92,7 +104,7 @@ function App() {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [todos, loading])
+  }, [todos, loading, error])
 
   useEffect(() => {
     const handleClick = () => {
@@ -104,7 +116,14 @@ function App() {
 
   const fetchTodos = async () => {
     try {
-      const response = await fetch(`https://api.github.com/gists/${gistId}`)
+      const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: GITHUB_TOKEN ? {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+        } : {}
+      })
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`)
+      }
       const data = await response.json()
       const content = data.files[filename]?.content
       if (content) {
@@ -112,6 +131,7 @@ function App() {
       }
       setLoading(false)
     } catch (err) {
+      console.error('Failed to fetch todos:', err)
       setError('Failed to load todos')
       setLoading(false)
     }
@@ -125,7 +145,46 @@ function App() {
 
     try {
       setSaving(true)
-      
+
+      // Fetch remote to merge
+      const fetchResponse = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+      })
+
+      let mergedTodos = todos
+      let remoteContent = null
+      if (fetchResponse.ok) {
+        const data = await fetchResponse.json()
+        remoteContent = data.files[filename]?.content
+        if (remoteContent) {
+          const remoteTodos = JSON.parse(remoteContent)
+          // Build map of local todos by hash
+          const localByHash = new Map()
+          todos.forEach(todo => {
+            const id = todo.id || hashText(todo.thing)
+            localByHash.set(id, todo)
+          })
+          // Add remote items not in local
+          remoteTodos.forEach(todo => {
+            const id = todo.id || hashText(todo.thing)
+            if (!localByHash.has(id)) {
+              localByHash.set(id, { ...todo, id })
+            }
+          })
+          // Ensure all todos have ids
+          mergedTodos = Array.from(localByHash.values()).map(todo => ({
+            ...todo,
+            id: todo.id || hashText(todo.thing)
+          }))
+        }
+      }
+
+      // Skip save if no changes
+      const newContent = JSON.stringify(mergedTodos, null, 2)
+      if (newContent === remoteContent) {
+        return
+      }
+
       const response = await fetch(`https://api.github.com/gists/${gistId}`, {
         method: 'PATCH',
         headers: {
@@ -135,14 +194,17 @@ function App() {
         body: JSON.stringify({
           files: {
             [filename]: {
-              content: JSON.stringify(todos, null, 2)
+              content: JSON.stringify(mergedTodos, null, 2)
             }
           }
         })
       })
-      
+
       if (!response.ok) {
         console.error('Failed to save to gist:', await response.text())
+      } else if (mergedTodos !== todos) {
+        // Update local state with merged data
+        setTodos(mergedTodos)
       }
     } catch (err) {
       console.error('Failed to save todos:', err)
@@ -153,7 +215,8 @@ function App() {
 
   const addTodo = () => {
     if (input.trim()) {
-      setTodos([...todos, { thing: input, done: false }])
+      const thing = input.trim()
+      setTodos([...todos, { id: hashText(thing), thing, done: false }])
       setInput('')
     }
   }
@@ -168,10 +231,10 @@ function App() {
     setTodos(todos.filter((_, i) => i !== index))
   }
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      addTodo()
-    }
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await fetchTodos()
+    setRefreshing(false)
   }
 
   if (loading) return <div className="todo-app">Loading...</div>
@@ -182,23 +245,31 @@ function App() {
       <div className="todo-app">
         <ul className="todo-list">
           {todos.map((todo, index) => (
-            <li key={index} className={todo.done ? 'completed' : ''}>
+            <li key={todo.id || index} className={todo.done ? 'completed' : ''}>
               <span onClick={() => toggleTodo(index)}>{todo.thing}</span>
               <button onClick={() => deleteTodo(index)}>×</button>
             </li>
           ))}
         </ul>
-        <div className="todo-input">
-          <input 
+        <form className="todo-input" onSubmit={(e) => { e.preventDefault(); addTodo(); }}>
+          <input
+            id="todo-input"
+            name="todo-input"
             ref={inputRef}
-            type="text" 
-            placeholder="..." 
+            type="text"
+            placeholder="..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
           />
-        </div>
+        </form>
       </div>
+      <button
+        className={`refresh-btn${refreshing ? ' spinning' : ''}`}
+        onClick={handleRefresh}
+        disabled={refreshing}
+      >
+        ♵
+      </button>
     </>
   )
 }

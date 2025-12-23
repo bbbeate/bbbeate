@@ -3,6 +3,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 export default defineConfig({
+  envDir: '..',
   resolve: {
     alias: {
       '@shared': path.resolve(__dirname, '../shared')
