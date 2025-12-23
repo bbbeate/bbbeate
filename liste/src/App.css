@@ -99,11 +99,18 @@
   color: var(--background);
 }
 
-.refresh-btn.spinning {
-  animation: spin 0.5s linear infinite;
+.refresh-boris {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  object-fit: cover;
+  animation: spin-center 0.5s linear infinite;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes spin-center {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(0deg) scale(420%); }
 }

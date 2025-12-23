@@ -233,7 +233,10 @@ function App() {
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    await fetchTodos()
+    await Promise.all([
+      fetchTodos(),
+      new Promise(r => setTimeout(r, 500))
+    ])
     setRefreshing(false)
   }
 
@@ -258,18 +261,26 @@ function App() {
             ref={inputRef}
             type="text"
             placeholder="..."
+            enterKeyHint="done"
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                e.stopPropagation()
+                addTodo()
+              }
+            }}
           />
         </form>
       </div>
-      <button
-        className={`refresh-btn${refreshing ? ' spinning' : ''}`}
-        onClick={handleRefresh}
-        disabled={refreshing}
-      >
-        ♵
-      </button>
+      {refreshing ? (
+        <img src="/liste/boris.PNG" alt="loading" className="refresh-boris" />
+      ) : (
+        <button className="refresh-btn" onClick={handleRefresh}>
+          ♵
+        </button>
+      )}
     </>
   )
 }
