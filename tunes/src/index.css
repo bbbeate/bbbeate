@@ -1,0 +1,443 @@
+@import url('@shared/colors.css');
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--first);
+  background-color: var(--background);
+}
+
+.app {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+}
+
+.nav {
+  margin-bottom: 1rem;
+}
+
+.nav a {
+  color: var(--first);
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+.nav a:hover {
+  opacity: 1;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logout-btn {
+  padding: 0.3em 0.6em;
+  font-size: 0.8em;
+  opacity: 0.5;
+}
+
+.logout-btn:hover {
+  opacity: 1;
+}
+
+h1 {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0 0 1rem 0;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--background);
+  color: var(--first);
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+button:hover {
+  border-color: var(--first);
+}
+
+.tracks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tracks li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--first);
+  opacity: 0.8;
+}
+
+.tracks li:last-child {
+  border-bottom: none;
+}
+
+.track-name {
+  font-weight: 500;
+}
+
+.track-artist {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+
+.sync-status {
+  padding: 0.5rem 0;
+  margin-bottom: 1rem;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.new-track {
+  opacity: 1 !important;
+}
+
+.new-badge {
+  color: var(--second, #1db954);
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.loading-more {
+  padding: 1rem 0;
+  opacity: 0.6;
+  text-align: center;
+}
+
+.info-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.info-toggle {
+  padding: 0.3em 0.6em;
+  font-size: 0.85em;
+  opacity: 0.5;
+}
+
+.info-toggle.active {
+  opacity: 1;
+  border-color: var(--first);
+}
+
+.info-toggle.no-data {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.track-main {
+  margin-bottom: 0.2rem;
+}
+
+.track-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  font-size: 0.8em;
+  opacity: 0.7;
+  margin-top: 0.3rem;
+}
+
+.info-item {
+  white-space: nowrap;
+}
+
+.info-label {
+  opacity: 0.6;
+}
+
+/* View tabs */
+.view-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.view-tab {
+  padding: 0.4em 0.8em;
+  font-size: 0.9em;
+  opacity: 0.5;
+}
+
+.view-tab.active {
+  opacity: 1;
+  border-color: var(--first);
+}
+
+/* Filter header */
+.filter-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-toggle-btn {
+  padding: 0.3em 0.6em;
+  font-size: 0.85em;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.filter-badge {
+  color: var(--second, #1db954);
+}
+
+.clear-filters {
+  padding: 0.3em 0.6em;
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
+.clear-filters:hover {
+  opacity: 1;
+}
+
+/* Filters */
+.filters {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-row:last-child {
+  margin-bottom: 0;
+}
+
+.filter-row label {
+  min-width: 80px;
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+.filter-row input[type="number"],
+.filter-row input[type="text"] {
+  width: 70px;
+  padding: 0.3em 0.5em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--first);
+  font-size: 0.85em;
+  font-family: inherit;
+}
+
+.filter-row input[type="text"] {
+  width: 150px;
+}
+
+.filter-row input::placeholder {
+  opacity: 0.4;
+}
+
+.filter-row span {
+  opacity: 0.5;
+}
+
+/* Key toggles */
+.key-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.key-toggle {
+  padding: 0.2em 0.4em;
+  font-size: 0.75em;
+  min-width: 28px;
+  opacity: 0.4;
+}
+
+.key-toggle.active {
+  opacity: 1;
+  border-color: var(--first);
+}
+
+/* Sort controls */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.85em;
+}
+
+.sort-controls label {
+  opacity: 0.7;
+}
+
+.sort-controls select {
+  padding: 0.3em 0.5em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--first);
+  font-size: 0.9em;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.sort-dir {
+  padding: 0.3em 0.6em;
+  font-size: 0.9em;
+}
+
+/* Artists list */
+.artists-list li,
+.albums-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.artists-list li:hover,
+.albums-list li:hover {
+  opacity: 1;
+}
+
+.artist-name,
+.album-name {
+  font-weight: 500;
+}
+
+.artist-count,
+.album-count {
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
+.album-info {
+  flex: 1;
+}
+
+.album-artist {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+
+/* Genres list */
+.genres-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.genres-list li:hover {
+  opacity: 1;
+}
+
+.genre-name {
+  font-weight: 500;
+}
+
+.genre-count {
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
+.features-loading {
+  font-size: 0.7em;
+  opacity: 0.6;
+  font-weight: normal;
+}
+
+.features-status {
+  font-size: 0.8em;
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.no-results {
+  padding: 2rem 0;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.no-results div {
+  margin-top: 0.5rem;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.retry-btn {
+  margin-left: 1rem;
+  padding: 0.2em 0.5em;
+  font-size: 0.85em;
+}
+
+/* Expandable tracks */
+.track-main {
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+}
+
+.track-main:hover {
+  opacity: 1;
+}
+
+.track-expand {
+  font-size: 0.7em;
+  margin-right: 0.5rem;
+  opacity: 0.5;
+  width: 1em;
+}
+
+.tracks li.expanded {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.03);
+  margin: 0 -0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.track-details {
+  margin-top: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.loading-features {
+  font-size: 0.8em;
+  opacity: 0.5;
+}
+
+.no-features {
+  font-size: 0.8em;
+  opacity: 0.5;
+  font-style: italic;
+}

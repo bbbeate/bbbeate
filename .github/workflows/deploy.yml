@@ -45,13 +45,23 @@ jobs:
       env:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
       run: npm run build
-    
+
+    - name: Install dependencies for tunes
+      working-directory: ./tunes
+      run: npm ci
+
+    - name: Build tunes
+      working-directory: ./tunes
+      run: npm run build
+
     - name: Create combined dist
       run: |
         mkdir -p combined_dist
         cp -r ./space/dist/* combined_dist/
         mkdir -p combined_dist/liste
         cp -r ./liste/dist/* combined_dist/liste/
+        mkdir -p combined_dist/tunes
+        cp -r ./tunes/dist/* combined_dist/tunes/
         cp CNAME combined_dist/CNAME
     
     - name: Upload artifact
