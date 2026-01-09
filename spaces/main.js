@@ -206,6 +206,87 @@ function initSpaceView() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
         || ('ontouchstart' in window);
 
+    // Floating texts with gyro on mobile
+    const floatingTexts = new Map(); // Map of element -> {x, y, vx, vy}
+
+    if (isMobile && window.DeviceOrientationEvent) {
+        let tiltX = 0;
+        let tiltY = 0;
+
+        window.addEventListener('deviceorientation', (e) => {
+            // gamma is left/right tilt (-90 to 90)
+            // beta is front/back tilt (-180 to 180)
+            tiltX = (e.gamma || 0) / 90; // -1 to 1
+            tiltY = (e.beta || 0) / 90;  // -1 to 1
+            tiltY = Math.max(-1, Math.min(1, tiltY)); // Clamp
+        });
+
+        // Animation loop for floating
+        function animateFloating() {
+            const containers = document.querySelectorAll('.text-container');
+            const padding = 10;
+            const maxX = window.innerWidth - padding;
+            const maxY = window.innerHeight - 120; // Account for buttons
+
+            containers.forEach(container => {
+                let state = floatingTexts.get(container);
+                if (!state) {
+                    // Initialize position randomly
+                    const rect = container.getBoundingClientRect();
+                    state = {
+                        x: Math.random() * (maxX - rect.width - padding) + padding,
+                        y: Math.random() * (maxY - rect.height - 80) + 80,
+                        vx: 0,
+                        vy: 0
+                    };
+                    floatingTexts.set(container, state);
+                    container.style.position = 'fixed';
+                    container.style.transition = 'none';
+                }
+
+                // Apply acceleration based on tilt
+                state.vx += tiltX * 0.5;
+                state.vy += tiltY * 0.5;
+
+                // Apply friction
+                state.vx *= 0.95;
+                state.vy *= 0.95;
+
+                // Update position
+                state.x += state.vx;
+                state.y += state.vy;
+
+                // Bounce off walls
+                const rect = container.getBoundingClientRect();
+                if (state.x < padding) {
+                    state.x = padding;
+                    state.vx *= -0.7;
+                }
+                if (state.x + rect.width > maxX) {
+                    state.x = maxX - rect.width;
+                    state.vx *= -0.7;
+                }
+                if (state.y < 80) {
+                    state.y = 80;
+                    state.vy *= -0.7;
+                }
+                if (state.y + rect.height > maxY) {
+                    state.y = maxY - rect.height;
+                    state.vy *= -0.7;
+                }
+
+                container.style.left = state.x + 'px';
+                container.style.top = state.y + 'px';
+                container.style.transform = 'none';
+            });
+
+            requestAnimationFrame(animateFloating);
+        }
+
+        // Start floating after texts are loaded
+        setTimeout(animateFloating, 500);
+    }
+
     // Show 404 with boris
     function show404() {
         const spaceEl = document.querySelector('.space');
@@ -319,7 +400,7 @@ function initSpaceView() {
             );
         });
 
-        document.body.appendChild(container);
+        document.querySelector('.space').appendChild(container);
     }
 
     // Create input for editing text
@@ -363,11 +444,11 @@ function initSpaceView() {
         editInput.focus();
         if (initialValue) editInput.select();
 
-        // On mobile, scroll input into view above keyboard
+        // On mobile, move input to upper part of screen to stay above keyboard
         if (isMobile) {
-            setTimeout(() => {
-                editInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 300);
+            const viewportHeight = window.innerHeight;
+            // Position at 30% from top to stay above keyboard
+            form.style.top = Math.min(y, viewportHeight * 0.3) + 'px';
         }
 
         let isHandled = false;

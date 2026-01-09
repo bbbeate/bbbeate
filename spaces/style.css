@@ -350,41 +350,75 @@ body {
         position: static;
         align-self: flex-start;
         margin-left: 10px;
+        font-size: 0.9rem;
     }
 
+    /* Hide messy title on mobile, show simple title */
     .messy-title {
-        top: 80px;
-        left: 15px;
-    }
-
-    .messy-title span {
-        font-size: 1.8rem;
+        display: none;
     }
 
     .button-container {
-        bottom: 30px !important;
-        left: 20px !important;
-        right: 20px !important;
+        bottom: 20px !important;
+        left: 15px !important;
+        right: 15px !important;
     }
 
     .action-button {
-        padding: 0.75rem 1.25rem;
-        font-size: 2.5rem;
-        min-width: 60px;
+        padding: 0.5rem 1rem;
+        font-size: 1.8rem;
+        min-width: 50px;
     }
 
     .spaces-list a {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
     }
 
     .create-space-link {
-        font-size: 1.2rem !important;
+        font-size: 1rem !important;
+        padding: 0.4rem 0.8rem !important;
     }
 
     .datepicker-dropdown {
         left: 50%;
         transform: translateX(-50%);
-        min-width: 240px;
+        min-width: 220px;
+    }
+
+    .datepicker-display {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.6rem;
+    }
+
+    /* On mobile, texts float with gyro */
+    .space {
+        min-height: 100vh;
+        position: relative;
+    }
+
+    .text-container {
+        position: fixed;
+        max-width: 60vw;
+    }
+
+    .placed-text {
+        font-size: 16px !important;
+        max-width: 100%;
+        word-wrap: break-word;
+    }
+
+    .text-name {
+        font-size: 0.65rem;
+    }
+
+    .text-input {
+        position: fixed !important;
+        top: 30% !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        font-size: 16px !important;
+        min-width: 80px;
+        max-width: 85vw;
     }
 }
 
