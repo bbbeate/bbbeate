@@ -208,10 +208,13 @@ function initSpaceView() {
 
     // Floating texts with gyro on mobile
     const floatingTexts = new Map(); // Map of element -> {x, y, vx, vy}
+    let tiltX = 0;
+    let tiltY = 0;
+    let floatingStarted = false;
 
-    if (isMobile && window.DeviceOrientationEvent) {
-        let tiltX = 0;
-        let tiltY = 0;
+    function startFloating() {
+        if (floatingStarted) return;
+        floatingStarted = true;
 
         window.addEventListener('deviceorientation', (e) => {
             // gamma is left/right tilt (-90 to 90)
@@ -283,8 +286,27 @@ function initSpaceView() {
             requestAnimationFrame(animateFloating);
         }
 
-        // Start floating after texts are loaded
-        setTimeout(animateFloating, 500);
+        animateFloating();
+    }
+
+    if (isMobile && window.DeviceOrientationEvent) {
+        // iOS 13+ requires permission
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // Request on first touch
+            document.body.addEventListener('touchstart', function requestGyro() {
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            startFloating();
+                        }
+                    })
+                    .catch(console.error);
+                document.body.removeEventListener('touchstart', requestGyro);
+            }, { once: true });
+        } else {
+            // Android or older iOS - just start
+            setTimeout(startFloating, 500);
+        }
     }
 
     // Show 404 with boris
