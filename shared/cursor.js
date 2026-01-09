@@ -1,19 +1,23 @@
 /**
  * Shared cursor module
  * Creates a custom cursor that follows the mouse with smooth animation
- * Supports different modes: 'discoball' (default for pointer), 'default', etc.
+ * Two modes:
+ *   - 'discoball': shows discoball gif (for empty space)
+ *   - 'bird': shows bird png (for clickable elements)
+ * Never shows original browser cursor
  */
 
 import discoballGif from './assets/discoball.gif';
+import birdPng from './assets/bird.png';
 
-const CURSOR_MODES = {
+const CURSOR_CONFIG = {
     discoball: {
         src: discoballGif,
-        size: 64
+        size: 51
     },
-    default: {
-        src: null,
-        size: 0
+    bird: {
+        src: birdPng,
+        size: 69
     }
 };
 
@@ -24,8 +28,13 @@ let mouseY = 0;
 let cursorX = 0;
 let cursorY = 0;
 let animationId = null;
-let currentMode = 'default';
+let currentMode = 'bird';
 let isInitialized = false;
+let autoDetectEnabled = false;
+let styleEl = null;
+
+// Selector for empty space (shows discoball) - everything else shows bird
+const EMPTY_SPACE_SELECTOR = '.space, .list-view, body';
 
 // Detect if device is mobile
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -39,7 +48,6 @@ function createCursorElement() {
         pointer-events: none;
         z-index: 9999;
         transform: translate(-50%, -50%);
-        transition: opacity 0.2s;
     `;
 
     cursorImg = document.createElement('img');
@@ -57,8 +65,10 @@ function animateCursor() {
     cursorX += (mouseX - cursorX) * 0.2;
     cursorY += (mouseY - cursorY) * 0.2;
 
-    cursor.style.left = cursorX + 'px';
-    cursor.style.top = cursorY + 'px';
+    if (cursor) {
+        cursor.style.left = cursorX + 'px';
+        cursor.style.top = cursorY + 'px';
+    }
 
     animationId = requestAnimationFrame(animateCursor);
 }
@@ -66,54 +76,74 @@ function animateCursor() {
 function handleMouseMove(e) {
     mouseX = e.clientX;
     mouseY = e.clientY;
+
+    // Auto-detect mode: discoball only for empty space, bird for everything else
+    if (autoDetectEnabled && !isMobile) {
+        // Check if directly on empty space (not on any child element)
+        const isEmptySpace = e.target.matches(EMPTY_SPACE_SELECTOR);
+        const newMode = isEmptySpace ? 'discoball' : 'bird';
+        if (newMode !== currentMode) {
+            applyMode(newMode);
+        }
+    }
+}
+
+function applyMode(mode) {
+    currentMode = mode;
+    const config = CURSOR_CONFIG[mode] || CURSOR_CONFIG.bird;
+
+    cursor.style.display = 'block';
+    cursor.style.width = config.size + 'px';
+    cursor.style.height = config.size + 'px';
+    cursorImg.src = config.src;
+
+    // Always hide browser cursor
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'custom-cursor-style';
+        document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+        html, body, *, *::before, *::after { cursor: none !important; }
+        *::-webkit-resizer { cursor: none !important; }
+        textarea, input, select { cursor: none !important; }
+        [style*="cursor"] { cursor: none !important; }
+    `;
 }
 
 /**
  * Initialize the custom cursor
- * @param {string} mode - Initial cursor mode ('discoball', 'default')
+ * Automatically switches between discoball (empty space) and bird (clickable)
  */
-export function initCursor(mode = 'discoball') {
+export function initCursor() {
     if (isInitialized) return;
     isInitialized = true;
 
     // Don't show custom cursor on mobile
     if (isMobile) {
-        document.body.style.cursor = 'auto';
         return;
     }
 
+    autoDetectEnabled = true;
     createCursorElement();
     document.addEventListener('mousemove', handleMouseMove);
 
-    setMode(mode);
+    applyMode('discoball');
     animateCursor();
 }
 
 /**
- * Set cursor mode
- * @param {string} mode - Cursor mode ('discoball', 'default')
+ * Manually set cursor mode
+ * @param {string} mode - 'discoball' or 'bird'
  */
 export function setMode(mode) {
     if (isMobile) return;
-
-    currentMode = mode;
-    const config = CURSOR_MODES[mode] || CURSOR_MODES.default;
-
-    if (config.src) {
-        cursor.style.display = 'block';
-        cursor.style.width = config.size + 'px';
-        cursor.style.height = config.size + 'px';
-        cursorImg.src = config.src;
-        document.body.style.cursor = 'none';
-    } else {
-        cursor.style.display = 'none';
-        document.body.style.cursor = 'auto';
-    }
+    applyMode(mode);
 }
 
 /**
  * Get current cursor mode
- * @returns {string} Current mode
+ * @returns {string} 'discoball' or 'bird'
  */
 export function getMode() {
     return currentMode;
@@ -135,7 +165,10 @@ export function destroy() {
         cursor.remove();
     }
 
-    document.body.style.cursor = 'auto';
+    if (styleEl && styleEl.parentNode) {
+        styleEl.remove();
+    }
+
     isInitialized = false;
 }
 

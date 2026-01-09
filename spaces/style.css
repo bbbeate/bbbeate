@@ -302,6 +302,12 @@ body {
 .text-input::-webkit-resizer {
     background: var(--first);
     border-radius: 2px;
+    cursor: none !important;
+}
+
+/* Hide all system cursors */
+.text-input {
+    cursor: none !important;
 }
 
 .button-container {
@@ -363,6 +369,31 @@ body {
     to { transform: rotate(360deg); }
 }
 
+@keyframes vibrate {
+    0% { transform: rotate(0deg); }
+    2% { transform: rotate(-5deg); }
+    4% { transform: rotate(5deg); }
+    6% { transform: rotate(-5deg); }
+    8% { transform: rotate(5deg); }
+    10% { transform: rotate(-5deg); }
+    12% { transform: rotate(5deg); }
+    14% { transform: rotate(-5deg); }
+    16% { transform: rotate(5deg); }
+    18% { transform: rotate(-5deg); }
+    20% { transform: rotate(5deg); }
+    22% { transform: rotate(-5deg); }
+    24% { transform: rotate(5deg); }
+    26% { transform: rotate(-5deg); }
+    28% { transform: rotate(5deg); }
+    30% { transform: rotate(-5deg); }
+    32% { transform: rotate(5deg); }
+    33%, 100% { transform: rotate(0deg); }
+}
+
+.action-button.unsaved {
+    animation: vibrate 3s ease-in-out infinite;
+}
+
 .action-button:hover {
     background: var(--first);
     color: var(--background);
@@ -416,6 +447,21 @@ body {
 .spaces-list .loading {
     color: var(--second);
     font-size: 1.5rem;
+}
+
+.create-space-link {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    border: 2px dashed var(--second);
+    border-radius: 8px;
+    color: var(--second) !important;
+    font-size: 1.5rem !important;
+}
+
+.create-space-link:hover {
+    border-style: solid;
+    color: var(--first) !important;
+    border-color: var(--first);
 }
 
 /* Space view */

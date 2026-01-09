@@ -1,6 +1,10 @@
 import borisImg from '@shared/assets/boris_no_bg.PNG';
 import discoballGif from '@shared/assets/discoball.gif';
 import { createDatePicker } from './datepicker.js';
+import { initCursor } from '@shared/cursor.js';
+
+// Initialize cursor (discoball for empty space, bird for clickable)
+initCursor();
 
 // GitHub Gist storage
 const GIST_ID = '0eb6f22f2822cdd5d70b92463c839fa7';
@@ -49,17 +53,73 @@ async function loadSpacesList() {
             .filter(name => name.startsWith(SPACES_PREFIX) && name.endsWith('.json'))
             .map(name => name.replace(SPACES_PREFIX, '').replace('.json', ''));
 
+        let html = '';
+
         if (spaces.length === 0) {
-            spacesList.innerHTML = '<div class="loading">no spaces found</div>';
-            return;
+            html = '<div class="loading">no spaces yet</div>';
+        } else {
+            html = spaces.map(name =>
+                `<a href="/spaces/${name}">${name}</a>`
+            ).join('');
         }
 
-        spacesList.innerHTML = spaces.map(name =>
-            `<a href="/spaces/${name}">${name}</a>`
-        ).join('');
+        // Add create new space button
+        html += '<a href="#" class="create-space-link" id="create-space-btn">+ new space</a>';
+
+        spacesList.innerHTML = html;
+
+        // Add click handler for create button
+        document.getElementById('create-space-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            createNewSpace();
+        });
     } catch (error) {
         console.error('Failed to load spaces:', error);
         spacesList.innerHTML = '<div class="loading">failed to load</div>';
+    }
+}
+
+// Validate space name: only letters and underscores
+function isValidSpaceName(name) {
+    return /^[a-zA-Z_]+$/.test(name) && name.length > 0;
+}
+
+async function createNewSpace() {
+    const name = prompt('Enter space name (letters and _ only):');
+
+    if (!name) return;
+
+    const cleanName = name.toLowerCase().trim();
+
+    if (!isValidSpaceName(cleanName)) {
+        alert('Invalid name. Use only letters and underscores.');
+        return;
+    }
+
+    const filename = SPACES_PREFIX + cleanName + '.json';
+
+    try {
+        // Create empty space file
+        await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                files: {
+                    [filename]: {
+                        content: '[]'
+                    }
+                }
+            })
+        });
+
+        // Navigate to new space
+        window.location.href = `/spaces/${cleanName}`;
+    } catch (error) {
+        console.error('Failed to create space:', error);
+        alert('Failed to create space');
     }
 }
 
@@ -81,6 +141,21 @@ function initSpaceView() {
     });
 
     let currentSpaceData = null;
+    let hasUnsavedChanges = false;
+
+    // Mark as having unsaved changes
+    function markUnsaved() {
+        if (!hasUnsavedChanges) {
+            hasUnsavedChanges = true;
+            document.getElementById('save-btn').classList.add('unsaved');
+        }
+    }
+
+    // Clear unsaved state
+    function clearUnsaved() {
+        hasUnsavedChanges = false;
+        document.getElementById('save-btn').classList.remove('unsaved');
+    }
 
     // Get today's date in local time (YYYY-MM-DD)
     function getTodayDate() {
@@ -235,8 +310,10 @@ function initSpaceView() {
                     if (newText) {
                         textElement.textContent = newText;
                         textElement.style.fontSize = newSize + 'px';
+                        markUnsaved();
                     } else {
                         container.remove();
+                        markUnsaved();
                     }
                 }
             );
@@ -280,14 +357,6 @@ function initSpaceView() {
         // Watch for resize
         const resizeObserver = new ResizeObserver(updateFontSize);
         resizeObserver.observe(editInput);
-
-        // Wand cursor when near resize corner
-        editInput.addEventListener('mousemove', (e) => {
-            const rect = editInput.getBoundingClientRect();
-            const cornerSize = 20;
-            const nearCorner = (rect.right - e.clientX < cornerSize) && (rect.bottom - e.clientY < cornerSize);
-            editInput.style.cursor = nearCorner ? 'url("data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><text y=\'24\' font-size=\'24\'>🪄</text></svg>") 4 4, nwse-resize' : 'text';
-        });
 
         form.appendChild(editInput);
         document.body.appendChild(form);
@@ -349,6 +418,7 @@ function initSpaceView() {
             };
 
             createTextElement(item);
+            markUnsaved();
         });
     }
 
@@ -526,6 +596,7 @@ function initSpaceView() {
     // Refresh
     async function handleRefresh() {
         await loadSpace();
+        clearUnsaved();
     }
 
     const handleSave = async () => {
