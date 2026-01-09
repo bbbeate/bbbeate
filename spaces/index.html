@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>spaces</title>
+    <link rel="icon" type="image/png" href="/discoball-icon.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- List view (shown when no space selected) -->
+    <div id="list-view" class="list-view">
+        <div class="spaces-list" id="spaces-list">
+            <div class="loading">loading...</div>
+        </div>
+    </div>
+
+    <!-- Space view (shown when a space is selected) -->
+    <div id="space-view" class="space-view" style="display: none;">
+        <div class="messy-title" id="messy-title">
+            <span class="messy-1"></span>
+            <span class="messy-2"></span>
+            <span class="messy-3"></span>
+        </div>
+        <div class="header">
+            <a href="/spaces/" class="back-link">←</a>
+            <div id="datepicker-container"></div>
+        </div>
+        <div class="button-container">
+            <button id="save-btn" class="action-button">💾</button>
+            <button id="refresh-btn" class="action-button">♵</button>
+        </div>
+        <div class="space"></div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>

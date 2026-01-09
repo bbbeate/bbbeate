@@ -54,6 +54,16 @@ jobs:
       working-directory: ./tunes
       run: npm run build
 
+    - name: Install dependencies for spaces
+      working-directory: ./spaces
+      run: npm ci
+
+    - name: Build spaces with secrets
+      working-directory: ./spaces
+      env:
+        VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
+      run: npm run build
+
     - name: Create combined dist
       run: |
         mkdir -p combined_dist
@@ -62,6 +72,9 @@ jobs:
         cp -r ./liste/dist/* combined_dist/liste/
         mkdir -p combined_dist/tunes
         cp -r ./tunes/dist/* combined_dist/tunes/
+        mkdir -p combined_dist/spaces
+        cp -r ./spaces/dist/* combined_dist/spaces/
+        cp ./spaces/public/404.html combined_dist/404.html
         cp CNAME combined_dist/CNAME
     
     - name: Upload artifact
