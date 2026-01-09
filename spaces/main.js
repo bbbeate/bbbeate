@@ -363,6 +363,13 @@ function initSpaceView() {
         editInput.focus();
         if (initialValue) editInput.select();
 
+        // On mobile, scroll input into view above keyboard
+        if (isMobile) {
+            setTimeout(() => {
+                editInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+
         let isHandled = false;
         let currentSize = initialSize;
 
