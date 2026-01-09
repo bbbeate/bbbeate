@@ -13,6 +13,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['discoball-icon.png'],
+      workbox: {
+        navigateFallbackDenylist: [/^\/spaces/, /^\/liste/, /^\/tunes/]
+      },
       manifest: {
         name: 'space',
         short_name: 'space',

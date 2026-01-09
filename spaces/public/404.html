@@ -4,12 +4,18 @@
   <meta charset="utf-8">
   <title>Redirecting...</title>
   <script>
-    // Redirect to index.html but preserve the path
+    // Only handle /spaces/* routes, let others go to root
     const path = window.location.pathname;
     const search = window.location.search;
     const hash = window.location.hash;
-    sessionStorage.setItem('redirect_path', path + search + hash);
-    window.location.replace('/spaces/');
+
+    if (path.startsWith('/spaces/') || path === '/spaces') {
+      sessionStorage.setItem('redirect_path', path + search + hash);
+      window.location.replace('/spaces/');
+    } else {
+      // For other 404s, go to root
+      window.location.replace('/');
+    }
   </script>
 </head>
 <body>
