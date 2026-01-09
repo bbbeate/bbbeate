@@ -1,4 +1,4 @@
-import discoballGif from './assets/discoball.gif';
+import discoballGif from '@shared/assets/discoball.gif';
 
 const cursor = document.querySelector('.custom-cursor');
 const cursorImg = document.getElementById('cursor-img');
