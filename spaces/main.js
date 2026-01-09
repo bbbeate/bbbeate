@@ -385,8 +385,19 @@ function initSpaceView() {
     function createTextElement(item) {
         const container = document.createElement('div');
         container.className = 'text-container';
-        container.style.left = item.x + 'px';
-        container.style.top = item.y + 'px';
+
+        // On mobile, position randomly on screen; on desktop use original x,y
+        if (isMobile) {
+            const padding = 20;
+            const maxX = window.innerWidth - 100;
+            const maxY = window.innerHeight - 150;
+            container.style.left = (Math.random() * (maxX - padding) + padding) + 'px';
+            container.style.top = (Math.random() * (maxY - 100) + 100) + 'px';
+            container.style.position = 'fixed';
+        } else {
+            container.style.left = item.x + 'px';
+            container.style.top = item.y + 'px';
+        }
 
         const nameLabel = document.createElement('div');
         nameLabel.className = 'text-name';
