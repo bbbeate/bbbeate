@@ -12,6 +12,9 @@
     if (path.startsWith('/spaces/') || path === '/spaces') {
       sessionStorage.setItem('redirect_path', path + search + hash);
       window.location.replace('/spaces/');
+    } else if (path.startsWith('/tunes/') || path === '/tunes') {
+      // Preserve query params for OAuth callback
+      window.location.replace('/tunes/' + search + hash);
     } else {
       // For other 404s, go to root
       window.location.replace('/');
