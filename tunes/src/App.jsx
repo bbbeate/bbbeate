@@ -32,7 +32,7 @@ function App() {
   const [artistData, setArtistData] = useState({})
   const [showFilters, setShowFilters] = useState(false)
 
-  const isUniverse = window.location.pathname.includes('/universe')
+  const isUniverse = window.location.pathname.includes('/universe') || window.location.hash.includes('universe')
 
   useEffect(() => {
     const storedToken = sessionStorage.getItem('spotify_token')

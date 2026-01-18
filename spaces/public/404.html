@@ -13,8 +13,10 @@
       sessionStorage.setItem('redirect_path', path + search + hash);
       window.location.replace('/spaces/');
     } else if (path.startsWith('/tunes/') || path === '/tunes') {
-      // Preserve query params for OAuth callback
-      window.location.replace('/tunes/' + search + hash);
+      // Preserve subpath via hash for SPA routing
+      const subpath = path.replace('/tunes', '').replace(/^\//, '');
+      const hashPath = subpath ? '#/' + subpath : hash;
+      window.location.replace('/tunes/' + search + hashPath);
     } else {
       // For other 404s, go to root
       window.location.replace('/');
