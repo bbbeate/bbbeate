@@ -52,6 +52,8 @@ jobs:
 
     - name: Build tunes
       working-directory: ./tunes
+      env:
+        VITE_SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       run: npm run build
 
     - name: Install dependencies for spaces
