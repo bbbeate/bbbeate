@@ -13,10 +13,9 @@
       sessionStorage.setItem('redirect_path', path + search + hash);
       window.location.replace('/spaces/');
     } else if (path.startsWith('/tunes/') || path === '/tunes') {
-      // Preserve subpath via hash for SPA routing
-      const subpath = path.replace('/tunes', '').replace(/^\//, '');
-      const hashPath = subpath ? '#/' + subpath : hash;
-      window.location.replace('/tunes/' + search + hashPath);
+      // Store full path for SPA to restore
+      sessionStorage.setItem('tunes_redirect', path + search + hash);
+      window.location.replace('/tunes/' + search);
     } else {
       // For other 404s, go to root
       window.location.replace('/');

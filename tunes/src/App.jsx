@@ -32,7 +32,18 @@ function App() {
   const [artistData, setArtistData] = useState({})
   const [showFilters, setShowFilters] = useState(false)
 
-  const isUniverse = window.location.pathname.includes('/universe') || window.location.hash.includes('universe')
+  // Check for redirect from 404 page and restore clean URL
+  const [isUniverse] = useState(() => {
+    const redirect = sessionStorage.getItem('tunes_redirect')
+    if (redirect) {
+      sessionStorage.removeItem('tunes_redirect')
+      if (redirect.includes('/universe')) {
+        window.history.replaceState({}, '', '/tunes/universe')
+        return true
+      }
+    }
+    return window.location.pathname.includes('/universe')
+  })
 
   useEffect(() => {
     const storedToken = sessionStorage.getItem('spotify_token')
