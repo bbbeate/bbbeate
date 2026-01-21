@@ -12,13 +12,74 @@ const parseGistContent = (content) => {
   return data // Already new format: { nextId, todos }
 }
 
-// Map of filename to gist ID (keep this secret!)
-const GIST_MAP = {
-  'catjo': 'bf00c9605fd01b610fb0db24d667ee64',
-  // Add more users here: 'username': 'gist_id'
-}
-
+const GIST_ID = 'bf00c9605fd01b610fb0db24d667ee64'
 const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN
+
+// User selection component - fetches available users from gist
+function UserSelect() {
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+          headers: GITHUB_TOKEN ? { 'Authorization': `token ${GITHUB_TOKEN}` } : {}
+        })
+        if (!response.ok) throw new Error(`GitHub API error: ${response.status}`)
+        const data = await response.json()
+        // Extract usernames from filenames (e.g., "catjo.json" -> "catjo")
+        const usernames = Object.keys(data.files)
+          .filter(f => f.endsWith('.json'))
+          .map(f => f.replace('.json', ''))
+        setUsers(usernames)
+      } catch (err) {
+        setError('Failed to load users')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchUsers()
+  }, [])
+
+  const handleUserSelect = (e) => {
+    const selectedUser = e.target.value
+    if (selectedUser) {
+      const params = new URLSearchParams()
+      params.set('user', selectedUser)
+      window.location.search = params.toString()
+    }
+  }
+
+  if (loading) return <div className="todo-app" style={{ textAlign: 'center', paddingTop: '4rem' }}>Loading...</div>
+  if (error) return <div className="todo-app" style={{ textAlign: 'center', paddingTop: '4rem' }}>{error}</div>
+
+  return (
+    <div className="todo-app" style={{ textAlign: 'center', paddingTop: '4rem' }}>
+      <h2>hvem der?</h2>
+      <select
+        onChange={handleUserSelect}
+        style={{
+          padding: '0.75rem',
+          fontSize: '1rem',
+          color: 'var(--primary-color)',
+          background: 'transparent',
+          border: '1px solid var(--primary-color)',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          minWidth: '200px'
+        }}
+        defaultValue=""
+      >
+        <option value="" disabled>select...</option>
+        {users.map(username => (
+          <option key={username} value={username}>{username}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
 
 function App() {
   const [todos, setTodos] = useState([])
@@ -34,58 +95,17 @@ function App() {
   // Get user from URL parameter (e.g., /liste?user=catjo)
   const urlParams = new URLSearchParams(window.location.search)
   const user = urlParams.get('user')
-  const gistId = user ? GIST_MAP[user] : null
+  const gistId = GIST_ID
   const filename = user ? `${user}.json` : null
 
   // If no user selected, show user selection screen
   if (!user) {
-    const availableUsers = Object.keys(GIST_MAP)
-    
-    const handleUserSelect = (e) => {
-      const selectedUser = e.target.value
-      if (selectedUser) {
-        const params = new URLSearchParams()
-        params.set('user', selectedUser)
-        window.location.search = params.toString()
-      }
-    }
-
-    return (
-      <div className="todo-app" style={{ textAlign: 'center', paddingTop: '4rem' }}>
-        <h2>hvem der?</h2>
-        <select 
-          onChange={handleUserSelect}
-          style={{
-            padding: '0.75rem',
-            fontSize: '1rem',
-            color: 'var(--primary-color)',
-            background: 'transparent',
-            border: '1px solid var(--primary-color)',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            minWidth: '200px'
-          }}
-          defaultValue=""
-        >
-          <option value="" disabled>select...</option>
-          {availableUsers.map(username => (
-            <option key={username} value={username}>{username}</option>
-          ))}
-        </select>
-      </div>
-    )
+    return <UserSelect />
   }
-
-  // Get user from URL parameter (e.g., /liste?user=catjo)
 
   // Load todos from gist on mount
   useEffect(() => {
-    if (gistId) {
-      fetchTodos()
-    } else {
-      setError(`User "${user}" not found`)
-      setLoading(false)
-    }
+    fetchTodos()
   }, [user])
 
   // Save todos to gist whenever they change (debounced)
