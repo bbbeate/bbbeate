@@ -1,0 +1,25 @@
+@import url('@shared/colors.css');
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  background-color: var(--background);
+  color: var(--first);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--second);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

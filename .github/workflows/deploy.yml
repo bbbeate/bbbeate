@@ -66,6 +66,17 @@ jobs:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
       run: npm run build
 
+    - name: Install dependencies for hvaskjer
+      working-directory: ./hvaskjer
+      run: npm ci
+
+    - name: Build hvaskjer with secrets
+      working-directory: ./hvaskjer
+      env:
+        VITE_MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+        VITE_HVA_SKJER_PASS: ${{ secrets.HVA_SKJER_PASS }}
+      run: npm run build
+
     - name: Create combined dist
       run: |
         mkdir -p combined_dist
@@ -76,6 +87,8 @@ jobs:
         cp -r ./tunes/dist/* combined_dist/tunes/
         mkdir -p combined_dist/spaces
         cp -r ./spaces/dist/* combined_dist/spaces/
+        mkdir -p combined_dist/hvaskjer
+        cp -r ./hvaskjer/dist/* combined_dist/hvaskjer/
         cp ./spaces/public/404.html combined_dist/404.html
         cp CNAME combined_dist/CNAME
     
