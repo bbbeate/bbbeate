@@ -62,7 +62,9 @@ function NewsItem({ item, isExpanded, onToggle }) {
 const CORRECT_PASS = import.meta.env.VITE_HVA_SKJER_PASS
 
 function App() {
-  const [authenticated, setAuthenticated] = useState(false)
+  const [authenticated, setAuthenticated] = useState(() =>
+    sessionStorage.getItem('hvaskjer-auth') === 'true'
+  )
   const [password, setPassword] = useState('')
   const [passError, setPassError] = useState(false)
 
@@ -87,6 +89,7 @@ function App() {
   function handleLogin(e) {
     e.preventDefault()
     if (password === CORRECT_PASS) {
+      sessionStorage.setItem('hvaskjer-auth', 'true')
       setAuthenticated(true)
       setPassError(false)
     } else {

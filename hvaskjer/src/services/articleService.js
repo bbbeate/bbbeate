@@ -1,4 +1,4 @@
-const CORS_PROXY = 'https://corsproxy.io/?'
+const CORS_PROXY = 'https://api.allorigins.win/raw?url='
 
 const CONTENT_SELECTORS = [
   '[data-main-content]',
