@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID
+const GITHUB_TOKEN = import.meta.env.VITE_GITHUB_TOKEN
 const REDIRECT_URI = import.meta.env.DEV
   ? 'http://127.0.0.1:1666/tunes/callback'
   : 'https://bbbeate.space/tunes/callback'
-const PLAYLIST_NAME = 'bbbeates top 50'
+const GIST_ID = '89b17b6422f099181722e5416b3e1794'
+const GIST_API = 'https://api.github.com'
 
 function App() {
   const [token, setToken] = useState(null)
@@ -15,6 +17,10 @@ function App() {
   const [syncStatus, setSyncStatus] = useState(null)
   const [newTracks, setNewTracks] = useState([])
   const [expandedTrack, setExpandedTrack] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
+  const [playlistName, setPlaylistName] = useState('')
+  const [showSaveForm, setShowSaveForm] = useState(false)
+  const [existingPlaylistId, setExistingPlaylistId] = useState(null)
 
   // Filters from URL params
   const getFiltersFromUrl = () => {
@@ -177,7 +183,15 @@ function App() {
     const data = await response.json()
     if (data.items) {
       setTracks(data.items)
-      await syncPlaylist(data.items)
+      // Get user profile and check for existing playlist
+      const profile = await getUserProfile()
+      const playlistId = await getPlaylistIdFromGist(profile.id)
+      if (playlistId) {
+        setExistingPlaylistId(playlistId)
+      } else {
+        // Suggest default name for new users
+        setPlaylistName(`${profile.display_name || profile.id}'s 50 favs`)
+      }
     }
   }
 
@@ -431,28 +445,62 @@ function App() {
       .map(([genre, count]) => ({ genre, count }))
   }
 
-  async function getUserId() {
+  async function getUserProfile() {
     const response = await fetch('https://api.spotify.com/v1/me', {
       headers: { Authorization: `Bearer ${token}` }
     })
     const data = await response.json()
-    return data.id
+    setUserProfile(data)
+    return data
   }
 
-  async function findOrCreatePlaylist(userId) {
-    // Check existing playlists
-    let url = 'https://api.spotify.com/v1/me/playlists?limit=50'
-    while (url) {
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` }
+  async function getPlaylistIdFromGist(userId) {
+    try {
+      const response = await fetch(`${GIST_API}/gists/${GIST_ID}`, {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` }
       })
       const data = await response.json()
-      const found = data.items.find(p => p.name === PLAYLIST_NAME)
-      if (found) return found.id
-      url = data.next
+      const content = JSON.parse(data.files['fav50playlistIds.json'].content)
+      return content[userId] || null
+    } catch (err) {
+      console.error('Failed to read gist:', err)
+      return null
     }
+  }
 
-    // Create new playlist
+  async function savePlaylistIdToGist(userId, playlistId) {
+    try {
+      // First get current content
+      const getResponse = await fetch(`${GIST_API}/gists/${GIST_ID}`, {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` }
+      })
+      const getData = await getResponse.json()
+      const content = JSON.parse(getData.files['fav50playlistIds.json'].content)
+
+      // Update with new mapping
+      content[userId] = playlistId
+
+      // Save back
+      await fetch(`${GIST_API}/gists/${GIST_ID}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          files: {
+            'fav50playlistIds.json': {
+              content: JSON.stringify(content, null, 2)
+            }
+          }
+        })
+      })
+    } catch (err) {
+      console.error('Failed to save to gist:', err)
+    }
+  }
+
+  async function createPlaylist(userId, name) {
     const response = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
       method: 'POST',
       headers: {
@@ -460,12 +508,14 @@ function App() {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: PLAYLIST_NAME,
+        name,
         description: 'Auto-synced top 50 tracks',
         public: false
       })
     })
     const data = await response.json()
+    // Save to gist
+    await savePlaylistIdToGist(userId, data.id)
     return data.id
   }
 
@@ -498,25 +548,45 @@ function App() {
     }
   }
 
-  async function syncPlaylist(topTracks) {
-    setSyncStatus('syncing...')
-    try {
-      const userId = await getUserId()
-      const playlistId = await findOrCreatePlaylist(userId)
-      const existingTrackIds = await getPlaylistTracks(playlistId)
+  async function handleSaveOrUpdate() {
+    if (existingPlaylistId) {
+      // Update existing playlist
+      setSyncStatus('updating...')
+      try {
+        const existingTrackIds = await getPlaylistTracks(existingPlaylistId)
+        const tracksToAdd = tracks.filter(t => !existingTrackIds.has(t.id))
 
-      const tracksToAdd = topTracks.filter(t => !existingTrackIds.has(t.id))
-
-      if (tracksToAdd.length > 0) {
-        const uris = tracksToAdd.map(t => `spotify:track:${t.id}`)
-        await addTracksToPlaylist(playlistId, uris)
-        setNewTracks(tracksToAdd)
-        setSyncStatus(`added ${tracksToAdd.length} new track${tracksToAdd.length > 1 ? 's' : ''}`)
-      } else {
-        setSyncStatus('playlist up to date')
+        if (tracksToAdd.length > 0) {
+          const uris = tracksToAdd.map(t => `spotify:track:${t.id}`)
+          await addTracksToPlaylist(existingPlaylistId, uris)
+          setNewTracks(tracksToAdd)
+          setSyncStatus(`added ${tracksToAdd.length} new track${tracksToAdd.length > 1 ? 's' : ''}`)
+        } else {
+          setSyncStatus('playlist up to date')
+        }
+      } catch (err) {
+        setSyncStatus('update failed')
+        console.error(err)
       }
+    } else {
+      // Show save form for new playlist
+      setShowSaveForm(true)
+    }
+  }
+
+  async function handleCreatePlaylist() {
+    if (!playlistName.trim() || !userProfile) return
+    setSyncStatus('creating playlist...')
+    setShowSaveForm(false)
+    try {
+      const playlistId = await createPlaylist(userProfile.id, playlistName.trim())
+      const uris = tracks.map(t => `spotify:track:${t.id}`)
+      await addTracksToPlaylist(playlistId, uris)
+      setExistingPlaylistId(playlistId)
+      setNewTracks(tracks)
+      setSyncStatus(`created "${playlistName.trim()}" with ${tracks.length} tracks`)
     } catch (err) {
-      setSyncStatus('sync failed')
+      setSyncStatus('failed to create playlist')
       console.error(err)
     }
   }
@@ -690,7 +760,33 @@ function App() {
         <a href="/tunes/universe">universe →</a>
         <button className="logout-btn" onClick={logout}>logout</button>
       </div>
-      {syncStatus && <div className="sync-status">{syncStatus}</div>}
+
+      <div className="save-section">
+        {!showSaveForm ? (
+          <>
+            <button onClick={handleSaveOrUpdate} className="save-btn">
+              {existingPlaylistId ? 'oppdater' : 'lagre'}
+            </button>
+            {syncStatus && <span className="sync-status">{syncStatus}</span>}
+          </>
+        ) : (
+          <div className="playlist-setup">
+            <input
+              type="text"
+              value={playlistName}
+              onChange={e => setPlaylistName(e.target.value)}
+              placeholder="playlist name"
+            />
+            <button onClick={handleCreatePlaylist} disabled={!playlistName.trim()}>
+              create
+            </button>
+            <button onClick={() => setShowSaveForm(false)} className="cancel-btn">
+              cancel
+            </button>
+          </div>
+        )}
+      </div>
+
       <ul className="tracks">
         {tracks.map((track, i) => (
           <li key={track.id} className={newTrackIds.has(track.id) ? 'new-track' : ''}>

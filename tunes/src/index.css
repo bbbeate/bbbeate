@@ -441,3 +441,96 @@ button:hover {
   opacity: 0.5;
   font-style: italic;
 }
+
+/* Playlist setup */
+.setup-info {
+  opacity: 0.7;
+  margin-bottom: 1.5rem;
+}
+
+.playlist-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.playlist-setup label {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+
+.playlist-setup input {
+  padding: 0.6em 0.8em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--first);
+  font-size: 1em;
+  font-family: inherit;
+}
+
+.playlist-setup input:focus {
+  outline: none;
+  border-color: var(--first);
+}
+
+.playlist-setup button {
+  align-self: flex-start;
+}
+
+.playlist-setup button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.setup-preview {
+  opacity: 0.6;
+  font-size: 0.9em;
+  margin-bottom: 0.5rem;
+}
+
+.more-tracks {
+  opacity: 0.5;
+  font-style: italic;
+}
+
+/* Save section */
+.save-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.save-btn {
+  padding: 0.5em 1em;
+}
+
+.save-section .sync-status {
+  margin: 0;
+  padding: 0;
+}
+
+.save-section .playlist-setup {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.save-section .playlist-setup input {
+  padding: 0.5em 0.8em;
+  min-width: 200px;
+}
+
+.cancel-btn {
+  opacity: 0.6;
+  padding: 0.5em 0.8em;
+}
+
+.cancel-btn:hover {
+  opacity: 1;
+}
