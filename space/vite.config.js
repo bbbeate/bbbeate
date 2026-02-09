@@ -14,7 +14,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['discoball-icon.png'],
       workbox: {
-        navigateFallbackDenylist: [/^\/spaces/, /^\/liste/, /^\/tunes/]
+        navigateFallbackDenylist: [/^\/spaces/, /^\/liste/, /^\/tunes/, /^\/hvaskjer/]
       },
       manifest: {
         name: 'space',
