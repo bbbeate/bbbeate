@@ -1,26 +1,7 @@
-const CORS_PROXIES = [
-  'https://api.allorigins.win/raw?url=',
-  'https://corsproxy.io/?url=',
-  'https://api.codetabs.com/v1/proxy?quest='
-]
-
-async function fetchWithProxy(url) {
-  for (const proxy of CORS_PROXIES) {
-    try {
-      const proxyUrl = proxy + encodeURIComponent(url)
-      const response = await fetch(proxyUrl)
-      if (response.ok) {
-        return response
-      }
-    } catch (e) {
-      continue
-    }
-  }
-  throw new Error('All CORS proxies failed')
-}
+const CORS_PROXY = 'https://bbbeate-cors.beatebog.workers.dev/?url='
 
 export async function fetchFeed(feedUrl) {
-  const response = await fetchWithProxy(feedUrl)
+  const response = await fetch(CORS_PROXY + encodeURIComponent(feedUrl))
   const xml = await response.text()
   return parseRss(xml)
 }
