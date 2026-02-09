@@ -1,12 +1,25 @@
 const CORS_PROXY = 'https://bbbeate-cors.beatebog.workers.dev/?url='
 
-export async function fetchFeed(feedUrl) {
+export async function fetchFeed(feedUrl, source) {
   const response = await fetch(CORS_PROXY + encodeURIComponent(feedUrl))
   const xml = await response.text()
-  return parseRss(xml)
+  return parseRss(xml, source)
 }
 
-function parseRss(xml) {
+export async function fetchAllFeeds(feeds) {
+  const results = await Promise.allSettled(
+    feeds.map(feed => fetchFeed(feed.url, feed.source))
+  )
+
+  const allItems = results
+    .filter(r => r.status === 'fulfilled')
+    .flatMap(r => r.value)
+
+  // Sort by date, newest first
+  return allItems.sort((a, b) => b.pubDate - a.pubDate)
+}
+
+function parseRss(xml, source) {
   const parser = new DOMParser()
   const doc = parser.parseFromString(xml, 'text/xml')
 
@@ -24,7 +37,8 @@ function parseRss(xml) {
       title: cleanHtml(title),
       description: cleanHtml(description),
       link,
-      pubDate: pubDate ? new Date(pubDate) : new Date()
+      pubDate: pubDate ? new Date(pubDate) : new Date(),
+      source
     }
   })
 }

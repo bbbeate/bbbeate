@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { FEED_URL } from './config/feeds'
-import { fetchFeed } from './services/rssService'
+import { FEEDS } from './config/feeds'
+import { fetchAllFeeds } from './services/rssService'
 import { fetchArticleContent } from './services/articleService'
 import { generateSummary, rewriteHeadlines, answerQuestion } from './services/mistralService'
 import './App.css'
@@ -26,6 +26,7 @@ function NewsItem({ item, isExpanded, onToggle }) {
     <li className="news-item">
       <div className="news-header" onClick={onToggle}>
         <div className="news-meta">
+          <span className="news-source">{item.source}</span>
           <span>{formatDate(item.pubDate)}</span>
           <span className="expand-indicator">
             {isExpanded ? '▼' : '▶'}
@@ -47,7 +48,7 @@ function NewsItem({ item, isExpanded, onToggle }) {
                 rel="noopener noreferrer"
                 className="news-link"
               >
-                Les på NRK →
+                Les mer →
               </a>
             </>
           ) : (
@@ -102,12 +103,13 @@ function App() {
       setLoading(true)
       setError(null)
 
-      // 1. Fetch RSS feed
-      const feedItems = await fetchFeed(FEED_URL)
+      // 1. Fetch all RSS feeds
+      const feedItems = await fetchAllFeeds(FEEDS)
 
-      // 2. Fetch all article contents in parallel
+      // 2. Fetch article contents in parallel (limit to first 20 to avoid overload)
+      const itemsToFetch = feedItems.slice(0, 20)
       const itemsWithContent = await Promise.all(
-        feedItems.map(async (item) => {
+        itemsToFetch.map(async (item) => {
           try {
             const content = await fetchArticleContent(item.link)
             return { ...item, content }
@@ -217,7 +219,7 @@ function App() {
         <input
           type="text"
           className="ask-input"
-          placeholder="Spør om nyhetene, f.eks. 'mer om Trump India-avtalen'"
+          placeholder="Spør om nyhetene..."
           value={question}
           onChange={e => setQuestion(e.target.value)}
           disabled={askingQuestion}
