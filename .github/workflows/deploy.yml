@@ -17,65 +17,71 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '22'
-        
+        cache: 'pnpm'
+
     - name: Install dependencies for liste
       working-directory: ./liste
-      run: npm ci
-      
+      run: pnpm install --frozen-lockfile
+
     - name: Build liste with secrets
       working-directory: ./liste
       env:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
-      run: npm run build
-    
+      run: pnpm run build
+
     - name: Install dependencies for space
       working-directory: ./space
-      run: npm ci
-      
+      run: pnpm install --frozen-lockfile
+
     - name: Build space with secrets
       working-directory: ./space
       env:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
-      run: npm run build
+      run: pnpm run build
 
     - name: Install dependencies for tunes
       working-directory: ./tunes
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Build tunes
       working-directory: ./tunes
       env:
         VITE_SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-      run: npm run build
+      run: pnpm run build
 
     - name: Install dependencies for spaces
       working-directory: ./spaces
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Build spaces with secrets
       working-directory: ./spaces
       env:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
-      run: npm run build
+      run: pnpm run build
 
     - name: Install dependencies for hvaskjer
       working-directory: ./hvaskjer
-      run: npm ci
+      run: pnpm install --frozen-lockfile
 
     - name: Build hvaskjer with secrets
       working-directory: ./hvaskjer
       env:
         VITE_MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
         VITE_HVA_SKJER_PASS: ${{ secrets.HVA_SKJER_PASS }}
-      run: npm run build
+      run: pnpm run build
 
     - name: Create combined dist
       run: |
@@ -91,7 +97,7 @@ jobs:
         cp -r ./hvaskjer/dist/* combined_dist/hvaskjer/
         cp ./spaces/public/404.html combined_dist/404.html
         cp CNAME combined_dist/CNAME
-    
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
