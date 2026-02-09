@@ -198,6 +198,16 @@ function App() {
 
   async function fetchLibrary() {
     setLibraryLoading(true)
+
+    // Get user profile and check for existing playlist
+    const profile = await getUserProfile()
+    const playlistId = await getPlaylistIdFromGist(profile.id)
+    if (playlistId) {
+      setExistingPlaylistId(playlistId)
+    } else {
+      setPlaylistName(`${profile.display_name || profile.id}'s 50 favs`)
+    }
+
     const seenIds = new Set()
     const trackSources = {} // trackId -> [source names]
 
