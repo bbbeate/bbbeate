@@ -1,4 +1,23 @@
-const CORS_PROXY = 'https://corsproxy.io/?url='
+const CORS_PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?url=',
+  'https://api.codetabs.com/v1/proxy?quest='
+]
+
+async function fetchWithProxy(url) {
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const proxyUrl = proxy + encodeURIComponent(url)
+      const response = await fetch(proxyUrl)
+      if (response.ok) {
+        return response
+      }
+    } catch (e) {
+      continue
+    }
+  }
+  throw new Error('All CORS proxies failed')
+}
 
 const CONTENT_SELECTORS = [
   '[data-main-content]',
@@ -10,13 +29,7 @@ const CONTENT_SELECTORS = [
 ]
 
 export async function fetchArticleContent(url) {
-  const proxyUrl = CORS_PROXY + encodeURIComponent(url)
-  const response = await fetch(proxyUrl)
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch article: ${response.status}`)
-  }
-
+  const response = await fetchWithProxy(url)
   const html = await response.text()
   return extractContent(html)
 }

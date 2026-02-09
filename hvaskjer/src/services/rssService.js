@@ -1,13 +1,26 @@
-const CORS_PROXY = 'https://corsproxy.io/?url='
+const CORS_PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?url=',
+  'https://api.codetabs.com/v1/proxy?quest='
+]
+
+async function fetchWithProxy(url) {
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const proxyUrl = proxy + encodeURIComponent(url)
+      const response = await fetch(proxyUrl)
+      if (response.ok) {
+        return response
+      }
+    } catch (e) {
+      continue
+    }
+  }
+  throw new Error('All CORS proxies failed')
+}
 
 export async function fetchFeed(feedUrl) {
-  const proxyUrl = CORS_PROXY + encodeURIComponent(feedUrl)
-  const response = await fetch(proxyUrl)
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch feed: ${response.status}`)
-  }
-
+  const response = await fetchWithProxy(feedUrl)
   const xml = await response.text()
   return parseRss(xml)
 }
