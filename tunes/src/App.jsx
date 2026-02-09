@@ -7,7 +7,6 @@ const REDIRECT_URI = import.meta.env.DEV
   : 'https://bbbeate.space/tunes/callback'
 const GIST_ID = '89b17b6422f099181722e5416b3e1794'
 const GIST_API = 'https://api.github.com'
-console.log('GitHub token loaded:', GITHUB_TOKEN ? 'yes' : 'no')
 
 function App() {
   const [token, setToken] = useState(null)
@@ -467,14 +466,11 @@ function App() {
 
   async function getPlaylistIdFromGist(userId) {
     try {
-      console.log('Looking up playlist for user:', userId)
       const response = await fetch(`${GIST_API}/gists/${GIST_ID}`, {
         headers: { Authorization: `token ${GITHUB_TOKEN}` }
       })
       const data = await response.json()
-      console.log('Gist response:', data)
       const content = JSON.parse(data.files['fav50playlistIds.json'].content)
-      console.log('Gist content:', content, 'Found:', content[userId])
       return content[userId] || null
     } catch (err) {
       console.error('Failed to read gist:', err)
