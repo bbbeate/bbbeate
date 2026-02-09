@@ -29,7 +29,9 @@ function parseRss(xml, source) {
     const title = item.querySelector('title')?.textContent || ''
     const description = item.querySelector('description')?.textContent || ''
     const link = item.querySelector('link')?.textContent || ''
-    const pubDate = item.querySelector('pubDate')?.textContent || ''
+    // Try pubDate first, then dc:date (used by Stortinget)
+    const pubDate = item.querySelector('pubDate')?.textContent ||
+                    item.getElementsByTagName('dc:date')[0]?.textContent || ''
     const guid = item.querySelector('guid')?.textContent || link
 
     return {
