@@ -1,4 +1,4 @@
-const CORS_PROXY = 'https://api.allorigins.win/raw?url='
+const CORS_PROXY = 'https://corsproxy.io/?url='
 
 export async function fetchFeed(feedUrl) {
   const proxyUrl = CORS_PROXY + encodeURIComponent(feedUrl)
