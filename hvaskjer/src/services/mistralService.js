@@ -23,23 +23,53 @@ async function callMistral(prompt) {
   return data.choices[0]?.message?.content || ''
 }
 
-export async function generateSummary(articles) {
-  if (!API_KEY || articles.length === 0) return null
+export async function rankAndSummarize(articles) {
+  if (!API_KEY || articles.length === 0) return { ranked: articles, summary: null }
 
-  const articleTexts = articles
-    .slice(0, 10)
-    .map(a => `${a.title}: ${a.content?.slice(0, 500) || a.description || ''}`)
-    .join('\n\n')
+  const articlesData = articles
+    .slice(0, 20)
+    .map((a, i) => `${i}. [${a.source}] "${a.title}"\n${a.content?.slice(0, 400) || a.description || ''}`)
+    .join('\n\n---\n\n')
 
-  const prompt = `Skriv en sammenhengende oppsummering av nyhetene i 2-3 setninger. Ikke bruk lister, nummerering eller formatering. Bare flytende tekst.
+  const prompt = `Du er en nyhetsredaktør. Analyser disse nyhetene og gjør to ting:
 
-${articleTexts}`
+1. RANGER artiklene etter viktighet/dramatikk/størst samfunnsendring. Viktigst først.
+2. Skriv en kort oppsummering (2-3 setninger) av det viktigste som skjer akkurat nå.
+
+${articlesData}
+
+Svar i dette JSON-formatet:
+{
+  "ranking": [5, 2, 0, 8, ...],
+  "summary": "Kort oppsummering her..."
+}
+
+Ranking er en liste med artikkel-indekser sortert etter viktighet (viktigst først).
+Oppsummeringen skal være ren tekst, ingen lister eller formatering.`
 
   try {
-    return await callMistral(prompt)
+    const content = await callMistral(prompt)
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { ranked: articles, summary: null }
+
+    const result = JSON.parse(jsonMatch[0])
+
+    // Reorder articles by ranking
+    const ranked = result.ranking
+      .filter(i => i >= 0 && i < articles.length)
+      .map(i => articles[i])
+
+    // Add any articles not in ranking to the end
+    const rankedIds = new Set(result.ranking)
+    const remaining = articles.filter((_, i) => !rankedIds.has(i))
+
+    return {
+      ranked: [...ranked, ...remaining],
+      summary: result.summary || null
+    }
   } catch (err) {
-    console.error('Summary error:', err)
-    return null
+    console.error('Rank/summary error:', err)
+    return { ranked: articles, summary: null }
   }
 }
 
@@ -48,7 +78,7 @@ export async function answerQuestion(question, articles) {
 
   const context = articles
     .slice(0, 15)
-    .map((a, i) => `## ${a.title}\n${a.content?.slice(0, 800) || a.description || ''}`)
+    .map((a, i) => `## [${a.source}] ${a.title}\n${a.content?.slice(0, 800) || a.description || ''}`)
     .join('\n\n---\n\n')
 
   const prompt = `Svar direkte på spørsmålet. Bare ren tekst, ingen formatering, ingen tall, ingen punktlister. Kort og konsist.

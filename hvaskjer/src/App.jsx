@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { FEEDS } from './config/feeds'
 import { fetchAllFeeds } from './services/rssService'
 import { fetchArticleContent } from './services/articleService'
-import { generateSummary, rewriteHeadlines, answerQuestion } from './services/mistralService'
+import { rankAndSummarize, rewriteHeadlines, answerQuestion } from './services/mistralService'
 import './App.css'
 
 function formatDate(date) {
@@ -123,14 +123,14 @@ function App() {
       setItems(itemsWithContent)
       setLoading(false)
 
-      // 3. Generate AI summary and headlines
+      // 3. Rank by importance and generate summary
       setLoadingAI(true)
-      const [summaryResult, rewrittenItems] = await Promise.all([
-        generateSummary(itemsWithContent),
-        rewriteHeadlines(itemsWithContent)
-      ])
+      const { ranked, summary: summaryResult } = await rankAndSummarize(itemsWithContent)
 
       setSummary(summaryResult)
+
+      // 4. Rewrite headlines for ranked items
+      const rewrittenItems = await rewriteHeadlines(ranked)
       setItems(rewrittenItems)
       setLoadingAI(false)
 
