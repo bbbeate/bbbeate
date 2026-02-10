@@ -2,61 +2,62 @@ import { useState, useEffect } from 'react'
 import { FEEDS } from './config/feeds'
 import { fetchAllFeeds } from './services/rssService'
 import { fetchArticleContent } from './services/articleService'
-import { rankAndSummarize, rewriteHeadlines, answerQuestion } from './services/mistralService'
+import { categorizeHeadlines, analyzeCategory, answerQuestion } from './services/mistralService'
 import './App.css'
 
 function formatDate(date) {
+  if (!date) return ''
   const now = new Date()
   const diff = now - date
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
 
-  if (minutes < 1) return 'Akkurat nå'
-  if (minutes < 60) return `${minutes} min siden`
-  if (hours < 24) return `${hours} timer siden`
+  if (days < 1) return 'i dag'
+  if (days === 1) return 'i går'
+  if (days < 7) return `${days}d siden`
 
-  return date.toLocaleDateString('nb-NO', {
-    day: 'numeric',
-    month: 'short'
-  })
+  return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' }).toLowerCase()
 }
 
-function NewsItem({ item, isExpanded, onToggle }) {
+function NewsItem({ item, isExpanded, onToggle, delay }) {
   return (
-    <li className="news-item">
+    <li className="news-item" style={{ animationDelay: `${delay}ms` }}>
       <div className="news-header" onClick={onToggle}>
         <div className="news-meta">
-          <span className="news-source">{item.source}</span>
-          <span>{formatDate(item.pubDate)}</span>
-          <span className="expand-indicator">
-            {isExpanded ? '▼' : '▶'}
-          </span>
+          <span className="news-source">{item.source.toLowerCase()}</span>
+          {item.pubDate && <span>{formatDate(item.pubDate)}</span>}
+          <span className="expand-indicator">{isExpanded ? 'v' : '>'}</span>
         </div>
-        <h2 className="news-title">{item.shortTitle || item.title}</h2>
+        <h2 className="news-title">{item.title.toLowerCase()}</h2>
       </div>
 
       {isExpanded && (
         <div className="news-content">
           {item.content ? (
             <>
-              {item.content.split('\n\n').map((paragraph, i) => (
-                <p key={i}>{paragraph}</p>
-              ))}
-              <a
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="news-link"
-              >
-                Les mer →
+              {item.content.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
+              <a href={item.link} target="_blank" rel="noopener noreferrer" className="news-link">
+                les mer -->
               </a>
             </>
           ) : (
-            <p className="loading-text">Laster innhold...</p>
+            <p className="loading-text">henter...</p>
           )}
         </div>
       )}
     </li>
+  )
+}
+
+function ThinkingIndicator({ text }) {
+  return (
+    <div className="thinking">
+      <pre className="thinking-ascii">{`
+    . · *
+  ·  *  ·
+    * · .
+      `}</pre>
+      <span>{text}</span>
+    </div>
   )
 }
 
@@ -69,14 +70,19 @@ function App() {
   const [password, setPassword] = useState('')
   const [passError, setPassError] = useState(false)
 
-  const [items, setItems] = useState([])
+  const [allItems, setAllItems] = useState([])
+  const [feedsLoaded, setFeedsLoaded] = useState(0)
+  const [categories, setCategories] = useState([])
   const [summary, setSummary] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [loadingAI, setLoadingAI] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [categoryItems, setCategoryItems] = useState([])
+  const [categorySummary, setCategorySummary] = useState(null)
+
+  const [phase, setPhase] = useState('idle') // idle, fetching, thinking, done
+  const [loadingCategory, setLoadingCategory] = useState(false)
   const [error, setError] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
 
-  // Q&A
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState(null)
   const [askingQuestion, setAskingQuestion] = useState(false)
@@ -100,45 +106,58 @@ function App() {
 
   async function loadNews() {
     try {
-      setLoading(true)
+      setPhase('fetching')
       setError(null)
+      setFeedsLoaded(0)
 
-      // 1. Fetch all RSS feeds
-      const feedItems = await fetchAllFeeds(FEEDS)
+      const items = await fetchAllFeeds(FEEDS, (loaded) => setFeedsLoaded(loaded))
+      setAllItems(items)
 
-      // 2. Fetch article contents in parallel (limit to first 20 to avoid overload)
-      const itemsToFetch = feedItems.slice(0, 20)
-      const itemsWithContent = await Promise.all(
-        itemsToFetch.map(async (item) => {
-          try {
-            const content = await fetchArticleContent(item.link)
-            return { ...item, content }
-          } catch (err) {
-            console.error('Failed to fetch:', item.link, err)
-            return { ...item, content: null }
-          }
-        })
-      )
-
-      setItems(itemsWithContent)
-      setLoading(false)
-
-      // 3. Rank by importance and generate summary
-      setLoadingAI(true)
-      const { ranked, summary: summaryResult } = await rankAndSummarize(itemsWithContent)
-
-      setSummary(summaryResult)
-
-      // 4. Rewrite headlines for ranked items
-      const rewrittenItems = await rewriteHeadlines(ranked)
-      setItems(rewrittenItems)
-      setLoadingAI(false)
+      setPhase('thinking')
+      const { categories: cats, summary: sum } = await categorizeHeadlines(items)
+      setCategories(cats)
+      setSummary(sum)
+      setPhase('done')
 
     } catch (err) {
-      setError('Kunne ikke laste nyheter. Prøv igjen senere.')
-      console.error('Load error:', err)
-      setLoading(false)
+      setError('noe gikk galt. prøv igjen.')
+      console.error('load error:', err)
+      setPhase('idle')
     }
+  }
+
+  async function handleCategoryClick(category) {
+    setSelectedCategory(category)
+    setLoadingCategory(true)
+    setCategorySummary(null)
+    setExpandedId(null)
+
+    const itemsInCategory = category.articleIds
+      .filter(id => id >= 0 && id < allItems.length)
+      .map(id => allItems[id])
+
+    const itemsWithContent = await Promise.all(
+      itemsInCategory.map(async (item) => {
+        if (item.content) return item
+        try {
+          const content = await fetchArticleContent(item.link)
+          return { ...item, content }
+        } catch (err) {
+          return { ...item, content: null }
+        }
+      })
+    )
+
+    const { ranked, summary } = await analyzeCategory(itemsWithContent)
+    setCategoryItems(ranked)
+    setCategorySummary(summary)
+    setLoadingCategory(false)
+  }
+
+  function handleBack() {
+    setSelectedCategory(null)
+    setCategoryItems([])
+    setCategorySummary(null)
   }
 
   function handleToggle(item) {
@@ -152,10 +171,11 @@ function App() {
     setAskingQuestion(true)
     setAnswer(null)
     try {
+      const items = selectedCategory ? categoryItems : allItems.slice(0, 20)
       const result = await answerQuestion(question, items)
       setAnswer(result)
     } catch (err) {
-      setAnswer('Kunne ikke svare på spørsmålet.')
+      setAnswer('klarte ikke svare.')
     } finally {
       setAskingQuestion(false)
     }
@@ -164,29 +184,49 @@ function App() {
   if (!authenticated) {
     return (
       <div className="app">
+        <div className="disco-float" />
         <div className="login-screen">
           <h1>hvaskjer</h1>
           <form onSubmit={handleLogin}>
             <input
               type="password"
               className="pass-input"
-              placeholder="Passord"
+              placeholder="passord"
               value={password}
               onChange={e => setPassword(e.target.value)}
               autoFocus
             />
-            <button type="submit" className="pass-button">Logg inn</button>
+            <button type="submit" className="pass-button">inn</button>
           </form>
-          {passError && <p className="pass-error">Feil passord</p>}
+          {passError && <p className="pass-error">feil passord</p>}
         </div>
       </div>
     )
   }
 
-  if (loading) {
+  if (phase === 'fetching' || phase === 'thinking') {
     return (
       <div className="app">
-        <div className="loading">Laster nyheter...</div>
+        <div className="disco-float" />
+        <header className="header">
+          <h1>hvaskjer</h1>
+        </header>
+        {phase === 'fetching' && (
+          <ThinkingIndicator text={`henter feeds...`} />
+        )}
+        {phase === 'thinking' && (
+          <ThinkingIndicator text="mistral tenker..." />
+        )}
+        {allItems.length > 0 && (
+          <div className="incoming-items">
+            {allItems.slice(0, 10).map((item, i) => (
+              <div key={item.id} className="incoming-item" style={{ animationDelay: `${i * 50}ms` }}>
+                <span className="incoming-source">{item.source.toLowerCase()}</span>
+                {item.title.toLowerCase().slice(0, 60)}...
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
@@ -199,56 +239,102 @@ function App() {
     )
   }
 
+  if (selectedCategory) {
+    return (
+      <div className="app">
+        <div className="disco-float" />
+        <header className="header">
+          <button className="back-button" onClick={handleBack}>&lt;-- tilbake</button>
+          <h1>{selectedCategory.symbol} {selectedCategory.name}</h1>
+        </header>
+
+        {loadingCategory ? (
+          <ThinkingIndicator text={`analyserer ${selectedCategory.name}...`} />
+        ) : (
+          <>
+            {categorySummary && (
+              <div className="summary-box">
+                <p>{categorySummary}</p>
+              </div>
+            )}
+
+            <form className="ask-form" onSubmit={handleAsk}>
+              <input
+                type="text"
+                className="ask-input"
+                placeholder="spør om denne kategorien..."
+                value={question}
+                onChange={e => setQuestion(e.target.value)}
+                disabled={askingQuestion}
+              />
+              <button type="submit" className="ask-button" disabled={askingQuestion || !question.trim()}>
+                {askingQuestion ? '...' : '?'}
+              </button>
+            </form>
+
+            {answer && <div className="answer-box"><p>{answer}</p></div>}
+
+            <ul className="news-list">
+              {categoryItems.map((item, i) => (
+                <NewsItem
+                  key={item.id}
+                  item={item}
+                  isExpanded={expandedId === item.id}
+                  onToggle={() => handleToggle(item)}
+                  delay={i * 80}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="app">
+      <div className="disco-float" />
       <header className="header">
         <h1>hvaskjer</h1>
+        <p className="item-count">{allItems.length} saker // {FEEDS.length} kilder</p>
       </header>
 
-      <div className="summary-box">
-        {loadingAI ? (
-          <p className="loading-text">Analyserer nyheter...</p>
-        ) : summary ? (
+      {summary && (
+        <div className="summary-box">
           <p>{summary}</p>
-        ) : (
-          <p className="loading-text">Oppsummering ikke tilgjengelig</p>
-        )}
+        </div>
+      )}
+
+      <div className="categories">
+        {categories.map((cat, i) => (
+          <button
+            key={i}
+            className="category-button"
+            onClick={() => handleCategoryClick(cat)}
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
+            <span className="cat-symbol">{cat.symbol || '//'}</span>
+            {cat.name}
+            <span className="category-count">{cat.articleIds.length}</span>
+          </button>
+        ))}
       </div>
 
       <form className="ask-form" onSubmit={handleAsk}>
         <input
           type="text"
           className="ask-input"
-          placeholder="Spør om nyhetene..."
+          placeholder="spør om nyhetene..."
           value={question}
           onChange={e => setQuestion(e.target.value)}
           disabled={askingQuestion}
         />
-        <button
-          type="submit"
-          className="ask-button"
-          disabled={askingQuestion || !question.trim()}
-        >
-          {askingQuestion ? '...' : 'Spør'}
+        <button type="submit" className="ask-button" disabled={askingQuestion || !question.trim()}>
+          {askingQuestion ? '...' : '?'}
         </button>
       </form>
 
-      {answer && (
-        <div className="answer-box">
-          <p>{answer}</p>
-        </div>
-      )}
-
-      <ul className="news-list">
-        {items.map(item => (
-          <NewsItem
-            key={item.id}
-            item={item}
-            isExpanded={expandedId === item.id}
-            onToggle={() => handleToggle(item)}
-          />
-        ))}
-      </ul>
+      {answer && <div className="answer-box"><p>{answer}</p></div>}
     </div>
   )
 }

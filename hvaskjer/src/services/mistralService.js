@@ -16,36 +16,74 @@ async function callMistral(prompt) {
   })
 
   if (!response.ok) {
-    throw new Error(`Mistral API error: ${response.status}`)
+    throw new Error(`mistral api error: ${response.status}`)
   }
 
   const data = await response.json()
   return data.choices[0]?.message?.content || ''
 }
 
-export async function rankAndSummarize(articles) {
+export async function categorizeHeadlines(articles) {
+  if (!API_KEY || articles.length === 0) return { categories: [], summary: null }
+
+  const headlinesData = articles
+    .map((a, i) => `${i}. [${a.source}] ${a.title}`)
+    .join('\n')
+
+  const prompt = `du er en uformell nyhetsredaktør. snakk som en kompis. analyser overskriftene:
+
+1. lag 4-6 kategorier basert på innhold (f.eks. "utenriks", "politikk", "klima", "drama" osv)
+2. plasser hver artikkel i minst én kategori
+3. skriv en kort oppsummering (2 setninger, uformelt språk, ingen store bokstaver)
+
+${headlinesData}
+
+svar i json:
+{
+  "categories": [
+    {"name": "utenriks", "symbol": "~>", "articleIds": [0, 5, 12]},
+    {"name": "politikk", "symbol": "##", "articleIds": [1, 3, 8]}
+  ],
+  "summary": "kort oppsummering her uten store bokstaver..."
+}
+
+bruk enkle ascii-symboler som ~> ## ** // ++ -- osv. ingen emojis. alle små bokstaver.`
+
+  try {
+    const content = await callMistral(prompt)
+    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { categories: [], summary: null }
+
+    const result = JSON.parse(jsonMatch[0])
+    return {
+      categories: result.categories || [],
+      summary: result.summary || null
+    }
+  } catch (err) {
+    console.error('categorize error:', err)
+    return { categories: [], summary: null }
+  }
+}
+
+export async function analyzeCategory(articles) {
   if (!API_KEY || articles.length === 0) return { ranked: articles, summary: null }
 
   const articlesData = articles
-    .slice(0, 20)
-    .map((a, i) => `${i}. [${a.source}] "${a.title}"\n${a.content?.slice(0, 400) || a.description || ''}`)
+    .map((a, i) => `${i}. [${a.source}] "${a.title}"\n${a.content?.slice(0, 600) || a.description || ''}`)
     .join('\n\n---\n\n')
 
-  const prompt = `Du er en nyhetsredaktør. Analyser disse nyhetene og gjør to ting:
+  const prompt = `du er en uformell nyhetsredaktør. analyser disse sakene:
 
-1. RANGER artiklene etter viktighet/dramatikk/størst samfunnsendring. Viktigst først.
-2. Skriv en kort oppsummering (2-3 setninger) av det viktigste som skjer akkurat nå.
+1. ranger etter viktighet/dramatikk. viktigst først.
+2. skriv en oppsummering (3-4 setninger, uformelt, ingen store bokstaver)
 
 ${articlesData}
 
-Svar i dette JSON-formatet:
+svar i json:
 {
-  "ranking": [5, 2, 0, 8, ...],
-  "summary": "Kort oppsummering her..."
-}
-
-Ranking er en liste med artikkel-indekser sortert etter viktighet (viktigst først).
-Oppsummeringen skal være ren tekst, ingen lister eller formatering.`
+  "ranking": [2, 0, 5, 1, ...],
+  "summary": "oppsummering uten store bokstaver..."
+}`
 
   try {
     const content = await callMistral(prompt)
@@ -54,12 +92,10 @@ Oppsummeringen skal være ren tekst, ingen lister eller formatering.`
 
     const result = JSON.parse(jsonMatch[0])
 
-    // Reorder articles by ranking
     const ranked = result.ranking
       .filter(i => i >= 0 && i < articles.length)
       .map(i => articles[i])
 
-    // Add any articles not in ranking to the end
     const rankedIds = new Set(result.ranking)
     const remaining = articles.filter((_, i) => !rankedIds.has(i))
 
@@ -68,7 +104,7 @@ Oppsummeringen skal være ren tekst, ingen lister eller formatering.`
       summary: result.summary || null
     }
   } catch (err) {
-    console.error('Rank/summary error:', err)
+    console.error('analyze error:', err)
     return { ranked: articles, summary: null }
   }
 }
@@ -78,58 +114,20 @@ export async function answerQuestion(question, articles) {
 
   const context = articles
     .slice(0, 15)
-    .map((a, i) => `## [${a.source}] ${a.title}\n${a.content?.slice(0, 800) || a.description || ''}`)
+    .map(a => `## [${a.source}] ${a.title}\n${a.content?.slice(0, 800) || a.description || ''}`)
     .join('\n\n---\n\n')
 
-  const prompt = `Svar direkte på spørsmålet. Bare ren tekst, ingen formatering, ingen tall, ingen punktlister. Kort og konsist.
+  const prompt = `svar uformelt og direkte. ingen store bokstaver. kort og konsist.
 
-NYHETER:
+nyheter:
 ${context}
 
-SPØRSMÅL: ${question}`
+spørsmål: ${question}`
 
   try {
     return await callMistral(prompt)
   } catch (err) {
-    console.error('Answer error:', err)
-    return 'Beklager, kunne ikke svare på spørsmålet.'
-  }
-}
-
-export async function rewriteHeadlines(articles) {
-  if (!API_KEY || articles.length === 0) return articles
-
-  const articlesData = articles
-    .slice(0, 15)
-    .map((a, i) => `${i}: "${a.title}"\nInnhold: ${a.content?.slice(0, 300) || a.description || ''}`)
-    .join('\n\n')
-
-  const prompt = `Du er en nyhetsredaktør. Les disse nyhetene og skriv NYE overskrifter som er mer beskrivende og informative. Overskriften skal fortelle leseren HVA som skjedde, ikke bare hint om temaet. Inkluder viktige detaljer som navn, tall, steder når relevant.
-
-${articlesData}
-
-Regler:
-- Vær spesifikk og konkret, ikke vag
-- Inkluder nøkkelinfo fra artikkelen
-- Maks 12 ord per overskrift
-- Unngå clickbait
-
-Svar BARE med JSON-array: [{"index": 0, "headline": "ny overskrift"}, ...]`
-
-  try {
-    const content = await callMistral(prompt)
-    const jsonMatch = content.match(/\[[\s\S]*\]/)
-    if (!jsonMatch) return articles
-
-    const rewrites = JSON.parse(jsonMatch[0])
-    const rewriteMap = new Map(rewrites.map(r => [r.index, r.headline]))
-
-    return articles.map((article, i) => ({
-      ...article,
-      shortTitle: rewriteMap.get(i) || article.title
-    }))
-  } catch (err) {
-    console.error('Rewrite error:', err)
-    return articles
+    console.error('answer error:', err)
+    return 'beklager, klarte ikke svare på det.'
   }
 }

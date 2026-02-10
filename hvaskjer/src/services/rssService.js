@@ -11,12 +11,18 @@ export async function fetchAllFeeds(feeds) {
     feeds.map(feed => fetchFeed(feed.url, feed.source))
   )
 
-  const allItems = results
-    .filter(r => r.status === 'fulfilled')
-    .flatMap(r => r.value)
+  const allItems = []
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled') {
+      console.log(`Feed ${feeds[i].source}: ${r.value.length} items`)
+      allItems.push(...r.value)
+    } else {
+      console.error(`Feed ${feeds[i].source} FAILED:`, r.reason)
+    }
+  })
 
-  // Sort by date, newest first
-  return allItems.sort((a, b) => b.pubDate - a.pubDate)
+  console.log(`Total items from ${feeds.length} feeds: ${allItems.length}`)
+  return allItems
 }
 
 function parseRss(xml, source) {
@@ -39,7 +45,7 @@ function parseRss(xml, source) {
       title: cleanHtml(title),
       description: cleanHtml(description),
       link,
-      pubDate: pubDate ? new Date(pubDate) : new Date(),
+      pubDate: pubDate ? new Date(pubDate) : null,
       source
     }
   })
