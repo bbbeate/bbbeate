@@ -6,22 +6,22 @@ export async function fetchFeed(feedUrl, source) {
   return parseRss(xml, source)
 }
 
-export async function fetchAllFeeds(feeds) {
-  const results = await Promise.allSettled(
-    feeds.map(feed => fetchFeed(feed.url, feed.source))
-  )
-
+// streams items as each feed loads via onItems callback
+export async function fetchAllFeeds(feeds, onItems) {
   const allItems = []
-  results.forEach((r, i) => {
-    if (r.status === 'fulfilled') {
-      console.log(`Feed ${feeds[i].source}: ${r.value.length} items`)
-      allItems.push(...r.value)
-    } else {
-      console.error(`Feed ${feeds[i].source} FAILED:`, r.reason)
-    }
-  })
 
-  console.log(`Total items from ${feeds.length} feeds: ${allItems.length}`)
+  // fetch feeds one by one so we can stream results
+  for (const feed of feeds) {
+    try {
+      const items = await fetchFeed(feed.url, feed.source)
+      allItems.push(...items)
+      // callback with current items so ui can update
+      if (onItems) onItems([...allItems])
+    } catch (err) {
+      console.error(`feed ${feed.source} failed:`, err)
+    }
+  }
+
   return allItems
 }
 
@@ -35,7 +35,6 @@ function parseRss(xml, source) {
     const title = item.querySelector('title')?.textContent || ''
     const description = item.querySelector('description')?.textContent || ''
     const link = item.querySelector('link')?.textContent || ''
-    // Try pubDate first, then dc:date (used by Stortinget)
     const pubDate = item.querySelector('pubDate')?.textContent ||
                     item.getElementsByTagName('dc:date')[0]?.textContent || ''
     const guid = item.querySelector('guid')?.textContent || link

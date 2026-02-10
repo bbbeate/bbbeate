@@ -12,7 +12,6 @@
   width: 40px;
   height: 40px;
   background: url('/discoball.gif') center/contain no-repeat;
-  opacity: 0.3;
   pointer-events: none;
   animation: float 20s ease-in-out infinite;
   z-index: 0;
@@ -80,9 +79,39 @@
   50% { opacity: 1; transform: scale(1.1); }
 }
 
+/* loading status */
+.loading-status {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.status-text {
+  font-family: monospace;
+  color: var(--second);
+  margin-bottom: 10px;
+}
+
+.source-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.source-count-item {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--first);
+  background: rgba(128, 128, 128, 0.15);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
 /* incoming items during load */
 .incoming-items {
   margin-top: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .incoming-item {

@@ -108,10 +108,12 @@ function App() {
     try {
       setPhase('fetching')
       setError(null)
-      setFeedsLoaded(0)
+      setAllItems([])
 
-      const items = await fetchAllFeeds(FEEDS, (loaded) => setFeedsLoaded(loaded))
-      setAllItems(items)
+      // stream items as feeds load
+      const items = await fetchAllFeeds(FEEDS, (currentItems) => {
+        setAllItems(currentItems)
+      })
 
       setPhase('thinking')
       const { categories: cats, summary: sum } = await categorizeHeadlines(items)
@@ -205,28 +207,46 @@ function App() {
   }
 
   if (phase === 'fetching' || phase === 'thinking') {
+    // group items by source for display
+    const sourceCount = {}
+    allItems.forEach(item => {
+      sourceCount[item.source] = (sourceCount[item.source] || 0) + 1
+    })
+
     return (
       <div className="app">
         <div className="disco-float" />
         <header className="header">
           <h1>hvaskjer</h1>
         </header>
-        {phase === 'fetching' && (
-          <ThinkingIndicator text={`henter feeds...`} />
-        )}
-        {phase === 'thinking' && (
-          <ThinkingIndicator text="mistral tenker..." />
-        )}
-        {allItems.length > 0 && (
-          <div className="incoming-items">
-            {allItems.slice(0, 10).map((item, i) => (
-              <div key={item.id} className="incoming-item" style={{ animationDelay: `${i * 50}ms` }}>
-                <span className="incoming-source">{item.source.toLowerCase()}</span>
-                {item.title.toLowerCase().slice(0, 60)}...
-              </div>
-            ))}
-          </div>
-        )}
+
+        <div className="loading-status">
+          {phase === 'fetching' && (
+            <p className="status-text">henter feeds... {allItems.length} saker</p>
+          )}
+          {phase === 'thinking' && (
+            <p className="status-text">mistral analyserer {allItems.length} overskrifter...</p>
+          )}
+
+          {Object.keys(sourceCount).length > 0 && (
+            <div className="source-counts">
+              {Object.entries(sourceCount).map(([source, count]) => (
+                <span key={source} className="source-count-item">
+                  {source.toLowerCase()}: {count}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="incoming-items">
+          {allItems.slice(-15).reverse().map((item, i) => (
+            <div key={item.id} className="incoming-item" style={{ animationDelay: `${i * 30}ms` }}>
+              <span className="incoming-source">{item.source.toLowerCase()}</span>
+              {item.title.toLowerCase().slice(0, 70)}
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
