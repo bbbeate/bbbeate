@@ -36,7 +36,7 @@ function NewsItem({ item, isExpanded, onToggle, delay }) {
             <>
               {item.content.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
               <a href={item.link} target="_blank" rel="noopener noreferrer" className="news-link">
-                les mer -->
+                les mer ~&gt;
               </a>
             </>
           ) : (
@@ -48,15 +48,28 @@ function NewsItem({ item, isExpanded, onToggle, delay }) {
   )
 }
 
-function ThinkingIndicator({ text }) {
+function TypingText({ texts }) {
+  const [index, setIndex] = useState(0)
+  const [charIndex, setCharIndex] = useState(0)
+  const currentText = texts[index] || ''
+
+  useEffect(() => {
+    if (charIndex < currentText.length) {
+      const timer = setTimeout(() => setCharIndex(c => c + 1), 20)
+      return () => clearTimeout(timer)
+    } else {
+      const timer = setTimeout(() => {
+        setIndex((index + 1) % texts.length)
+        setCharIndex(0)
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [charIndex, index, currentText, texts])
+
   return (
-    <div className="thinking">
-      <pre className="thinking-ascii">{`
-    . · *
-  ·  *  ·
-    * · .
-      `}</pre>
-      <span>{text}</span>
+    <div className="typing-text">
+      {currentText.slice(0, charIndex)}
+      <span className="cursor">_</span>
     </div>
   )
 }
@@ -71,7 +84,7 @@ function App() {
   const [passError, setPassError] = useState(false)
 
   const [allItems, setAllItems] = useState([])
-  const [feedsLoaded, setFeedsLoaded] = useState(0)
+  const [streamingItems, setStreamingItems] = useState([])
   const [categories, setCategories] = useState([])
   const [summary, setSummary] = useState(null)
   const [selectedCategory, setSelectedCategory] = useState(null)
@@ -109,10 +122,17 @@ function App() {
       setPhase('fetching')
       setError(null)
       setAllItems([])
+      setStreamingItems([])
 
-      // stream items as feeds load
+      let lastCount = 0
       const items = await fetchAllFeeds(FEEDS, (currentItems) => {
         setAllItems(currentItems)
+        // add new items to streaming display
+        const newItems = currentItems.slice(lastCount)
+        if (newItems.length > 0) {
+          setStreamingItems(prev => [...prev, ...newItems].slice(-20))
+        }
+        lastCount = currentItems.length
       })
 
       setPhase('thinking')
@@ -213,6 +233,13 @@ function App() {
       sourceCount[item.source] = (sourceCount[item.source] || 0) + 1
     })
 
+    // get random headlines for typing animation
+    const sampleHeadlines = allItems
+      .slice(0, 50)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 8)
+      .map(item => item.title.toLowerCase())
+
     return (
       <div className="app">
         <div className="disco-float" />
@@ -239,14 +266,22 @@ function App() {
           )}
         </div>
 
-        <div className="incoming-items">
-          {allItems.slice(-15).reverse().map((item, i) => (
-            <div key={item.id} className="incoming-item" style={{ animationDelay: `${i * 30}ms` }}>
-              <span className="incoming-source">{item.source.toLowerCase()}</span>
-              {item.title.toLowerCase().slice(0, 70)}
-            </div>
-          ))}
-        </div>
+        {phase === 'thinking' && sampleHeadlines.length > 0 && (
+          <div className="thinking-headlines">
+            <TypingText texts={sampleHeadlines} />
+          </div>
+        )}
+
+        {phase === 'fetching' && (
+          <div className="incoming-items">
+            {streamingItems.map((item, i) => (
+              <div key={item.id + '-' + i} className="incoming-item" style={{ animationDelay: `${i * 30}ms` }}>
+                <span className="incoming-source">{item.source.toLowerCase()}</span>
+                {item.title.toLowerCase()}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     )
   }

@@ -107,6 +107,31 @@
   border-radius: 4px;
 }
 
+/* typing text while thinking */
+.thinking-headlines {
+  margin: 30px 0;
+  padding: 20px;
+  background: rgba(128, 128, 128, 0.1);
+  border-radius: 4px;
+  min-height: 60px;
+}
+
+.typing-text {
+  font-family: monospace;
+  font-size: 1rem;
+  color: var(--first);
+  line-height: 1.6;
+}
+
+.cursor {
+  animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
 /* incoming items during load */
 .incoming-items {
   margin-top: 20px;

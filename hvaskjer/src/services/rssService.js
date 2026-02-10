@@ -6,22 +6,25 @@ export async function fetchFeed(feedUrl, source) {
   return parseRss(xml, source)
 }
 
-// streams items as each feed loads via onItems callback
+// fetch all feeds in parallel, stream results as each completes
 export async function fetchAllFeeds(feeds, onItems) {
   const allItems = []
 
-  // fetch feeds one by one so we can stream results
-  for (const feed of feeds) {
+  // start all fetches in parallel
+  const promises = feeds.map(async (feed) => {
     try {
       const items = await fetchFeed(feed.url, feed.source)
+      // add to results and notify UI as each feed completes
       allItems.push(...items)
-      // callback with current items so ui can update
       if (onItems) onItems([...allItems])
+      return items
     } catch (err) {
       console.error(`feed ${feed.source} failed:`, err)
+      return []
     }
-  }
+  })
 
+  await Promise.all(promises)
   return allItems
 }
 
