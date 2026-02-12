@@ -1,0 +1,28 @@
+{
+  "lights": [
+    { "id": "bea913f7-20ea-446b-8ca3-4999c20c63b2", "name": "bad2" },
+    { "id": "9d85165a-0f90-4204-8598-ea118ae34d01", "name": "🛋️" },
+    { "id": "da512a57-dcd5-4851-811a-2cf8e43cc9ec", "name": "Hue color luster 2" },
+    { "id": "4ba7b2a9-0a14-47e9-8134-17fadea2a4c2", "name": "🛋️" },
+    { "id": "34288ced-edd5-427e-a273-67cf0573db33", "name": "Hue color luster 1" },
+    { "id": "3a208c6e-174f-493f-8950-76179e89bd0d", "name": "🛌" },
+    { "id": "71be8502-66e1-4e31-ba23-e1e6d9359efe", "name": "🛌" },
+    { "id": "3d005f56-dbae-486a-afaf-feb45b657b2d", "name": "nattlys2" },
+    { "id": "2f73c83a-6389-4646-a11c-e9daa29cebe6", "name": "🛋️" },
+    { "id": "f7995275-820f-40c0-8023-212c86a7affd", "name": "bad1" },
+    { "id": "a94658c3-1d1e-40aa-aee3-bb5849684880", "name": "🛌" },
+    { "id": "d539b9a8-8ece-4a4b-838b-354ae5375b37", "name": "nattlys1" },
+    { "id": "7a39fee0-59bd-410c-adae-6cc558626798", "name": "🦩🪽" },
+    { "id": "fa943769-316b-4d62-848e-9770102b073a", "name": "Hue color ceiling living room" },
+    { "id": "94b8a9ca-a040-4b9a-a756-270f6796e7d0", "name": "bad3" }
+  ],
+  "rooms": [
+    { "id": "fd55fb9b-8501-4d55-897d-90ed5fafdb31", "name": "🍝🍷" },
+    { "id": "15b29a5c-b0af-468f-8582-1c7e28f245cc", "name": "bad" },
+    { "id": "0335c028-f884-4679-8f18-b0e8afd7c7c4", "name": "☁️" },
+    { "id": "d0ec75f8-c058-4ad9-ad68-6d1b06ed8045", "name": "🌙💞🌤" }
+  ],
+  "zones": [
+    { "id": "3f7d742d-7bbe-4abc-bc4e-593fe15783de", "name": "Alle fargepærene" }
+  ]
+}

@@ -17,6 +17,8 @@
       window.location.replace('/tunes/' + search);
     } else if (path.startsWith('/hvaskjer/') || path === '/hvaskjer') {
       window.location.replace('/hvaskjer/');
+    } else if (path.startsWith('/hjemme/') || path === '/hjemme') {
+      window.location.replace('/hjemme/');
     } else {
       // For other 404s, go to root
       window.location.replace('/');
