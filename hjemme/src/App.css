@@ -70,3 +70,50 @@
   font-size: 1.5rem;
   cursor: pointer;
 }
+
+.modal h2 {
+  text-align: center;
+  font-size: 3rem;
+  margin: 0 0 1.5rem;
+}
+
+.nei-text {
+  font-size: 1.5rem;
+  text-align: center;
+  margin: 2rem 0;
+  font-style: italic;
+  color: #888;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.setting-row span {
+  min-width: 60px;
+}
+
+.setting-row input[type="range"] {
+  flex: 1;
+  accent-color: #ffcc66;
+}
+
+.setting-row input[type="color"] {
+  width: 60px;
+  height: 40px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.temp-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: -0.5rem;
+  padding: 0 70px 0 0;
+}

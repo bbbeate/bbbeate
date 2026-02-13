@@ -1,8 +1,29 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import './App.css'
 
 const USERNAME = import.meta.env.VITE_HUE_USERNAME
 const ALL_LIGHTS_GROUP = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
+
+const STORAGE_KEY = 'hjemme-settings'
+
+const defaultSettings = {
+  on: { mirek: 300 },
+  night: { color: '#ff9933' },
+  orange: { color: '#ff6600' }
+}
+
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
+  } catch {
+    return defaultSettings
+  }
+}
+
+function saveSettings(settings) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+}
 
 async function hueCommand(body) {
   await fetch(`/hue-api/clip/v2/resource/grouped_light/${ALL_LIGHTS_GROUP}`, {
@@ -17,23 +38,22 @@ async function hueCommand(body) {
 
 const allOff = () => hueCommand({ on: { on: false } })
 
-const allOn = () => hueCommand({
-  on: { on: true },
-  dimming: { brightness: 100 },
-  color_temperature: { mirek: 454 }
-})
+function hexToXy(hex) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255
+  const g = parseInt(hex.slice(3, 5), 16) / 255
+  const b = parseInt(hex.slice(5, 7), 16) / 255
 
-const nightMode = () => hueCommand({
-  on: { on: true },
-  dimming: { brightness: 27 },
-  color_temperature: { mirek: 454 }
-})
+  const rr = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92
+  const gg = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92
+  const bb = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92
 
-const orangeMode = () => hueCommand({
-  on: { on: true },
-  dimming: { brightness: 100 },
-  color: { xy: { x: 0.6, y: 0.38 } }
-})
+  const X = rr * 0.4124 + gg * 0.3576 + bb * 0.1805
+  const Y = rr * 0.2126 + gg * 0.7152 + bb * 0.0722
+  const Z = rr * 0.0193 + gg * 0.1192 + bb * 0.9505
+
+  const sum = X + Y + Z
+  return sum === 0 ? { x: 0, y: 0 } : { x: X / sum, y: Y / sum }
+}
 
 function haptic() {
   if (navigator.vibrate) navigator.vibrate(50)
@@ -109,9 +129,42 @@ function HueButton({ className, emoji, onPress, onOptions }) {
 
 function App() {
   const [modal, setModal] = useState(null)
+  const [settings, setSettings] = useState(loadSettings)
+
+  useEffect(() => {
+    saveSettings(settings)
+  }, [settings])
 
   const openModal = (type) => setModal(type)
   const closeModal = () => setModal(null)
+
+  const updateSetting = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }))
+  }
+
+  const allOn = () => hueCommand({
+    on: { on: true },
+    dimming: { brightness: 100 },
+    color_temperature: { mirek: settings.on.mirek }
+  })
+
+  const nightMode = () => {
+    const xy = hexToXy(settings.night.color)
+    hueCommand({
+      on: { on: true },
+      dimming: { brightness: 27 },
+      color: { xy }
+    })
+  }
+
+  const orangeMode = () => {
+    const xy = hexToXy(settings.orange.color)
+    hueCommand({
+      on: { on: true },
+      dimming: { brightness: 100 },
+      color: { xy }
+    })
+  }
 
   return (
     <div className="container">
@@ -123,8 +176,59 @@ function App() {
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h2>{modal === 'off' ? 'nei betyr nei' : `${modal} settings`}</h2>
             <button className="modal-close" onClick={closeModal}>×</button>
+
+            {modal === 'off' && (
+              <p className="nei-text">nei betyr nei</p>
+            )}
+
+            {modal === 'on' && (
+              <>
+                <h2>🌕</h2>
+                <label className="setting-row">
+                  <span>ambient</span>
+                  <input
+                    type="range"
+                    min="153"
+                    max="500"
+                    value={settings.on.mirek}
+                    onChange={e => updateSetting('on', { mirek: parseInt(e.target.value) })}
+                  />
+                </label>
+                <div className="temp-labels">
+                  <span>kald</span>
+                  <span>varm</span>
+                </div>
+              </>
+            )}
+
+            {modal === 'night' && (
+              <>
+                <h2>🌛</h2>
+                <label className="setting-row">
+                  <span>farge</span>
+                  <input
+                    type="color"
+                    value={settings.night.color}
+                    onChange={e => updateSetting('night', { color: e.target.value })}
+                  />
+                </label>
+              </>
+            )}
+
+            {modal === 'orange' && (
+              <>
+                <h2></h2>
+                <label className="setting-row">
+                  <span>farge</span>
+                  <input
+                    type="color"
+                    value={settings.orange.color}
+                    onChange={e => updateSetting('orange', { color: e.target.value })}
+                  />
+                </label>
+              </>
+            )}
           </div>
         </div>
       )}
