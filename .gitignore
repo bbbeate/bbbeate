@@ -19,3 +19,5 @@ dist
 .DS_Store
 Thumbs.db
 combined_dist/
+pi_key
+pi_key.pub

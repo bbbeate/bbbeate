@@ -67,69 +67,54 @@ function haptic() {
   if (navigator.vibrate) navigator.vibrate(50)
 }
 
-function useLongPress(onPress, onLongPress, delay = 500) {
+function HueButton({ className, emoji, onPress, onOptions, style }) {
   const timeout = useRef(null)
   const didLongPress = useRef(false)
+  const clickCount = useRef(0)
+  const clickTimeout = useRef(null)
 
-  const start = () => {
+  // Touch: long press = options, tap = action
+  const handleTouchStart = () => {
     didLongPress.current = false
     timeout.current = setTimeout(() => {
       didLongPress.current = true
       haptic()
-      onLongPress()
-    }, delay)
+      onOptions()
+    }, 500)
   }
 
-  const end = () => {
+  const handleTouchEnd = (e) => {
+    e.preventDefault() // Prevent click from firing
     clearTimeout(timeout.current)
     if (!didLongPress.current) onPress()
   }
 
-  const cancel = () => clearTimeout(timeout.current)
+  const handleTouchCancel = () => clearTimeout(timeout.current)
 
-  return {
-    onMouseDown: start,
-    onMouseUp: end,
-    onMouseLeave: cancel,
-    onTouchStart: start,
-    onTouchEnd: end,
-    onTouchCancel: cancel
-  }
-}
-
-function useDoubleClick(onSingleClick, onDoubleClick, delay = 300) {
-  const clickCount = useRef(0)
-  const timeout = useRef(null)
-
+  // Mouse: double click = options, single click = action
   const handleClick = () => {
     clickCount.current++
     if (clickCount.current === 1) {
-      timeout.current = setTimeout(() => {
-        if (clickCount.current === 1) onSingleClick()
+      clickTimeout.current = setTimeout(() => {
+        if (clickCount.current === 1) onPress()
         clickCount.current = 0
-      }, delay)
+      }, 300)
     } else if (clickCount.current === 2) {
-      clearTimeout(timeout.current)
+      clearTimeout(clickTimeout.current)
       clickCount.current = 0
-      onDoubleClick()
+      onOptions()
     }
   }
 
-  return { onClick: handleClick }
-}
-
-function isTouchDevice() {
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0
-}
-
-function HueButton({ className, emoji, onPress, onOptions, style }) {
-  const longPressHandlers = useLongPress(onPress, onOptions)
-  const doubleClickHandlers = useDoubleClick(onPress, onOptions)
-
-  const handlers = isTouchDevice() ? longPressHandlers : doubleClickHandlers
-
   return (
-    <button className={`hue-button ${className}`} style={style} {...handlers}>
+    <button
+      className={`hue-button ${className}`}
+      style={style}
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
+    >
       {emoji}
     </button>
   )
