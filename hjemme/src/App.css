@@ -35,3 +35,38 @@
 .hue-button.orange {
   background-color: #ff6600;
 }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #222;
+  padding: 2rem;
+  border-radius: 12px;
+  min-width: 280px;
+  position: relative;
+  color: white;
+}
+
+.modal h2 {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
