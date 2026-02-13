@@ -38,6 +38,14 @@ async function hueCommand(body) {
 
 const allOff = () => hueCommand({ on: { on: false } })
 
+function mirekToHex(mirek) {
+  const t = (mirek - 153) / (500 - 153)
+  const r = 255
+  const g = Math.round(180 + (255 - 180) * (1 - t))
+  const b = Math.round(100 + (200 - 100) * (1 - t))
+  return `rgb(${r}, ${g}, ${b})`
+}
+
 function hexToXy(hex) {
   const r = parseInt(hex.slice(1, 3), 16) / 255
   const g = parseInt(hex.slice(3, 5), 16) / 255
@@ -114,14 +122,14 @@ function isTouchDevice() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0
 }
 
-function HueButton({ className, emoji, onPress, onOptions }) {
+function HueButton({ className, emoji, onPress, onOptions, style }) {
   const longPressHandlers = useLongPress(onPress, onOptions)
   const doubleClickHandlers = useDoubleClick(onPress, onOptions)
 
   const handlers = isTouchDevice() ? longPressHandlers : doubleClickHandlers
 
   return (
-    <button className={`hue-button ${className}`} {...handlers}>
+    <button className={`hue-button ${className}`} style={style} {...handlers}>
       {emoji}
     </button>
   )
@@ -169,9 +177,9 @@ function App() {
   return (
     <div className="container">
       <HueButton className="off" emoji="🌑" onPress={allOff} onOptions={() => openModal('off')} />
-      <HueButton className="on" emoji="🌕" onPress={allOn} onOptions={() => openModal('on')} />
-      <HueButton className="night" emoji="🌛" onPress={nightMode} onOptions={() => openModal('night')} />
-      <HueButton className="orange" emoji="" onPress={orangeMode} onOptions={() => openModal('orange')} />
+      <HueButton className="on" emoji="🌕" onPress={allOn} onOptions={() => openModal('on')} style={{ backgroundColor: mirekToHex(settings.on.mirek) }} />
+      <HueButton className="night" emoji="🌛" onPress={nightMode} onOptions={() => openModal('night')} style={{ backgroundColor: settings.night.color }} />
+      <HueButton className="orange" emoji="" onPress={orangeMode} onOptions={() => openModal('orange')} style={{ backgroundColor: settings.orange.color }} />
 
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
