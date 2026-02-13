@@ -117,3 +117,9 @@
   margin-top: -0.5rem;
   padding: 0 70px 0 0;
 }
+
+.setting-row .value {
+  min-width: 40px;
+  text-align: right;
+  font-size: 0.9rem;
+}

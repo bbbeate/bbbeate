@@ -7,9 +7,9 @@ const ALL_LIGHTS_GROUP = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
 const STORAGE_KEY = 'hjemme-settings'
 
 const defaultSettings = {
-  on: { mirek: 300 },
-  night: { color: '#ff9933' },
-  orange: { color: '#ff6600' }
+  on: { mirek: 300, brightness: 100 },
+  night: { color: '#ff9933', brightness: 27 },
+  orange: { color: '#ff6600', brightness: 100 }
 }
 
 function loadSettings() {
@@ -152,7 +152,7 @@ function App() {
 
   const allOn = () => hueCommand({
     on: { on: true },
-    dimming: { brightness: 100 },
+    dimming: { brightness: settings.on.brightness },
     color_temperature: { mirek: settings.on.mirek }
   })
 
@@ -160,7 +160,7 @@ function App() {
     const xy = hexToXy(settings.night.color)
     hueCommand({
       on: { on: true },
-      dimming: { brightness: 27 },
+      dimming: { brightness: settings.night.brightness },
       color: { xy }
     })
   }
@@ -169,7 +169,7 @@ function App() {
     const xy = hexToXy(settings.orange.color)
     hueCommand({
       on: { on: true },
-      dimming: { brightness: 100 },
+      dimming: { brightness: settings.orange.brightness },
       color: { xy }
     })
   }
@@ -200,13 +200,24 @@ function App() {
                     min="153"
                     max="500"
                     value={settings.on.mirek}
-                    onChange={e => updateSetting('on', { mirek: parseInt(e.target.value) })}
+                    onChange={e => updateSetting('on', { ...settings.on, mirek: parseInt(e.target.value) })}
                   />
                 </label>
                 <div className="temp-labels">
                   <span>kald</span>
                   <span>varm</span>
                 </div>
+                <label className="setting-row">
+                  <span>styrke</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={settings.on.brightness}
+                    onChange={e => updateSetting('on', { ...settings.on, brightness: parseInt(e.target.value) })}
+                  />
+                  <span className="value">{settings.on.brightness}%</span>
+                </label>
               </>
             )}
 
@@ -218,8 +229,19 @@ function App() {
                   <input
                     type="color"
                     value={settings.night.color}
-                    onChange={e => updateSetting('night', { color: e.target.value })}
+                    onChange={e => updateSetting('night', { ...settings.night, color: e.target.value })}
                   />
+                </label>
+                <label className="setting-row">
+                  <span>styrke</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={settings.night.brightness}
+                    onChange={e => updateSetting('night', { ...settings.night, brightness: parseInt(e.target.value) })}
+                  />
+                  <span className="value">{settings.night.brightness}%</span>
                 </label>
               </>
             )}
@@ -232,8 +254,19 @@ function App() {
                   <input
                     type="color"
                     value={settings.orange.color}
-                    onChange={e => updateSetting('orange', { color: e.target.value })}
+                    onChange={e => updateSetting('orange', { ...settings.orange, color: e.target.value })}
                   />
+                </label>
+                <label className="setting-row">
+                  <span>styrke</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={settings.orange.brightness}
+                    onChange={e => updateSetting('orange', { ...settings.orange, brightness: parseInt(e.target.value) })}
+                  />
+                  <span className="value">{settings.orange.brightness}%</span>
                 </label>
               </>
             )}
