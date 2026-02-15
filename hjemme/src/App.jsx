@@ -4,12 +4,28 @@ import './App.css'
 const USERNAME = import.meta.env.VITE_HUE_USERNAME
 const ALL_LIGHTS_GROUP = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
 
-const STORAGE_KEY = 'hjemme-settings'
-
 const defaultSettings = {
   on: { mirek: 300, brightness: 100 },
   night: { color: '#ff9933', brightness: 27 },
   orange: { color: '#ff6600', brightness: 100 }
+}
+
+async function loadSettingsFromApi() {
+  try {
+    const res = await fetch('/api/settings')
+    const data = await res.json()
+    return { ...defaultSettings, ...data }
+  } catch {
+    return defaultSettings
+  }
+}
+
+async function saveSettingsToApi(settings) {
+  await fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings)
+  })
 }
 
 const WAKE_NAME = 'hjemme solopp'
@@ -81,18 +97,6 @@ function formatTime(hour, minute) {
 
 const WAKE_PRESETS = ['06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00']
 
-function loadSettings() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings
-  } catch {
-    return defaultSettings
-  }
-}
-
-function saveSettings(settings) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-}
 
 async function hueCommand(body) {
   await fetch(`/hue-api/clip/v2/resource/grouped_light/${ALL_LIGHTS_GROUP}`, {
@@ -191,12 +195,20 @@ function HueButton({ className, emoji, onPress, onOptions, style }) {
 
 function App() {
   const [modal, setModal] = useState(null)
-  const [settings, setSettings] = useState(loadSettings)
+  const [settings, setSettings] = useState(defaultSettings)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
   const [wakeState, setWakeState] = useState({ enabled: false, time: '07:00', duration: 27, instanceId: null, loading: true })
 
   useEffect(() => {
-    saveSettings(settings)
-  }, [settings])
+    loadSettingsFromApi().then(data => {
+      setSettings(data)
+      setSettingsLoaded(true)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (settingsLoaded) saveSettingsToApi(settings)
+  }, [settings, settingsLoaded])
 
   useEffect(() => {
     getOrCreateWakeInstance().then(instance => {

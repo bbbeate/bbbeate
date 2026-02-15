@@ -1,7 +1,36 @@
 import { defineConfig } from 'vite'
 import path from 'path'
+import fs from 'fs'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+
+const settingsFile = path.resolve(__dirname, 'settings.json')
+
+function settingsApi() {
+  return {
+    name: 'settings-api',
+    configureServer(server) {
+      server.middlewares.use('/api/settings', (req, res) => {
+        if (req.method === 'GET') {
+          try {
+            const data = fs.existsSync(settingsFile) ? fs.readFileSync(settingsFile, 'utf-8') : '{}'
+            res.setHeader('Content-Type', 'application/json')
+            res.end(data)
+          } catch {
+            res.end('{}')
+          }
+        } else if (req.method === 'POST') {
+          let body = ''
+          req.on('data', chunk => body += chunk)
+          req.on('end', () => {
+            fs.writeFileSync(settingsFile, body)
+            res.end('ok')
+          })
+        }
+      })
+    }
+  }
+}
 
 export default defineConfig({
   envDir: '..',
@@ -11,6 +40,7 @@ export default defineConfig({
     }
   },
   plugins: [
+    settingsApi(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
