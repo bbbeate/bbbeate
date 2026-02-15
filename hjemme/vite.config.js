@@ -14,7 +14,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'icon.png'],
       manifest: {
         name: 'hjemme',
         short_name: 'hjemme',
@@ -25,22 +25,12 @@ export default defineConfig({
         scope: '/hjemme/',
         icons: [
           {
-            src: '/hjemme/favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml'
-          },
-          {
-            src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31d.png',
-            sizes: '72x72',
-            type: 'image/png'
-          },
-          {
-            src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31d.png',
+            src: '/hjemme/icon.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31d.png',
+            src: '/hjemme/icon.png',
             sizes: '512x512',
             type: 'image/png'
           }
