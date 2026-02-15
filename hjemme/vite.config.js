@@ -27,8 +27,22 @@ export default defineConfig({
           {
             src: '/hjemme/favicon.svg',
             sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            type: 'image/svg+xml'
+          },
+          {
+            src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31d.png',
+            sizes: '72x72',
+            type: 'image/png'
+          },
+          {
+            src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31d.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f31d.png',
+            sizes: '512x512',
+            type: 'image/png'
           }
         ]
       }
@@ -39,6 +53,7 @@ export default defineConfig({
     port: 1669,
     strictPort: true,
     host: '0.0.0.0',
+    allowedHosts: ['hjemme.bbbeate.space'],
     proxy: {
       '/hue-api': {
         target: 'https://10.0.0.1',
