@@ -18,6 +18,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .hue-button.off {
@@ -47,12 +50,14 @@
 }
 
 .modal {
-  background: #222;
+  background: var(--background);
   padding: 2rem;
   border-radius: 12px;
   min-width: 280px;
   position: relative;
-  color: white;
+  color: var(--first);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .modal h2 {
@@ -66,7 +71,7 @@
   right: 0.5rem;
   background: none;
   border: none;
-  color: white;
+  color: var(--first);
   font-size: 1.5rem;
   cursor: pointer;
 }
@@ -82,7 +87,7 @@
   text-align: center;
   margin: 2rem 0;
   font-style: italic;
-  color: #888;
+  color: var(--second);
 }
 
 .setting-row {
@@ -98,7 +103,36 @@
 
 .setting-row input[type="range"] {
   flex: 1;
-  accent-color: #ffcc66;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--background);
+  height: 2rem;
+  border: 1px solid var(--first);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.setting-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 3px;
+  height: 2rem;
+  background: var(--first);
+  cursor: pointer;
+  box-shadow: -100vw 0 0 100vw var(--first);
+}
+
+.setting-row input[type="range"]::-moz-range-thumb {
+  width: 3px;
+  height: 2rem;
+  background: var(--first);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.setting-row input[type="range"]::-moz-range-progress {
+  background: var(--first);
+  height: 100%;
 }
 
 .setting-row input[type="color"] {
@@ -113,7 +147,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: #888;
+  color: var(--second);
   margin-top: -0.5rem;
   padding: 0 70px 0 0;
 }
@@ -122,4 +156,44 @@
   min-width: 40px;
   text-align: right;
   font-size: 0.9rem;
+}
+
+.hue-button.wake {
+  font-size: 1.5rem;
+}
+
+.wake-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.wake-preset {
+  padding: 0.75rem;
+  border: 1px solid var(--first);
+  border-radius: 8px;
+  background: var(--background);
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.wake-preset.active {
+  background: var(--first);
+  color: var(--background);
+}
+
+.wake-preset.custom {
+  grid-column: span 3;
+}
+
+.setting-row input[type="time"] {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--first);
+  border-radius: 4px;
+  background: var(--background);
+  color: inherit;
+  font-size: 1rem;
 }

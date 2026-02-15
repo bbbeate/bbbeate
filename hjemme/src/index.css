@@ -10,4 +10,5 @@ body {
   background: var(--background);
   color: var(--first);
   min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
 }
