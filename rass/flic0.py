@@ -17,7 +17,7 @@ if os.path.exists(env_path):
                 k, v = line.split('=', 1)
                 os.environ.setdefault(k.strip(), v.strip())
 
-sys.path.append(os.path.expanduser('~/fliclib-linux-hci/clientlib/python'))
+sys.path.append('/home/bbbeate/fliclib-linux-hci/clientlib/python')
 import fliclib
 import requests
 import urllib3
