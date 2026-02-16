@@ -6,15 +6,25 @@
 
 import sys
 import os
+
+# load ../.env
+env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+if os.path.exists(env_path):
+    with open(env_path) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, v = line.split('=', 1)
+                os.environ.setdefault(k.strip(), v.strip())
+
 sys.path.append(os.path.expanduser('~/fliclib-linux-hci/clientlib/python'))
 import fliclib
 import requests
 import urllib3
 urllib3.disable_warnings()
 
-# config - set these env vars or edit here
 HUE_IP = os.getenv('HUE_IP', '10.0.0.1')
-HUE_USER = os.getenv('HUE_USER', '')
+HUE_USER = os.getenv('VITE_HUE_USERNAME', '')
 GROUP_ID = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
 
 # settings from hjemme
