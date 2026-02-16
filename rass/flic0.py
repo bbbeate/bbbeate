@@ -21,18 +21,24 @@ sys.path.append(os.path.expanduser('~/fliclib-linux-hci/clientlib/python'))
 import fliclib
 import requests
 import urllib3
+import json
 urllib3.disable_warnings()
 
 HUE_IP = os.getenv('HUE_IP', '10.0.0.1')
 HUE_USER = os.getenv('VITE_HUE_USERNAME', '')
 GROUP_ID = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
+SETTINGS_FILE = os.path.join(os.path.dirname(__file__), '..', 'hjemme', 'settings.json')
 
-# settings from hjemme
-SETTINGS = {
-    'on': {'mirek': 300, 'brightness': 100},
-    'night': {'color': '#ff9933', 'brightness': 27},
-    'orange': {'color': '#ff6600', 'brightness': 100}
-}
+def load_settings():
+    try:
+        with open(SETTINGS_FILE) as f:
+            return json.load(f)
+    except:
+        return {
+            'on': {'mirek': 300, 'brightness': 100},
+            'night': {'color': '#ff9933', 'brightness': 27},
+            'orange': {'color': '#ff6600', 'brightness': 100}
+        }
 
 light_state = False
 
@@ -58,32 +64,35 @@ def hue_command(body):
 
 def toggle():
     global light_state
+    settings = load_settings()
     if light_state:
         hue_command({'on': {'on': False}})
     else:
         hue_command({
             'on': {'on': True},
-            'dimming': {'brightness': SETTINGS['on']['brightness']},
-            'color_temperature': {'mirek': SETTINGS['on']['mirek']}
+            'dimming': {'brightness': settings['on']['brightness']},
+            'color_temperature': {'mirek': settings['on']['mirek']}
         })
     light_state = not light_state
 
 def night_mode():
     global light_state
-    xy = hex_to_xy(SETTINGS['night']['color'])
+    settings = load_settings()
+    xy = hex_to_xy(settings['night']['color'])
     hue_command({
         'on': {'on': True},
-        'dimming': {'brightness': SETTINGS['night']['brightness']},
+        'dimming': {'brightness': settings['night']['brightness']},
         'color': {'xy': xy}
     })
     light_state = True
 
 def orange_mode():
     global light_state
-    xy = hex_to_xy(SETTINGS['orange']['color'])
+    settings = load_settings()
+    xy = hex_to_xy(settings['orange']['color'])
     hue_command({
         'on': {'on': True},
-        'dimming': {'brightness': SETTINGS['orange']['brightness']},
+        'dimming': {'brightness': settings['orange']['brightness']},
         'color': {'xy': xy}
     })
     light_state = True
