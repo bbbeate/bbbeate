@@ -1,0 +1,3 @@
+target/
+*.db
+sync_log.txt
