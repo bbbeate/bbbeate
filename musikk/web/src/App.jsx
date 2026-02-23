@@ -262,14 +262,21 @@ function App() {
         setFilters(DEFAULT_FILTERS)
       }
       if (e.key === 'Escape') {
-        setSelectedTracks(new Set())
-        setShowCheckboxes(false)
-        setShowFilterModal(false)
+        if (showFilterModal) {
+          setShowFilterModal(false)
+        } else if (detail) {
+          setDetail(null)
+        } else if (showColumnPicker) {
+          setShowColumnPicker(false)
+        } else {
+          setSelectedTracks(new Set())
+          setShowCheckboxes(false)
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [tracks, selectedTracks])
+  }, [tracks, selectedTracks, showFilterModal, detail, showColumnPicker])
 
   const playTrack = async (id) => {
     await fetch(`/api/player/play/${id}`, { method: 'POST' })
