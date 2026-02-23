@@ -722,7 +722,7 @@ function App() {
               </span>
             )}
             {visibleColumns.includes('bpm') && (
-              <span className="track-bpm" onClick={(e) => { e.stopPropagation(); const bpm = Math.round(track.tempo); updateFilter('tempo', [bpm, bpm + 0.99]) }}>{track.tempo ? Math.round(track.tempo) : '-'}</span>
+              <span className="track-bpm" onClick={(e) => { e.stopPropagation(); const bpm = Math.round(track.tempo); updateFilter('tempo', [bpm - 0.5, bpm + 0.49]) }}>{track.tempo ? Math.round(track.tempo) : '-'}</span>
             )}
             {visibleColumns.includes('danceability') && (
               <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('danceability', [track.danceability, track.danceability]) }}>
