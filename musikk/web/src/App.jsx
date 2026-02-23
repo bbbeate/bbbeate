@@ -27,6 +27,12 @@ const ALL_COLUMNS = [
   { id: 'danceability', label: 'dance' },
   { id: 'energy', label: 'energy' },
   { id: 'valence', label: 'valence' },
+  { id: 'acousticness', label: 'acoustic' },
+  { id: 'instrumentalness', label: 'instrumental' },
+  { id: 'speechiness', label: 'speech' },
+  { id: 'liveness', label: 'live' },
+  { id: 'popularity', label: 'popularity' },
+  { id: 'key', label: 'key' },
 ]
 
 const DEFAULT_COLUMNS = ['name', 'artist', 'bpm', 'danceability', 'energy', 'valence']
@@ -594,6 +600,24 @@ function App() {
         {visibleColumns.includes('valence') && (
           <span className={`col-bar ${sort === 'valence' ? 'sorted' : ''}`} onClick={() => setSort('valence')}>valence</span>
         )}
+        {visibleColumns.includes('acousticness') && (
+          <span className={`col-bar ${sort === 'acousticness' ? 'sorted' : ''}`} onClick={() => setSort('acousticness')}>acoustic</span>
+        )}
+        {visibleColumns.includes('instrumentalness') && (
+          <span className={`col-bar ${sort === 'instrumentalness' ? 'sorted' : ''}`} onClick={() => setSort('instrumentalness')}>instr</span>
+        )}
+        {visibleColumns.includes('speechiness') && (
+          <span className={`col-bar ${sort === 'speechiness' ? 'sorted' : ''}`} onClick={() => setSort('speechiness')}>speech</span>
+        )}
+        {visibleColumns.includes('liveness') && (
+          <span className={`col-bar ${sort === 'liveness' ? 'sorted' : ''}`} onClick={() => setSort('liveness')}>live</span>
+        )}
+        {visibleColumns.includes('popularity') && (
+          <span className={`col-num ${sort === 'popularity' ? 'sorted' : ''}`} onClick={() => setSort('popularity')}>pop</span>
+        )}
+        {visibleColumns.includes('key') && (
+          <span className={`col-key ${sort === 'key' ? 'sorted' : ''}`} onClick={() => setSort('key')}>key</span>
+        )}
         <span className="col-queue"></span>
       </div>
 
@@ -668,6 +692,32 @@ function App() {
               <div className="bar">
                 <div className="bar-fill" style={{ width: `${(track.valence || 0) * 100}%` }} />
               </div>
+            )}
+            {visibleColumns.includes('acousticness') && (
+              <div className="bar">
+                <div className="bar-fill" style={{ width: `${(track.acousticness || 0) * 100}%` }} />
+              </div>
+            )}
+            {visibleColumns.includes('instrumentalness') && (
+              <div className="bar">
+                <div className="bar-fill" style={{ width: `${(track.instrumentalness || 0) * 100}%` }} />
+              </div>
+            )}
+            {visibleColumns.includes('speechiness') && (
+              <div className="bar">
+                <div className="bar-fill" style={{ width: `${(track.speechiness || 0) * 100}%` }} />
+              </div>
+            )}
+            {visibleColumns.includes('liveness') && (
+              <div className="bar">
+                <div className="bar-fill" style={{ width: `${(track.liveness || 0) * 100}%` }} />
+              </div>
+            )}
+            {visibleColumns.includes('popularity') && (
+              <span className="track-num">{track.popularity || '-'}</span>
+            )}
+            {visibleColumns.includes('key') && (
+              <span className="track-key">{track.key != null ? KEYS[track.key] : '-'}</span>
             )}
             <button className="track-queue" onClick={(e) => queueTrack(e, track.spotify_id)} title="queue">+</button>
           </li>

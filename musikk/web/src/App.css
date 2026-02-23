@@ -168,6 +168,8 @@ input[type="checkbox"]:checked::after {
 .col-album { flex: 2; }
 .col-bpm { width: 50px; text-align: right; }
 .col-bar { width: 70px; }
+.col-num { width: 40px; text-align: right; }
+.col-key { width: 30px; text-align: center; }
 .col-queue { width: 24px; }
 
 .tracks {
@@ -308,6 +310,17 @@ input[type="checkbox"]:checked::after {
   width: 50px;
   text-align: right;
   font-family: monospace;
+}
+
+.track-num {
+  width: 40px;
+  text-align: right;
+  font-family: monospace;
+}
+
+.track-key {
+  width: 30px;
+  text-align: center;
 }
 
 .bar {
