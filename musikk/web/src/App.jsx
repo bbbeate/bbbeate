@@ -249,6 +249,10 @@ function App() {
         setShowFilterModal(true)
         setTimeout(() => searchInputRef.current?.focus(), 100)
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'c' && selectedTracks.size === 0) {
+        e.preventDefault()
+        setFilters(DEFAULT_FILTERS)
+      }
       if (e.key === 'Escape') {
         setSelectedTracks(new Set())
         setShowCheckboxes(false)
@@ -257,7 +261,7 @@ function App() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [tracks])
+  }, [tracks, selectedTracks])
 
   const playTrack = async (id) => {
     await fetch(`/api/player/play/${id}`, { method: 'POST' })
