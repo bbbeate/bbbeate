@@ -249,7 +249,7 @@ function App() {
         setShowFilterModal(true)
         setTimeout(() => searchInputRef.current?.focus(), 100)
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === 'c' && selectedTracks.size === 0) {
+      if (e.ctrlKey && !e.metaKey && e.key === 'c') {
         e.preventDefault()
         setFilters(DEFAULT_FILTERS)
       }
