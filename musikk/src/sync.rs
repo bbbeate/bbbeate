@@ -14,6 +14,7 @@ pub async fn run_sync(
     db_path: &Path,
     spotify: &mut SpotifyClient,
     dry_run: bool,
+    backfill: bool,
 ) -> Result<SyncResult, String> {
     // open db just to get refresh token
     let refresh_token = {
@@ -181,10 +182,19 @@ pub async fn run_sync(
     // get list of tracks that need features (check db)
     let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
     let mut needs_features: Vec<String> = vec![];
-    for (spotify_id, _) in &tracks {
-        let existing = db::get_track(&conn, spotify_id).map_err(|e| e.to_string())?;
-        if existing.as_ref().map(|t| t.tempo.is_none()).unwrap_or(true) {
-            needs_features.push(spotify_id.clone());
+    
+    if backfill {
+        // backfill mode: get ALL tracks from db missing features
+        println!("backfill mode: checking all tracks in db...");
+        let all_missing = db::get_tracks_missing_features(&conn).map_err(|e| e.to_string())?;
+        needs_features = all_missing;
+    } else {
+        // normal mode: only check tracks from current sync
+        for (spotify_id, _) in &tracks {
+            let existing = db::get_track(&conn, spotify_id).map_err(|e| e.to_string())?;
+            if existing.as_ref().map(|t| t.tempo.is_none()).unwrap_or(true) {
+                needs_features.push(spotify_id.clone());
+            }
         }
     }
     drop(conn);
@@ -242,6 +252,32 @@ pub async fn run_sync(
     let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
     let mut added = 0i64;
     let mut updated = 0i64;
+
+    // in backfill mode, update features for tracks not in current sync
+    if backfill {
+        for (spotify_id, features) in &features_map {
+            if !tracks.contains_key(spotify_id) {
+                if let Ok(Some(mut existing)) = db::get_track(&conn, spotify_id) {
+                    existing.tempo = features.tempo;
+                    existing.key = features.key;
+                    existing.mode = features.mode;
+                    existing.danceability = features.danceability;
+                    existing.energy = features.energy;
+                    existing.valence = features.valence;
+                    existing.acousticness = features.acousticness;
+                    existing.instrumentalness = features.instrumentalness;
+                    existing.speechiness = features.speechiness;
+                    existing.liveness = features.liveness;
+                    existing.loudness = features.loudness;
+                    if let Some(recco_id) = recco_id_map.get(spotify_id) {
+                        existing.recco_id = Some(recco_id.clone());
+                    }
+                    let _ = db::upsert_track(&conn, &existing);
+                    updated += 1;
+                }
+            }
+        }
+    }
 
     for (spotify_id, mut track) in tracks {
         // store recco_id if we found it

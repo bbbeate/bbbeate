@@ -1,0 +1,16 @@
+[Unit]
+Description=Musikk - Spotify library with audio features
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=bbbeate
+WorkingDirectory=/home/bbbeate/bbbeate/musikk
+EnvironmentFile=/home/bbbeate/bbbeate/.env
+ExecStart=/home/bbbeate/bbbeate/musikk/target/release/musikk serve
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

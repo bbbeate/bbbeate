@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use rusqlite::{Connection, params, OptionalExtension};
+use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -61,11 +61,10 @@ pub fn open_db(path: &Path) -> rusqlite::Result<Connection> {
 }
 
 pub fn get_config(conn: &Connection, key: &str) -> rusqlite::Result<Option<String>> {
-    conn.query_row(
-        "SELECT value FROM config WHERE key = ?",
-        [key],
-        |row| row.get(0),
-    ).optional()
+    conn.query_row("SELECT value FROM config WHERE key = ?", [key], |row| {
+        row.get(0)
+    })
+    .optional()
 }
 
 pub fn set_config(conn: &Connection, key: &str, value: &str) -> rusqlite::Result<()> {
@@ -80,34 +79,37 @@ pub fn get_track(conn: &Connection, spotify_id: &str) -> rusqlite::Result<Option
     conn.query_row(
         "SELECT * FROM tracks WHERE spotify_id = ?",
         [spotify_id],
-        |row| Ok(Track {
-            spotify_id: row.get("spotify_id")?,
-            recco_id: row.get("recco_id")?,
-            name: row.get("name")?,
-            artists: row.get("artists")?,
-            album_id: row.get("album_id")?,
-            album_name: row.get("album_name")?,
-            duration_ms: row.get("duration_ms")?,
-            popularity: row.get("popularity")?,
-            sources: row.get("sources")?,
-            genres: row.get("genres")?,
-            tempo: row.get("tempo")?,
-            key: row.get("key")?,
-            mode: row.get("mode")?,
-            danceability: row.get("danceability")?,
-            energy: row.get("energy")?,
-            valence: row.get("valence")?,
-            acousticness: row.get("acousticness")?,
-            instrumentalness: row.get("instrumentalness")?,
-            speechiness: row.get("speechiness")?,
-            liveness: row.get("liveness")?,
-            loudness: row.get("loudness")?,
-            unavailable: row.get::<_, i64>("unavailable")? == 1,
-            first_seen: row.get("first_seen")?,
-            last_seen: row.get("last_seen")?,
-            updated: row.get("updated")?,
-        }),
-    ).optional()
+        |row| {
+            Ok(Track {
+                spotify_id: row.get("spotify_id")?,
+                recco_id: row.get("recco_id")?,
+                name: row.get("name")?,
+                artists: row.get("artists")?,
+                album_id: row.get("album_id")?,
+                album_name: row.get("album_name")?,
+                duration_ms: row.get("duration_ms")?,
+                popularity: row.get("popularity")?,
+                sources: row.get("sources")?,
+                genres: row.get("genres")?,
+                tempo: row.get("tempo")?,
+                key: row.get("key")?,
+                mode: row.get("mode")?,
+                danceability: row.get("danceability")?,
+                energy: row.get("energy")?,
+                valence: row.get("valence")?,
+                acousticness: row.get("acousticness")?,
+                instrumentalness: row.get("instrumentalness")?,
+                speechiness: row.get("speechiness")?,
+                liveness: row.get("liveness")?,
+                loudness: row.get("loudness")?,
+                unavailable: row.get::<_, i64>("unavailable")? == 1,
+                first_seen: row.get("first_seen")?,
+                last_seen: row.get("last_seen")?,
+                updated: row.get("updated")?,
+            })
+        },
+    )
+    .optional()
 }
 
 pub fn upsert_track(conn: &Connection, track: &Track) -> rusqlite::Result<bool> {
@@ -288,45 +290,43 @@ pub fn query_tracks(conn: &Connection, filter: &TrackFilter) -> rusqlite::Result
 
     let params_ref: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
     let mut stmt = conn.prepare(&sql)?;
-    let tracks = stmt.query_map(params_ref.as_slice(), |row| {
-        Ok(Track {
-            spotify_id: row.get("spotify_id")?,
-            recco_id: row.get("recco_id")?,
-            name: row.get("name")?,
-            artists: row.get("artists")?,
-            album_id: row.get("album_id")?,
-            album_name: row.get("album_name")?,
-            duration_ms: row.get("duration_ms")?,
-            popularity: row.get("popularity")?,
-            sources: row.get("sources")?,
-            genres: row.get("genres")?,
-            tempo: row.get("tempo")?,
-            key: row.get("key")?,
-            mode: row.get("mode")?,
-            danceability: row.get("danceability")?,
-            energy: row.get("energy")?,
-            valence: row.get("valence")?,
-            acousticness: row.get("acousticness")?,
-            instrumentalness: row.get("instrumentalness")?,
-            speechiness: row.get("speechiness")?,
-            liveness: row.get("liveness")?,
-            loudness: row.get("loudness")?,
-            unavailable: row.get::<_, i64>("unavailable")? == 1,
-            first_seen: row.get("first_seen")?,
-            last_seen: row.get("last_seen")?,
-            updated: row.get("updated")?,
-        })
-    })?.collect::<Result<Vec<_>, _>>()?;
+    let tracks = stmt
+        .query_map(params_ref.as_slice(), |row| {
+            Ok(Track {
+                spotify_id: row.get("spotify_id")?,
+                recco_id: row.get("recco_id")?,
+                name: row.get("name")?,
+                artists: row.get("artists")?,
+                album_id: row.get("album_id")?,
+                album_name: row.get("album_name")?,
+                duration_ms: row.get("duration_ms")?,
+                popularity: row.get("popularity")?,
+                sources: row.get("sources")?,
+                genres: row.get("genres")?,
+                tempo: row.get("tempo")?,
+                key: row.get("key")?,
+                mode: row.get("mode")?,
+                danceability: row.get("danceability")?,
+                energy: row.get("energy")?,
+                valence: row.get("valence")?,
+                acousticness: row.get("acousticness")?,
+                instrumentalness: row.get("instrumentalness")?,
+                speechiness: row.get("speechiness")?,
+                liveness: row.get("liveness")?,
+                loudness: row.get("loudness")?,
+                unavailable: row.get::<_, i64>("unavailable")? == 1,
+                first_seen: row.get("first_seen")?,
+                last_seen: row.get("last_seen")?,
+                updated: row.get("updated")?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
 
     Ok(tracks)
 }
 
 pub fn get_stats(conn: &Connection) -> rusqlite::Result<Stats> {
-    let total_tracks: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM tracks",
-        [],
-        |row| row.get(0),
-    )?;
+    let total_tracks: i64 = conn.query_row("SELECT COUNT(*) FROM tracks", [], |row| row.get(0))?;
 
     let tracks_with_features: i64 = conn.query_row(
         "SELECT COUNT(*) FROM tracks WHERE tempo IS NOT NULL",
@@ -340,23 +340,29 @@ pub fn get_stats(conn: &Connection) -> rusqlite::Result<Stats> {
         |row| row.get(0),
     )?;
 
-    let last_sync: Option<String> = conn.query_row(
-        "SELECT finished_at FROM sync_log ORDER BY id DESC LIMIT 1",
-        [],
-        |row| row.get(0),
-    ).optional()?;
+    let last_sync: Option<String> = conn
+        .query_row(
+            "SELECT finished_at FROM sync_log ORDER BY id DESC LIMIT 1",
+            [],
+            |row| row.get(0),
+        )
+        .optional()?;
 
-    let avg_tempo: Option<f64> = conn.query_row(
-        "SELECT AVG(tempo) FROM tracks WHERE tempo IS NOT NULL",
-        [],
-        |row| row.get::<_, Option<f64>>(0),
-    ).unwrap_or(None);
+    let avg_tempo: Option<f64> = conn
+        .query_row(
+            "SELECT AVG(tempo) FROM tracks WHERE tempo IS NOT NULL",
+            [],
+            |row| row.get::<_, Option<f64>>(0),
+        )
+        .unwrap_or(None);
 
-    let avg_energy: Option<f64> = conn.query_row(
-        "SELECT AVG(energy) FROM tracks WHERE energy IS NOT NULL",
-        [],
-        |row| row.get::<_, Option<f64>>(0),
-    ).unwrap_or(None);
+    let avg_energy: Option<f64> = conn
+        .query_row(
+            "SELECT AVG(energy) FROM tracks WHERE energy IS NOT NULL",
+            [],
+            |row| row.get::<_, Option<f64>>(0),
+        )
+        .unwrap_or(None);
 
     Ok(Stats {
         total_tracks,
@@ -377,11 +383,27 @@ pub fn start_sync_log(conn: &Connection) -> rusqlite::Result<i64> {
     Ok(conn.last_insert_rowid())
 }
 
-pub fn finish_sync_log(conn: &Connection, id: i64, added: i64, updated: i64, unavailable: i64, error: Option<&str>) -> rusqlite::Result<()> {
+pub fn finish_sync_log(
+    conn: &Connection,
+    id: i64,
+    added: i64,
+    updated: i64,
+    unavailable: i64,
+    error: Option<&str>,
+) -> rusqlite::Result<()> {
     let now = chrono::Utc::now().to_rfc3339();
     conn.execute(
         "UPDATE sync_log SET finished_at = ?, tracks_added = ?, tracks_updated = ?, tracks_unavailable = ?, error = ? WHERE id = ?",
         params![now, added, updated, unavailable, error, id],
     )?;
     Ok(())
+}
+
+pub fn get_tracks_missing_features(conn: &Connection) -> rusqlite::Result<Vec<String>> {
+    let mut stmt =
+        conn.prepare("SELECT spotify_id FROM tracks WHERE tempo IS NULL AND unavailable = 0")?;
+    let ids = stmt
+        .query_map([], |row| row.get(0))?
+        .collect::<Result<Vec<String>, _>>()?;
+    Ok(ids)
 }

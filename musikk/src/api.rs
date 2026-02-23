@@ -140,7 +140,7 @@ async fn trigger_sync(State(state): State<Arc<AppState>>) -> impl IntoResponse {
             "http://127.0.0.1:1670/callback".to_string(),
         );
 
-        match sync::run_sync(&db_path, &mut spotify, false).await {
+        match sync::run_sync(&db_path, &mut spotify, false, false).await {
             Ok(result) => {
                 if let Ok(conn) = Connection::open(&db_path) {
                     let _ = db::finish_sync_log(&conn, log_id, result.added, result.updated, result.unavailable, None);

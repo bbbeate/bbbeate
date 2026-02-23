@@ -28,6 +28,8 @@ enum Commands {
     Sync {
         #[arg(long)]
         dry_run: bool,
+        #[arg(long)]
+        backfill: bool,
     },
     Auth,
     Stats,
@@ -56,7 +58,7 @@ async fn main() {
             api::serve(state, port).await;
         }
 
-        Commands::Sync { dry_run } => {
+        Commands::Sync { dry_run, backfill } => {
             let (client_id, client_secret) = get_spotify_creds();
 
             // ensure db exists
@@ -75,7 +77,7 @@ async fn main() {
                 "http://127.0.0.1:1670/callback".to_string(),
             );
 
-            match sync::run_sync(&cli.db, &mut spotify, dry_run).await {
+            match sync::run_sync(&cli.db, &mut spotify, dry_run, backfill).await {
                 Ok(result) => {
                     if let Some(id) = log_id {
                         let conn = db::open_db(&cli.db).expect("failed to open db");
