@@ -1,5 +1,5 @@
 .app {
-  max-width: 900px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 1rem 2rem;
 }
@@ -199,6 +199,14 @@ input[type="checkbox"]:checked::after {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
+}
+
+.track-name:hover {
+  overflow: visible;
+  background: var(--background);
+  z-index: 10;
+  padding-right: 1rem;
 }
 
 .track-artist-mobile {
@@ -214,6 +222,14 @@ input[type="checkbox"]:checked::after {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
+}
+
+.track-artists:hover {
+  overflow: visible;
+  background: var(--background);
+  z-index: 10;
+  padding-right: 1rem;
 }
 
 .track-album {
@@ -221,6 +237,14 @@ input[type="checkbox"]:checked::after {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
+}
+
+.track-album:hover {
+  overflow: visible;
+  background: var(--background);
+  z-index: 10;
+  padding-right: 1rem;
 }
 
 .track.selected {
