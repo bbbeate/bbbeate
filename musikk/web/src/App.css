@@ -210,7 +210,7 @@ input[type="checkbox"]:checked::after {
 
 .track-name:hover {
   overflow: visible;
-  position: relative;
+  position: absolute;
   z-index: 100;
   background: var(--background);
   padding-right: 1rem;
@@ -231,12 +231,13 @@ input[type="checkbox"]:checked::after {
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+  position: relative;
 }
 
 .track-artists:hover {
   text-decoration: underline;
   overflow: visible;
-  position: relative;
+  position: absolute;
   z-index: 100;
   background: var(--background);
   padding-right: 1rem;
@@ -249,12 +250,13 @@ input[type="checkbox"]:checked::after {
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+  position: relative;
 }
 
 .track-album:hover {
   text-decoration: underline;
   overflow: visible;
-  position: relative;
+  position: absolute;
   z-index: 100;
   background: var(--background);
   padding-right: 1rem;
@@ -383,11 +385,12 @@ input[type="checkbox"]:checked::after {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
 }
 
 .track-text:hover {
   overflow: visible;
-  position: relative;
+  position: absolute;
   z-index: 100;
   background: var(--background);
   padding-right: 1rem;
@@ -879,6 +882,24 @@ input[type="checkbox"]:checked::after {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .track-name:hover,
+  .track-artists:hover,
+  .track-album:hover,
+  .track-text:hover {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .track:active .track-name,
+  .track:active .track-artist-mobile {
+    animation: scroll-text 3s linear;
+  }
+
+  @keyframes scroll-text {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
   }
 
   .filter-modal {
