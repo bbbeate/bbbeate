@@ -204,6 +204,13 @@ input[type="checkbox"]:checked::after {
   max-width: 100%;
 }
 
+.track-name:hover {
+  overflow: visible;
+  background: var(--background);
+  position: relative;
+  z-index: 10;
+}
+
 .track-artist-mobile {
   display: none;
   font-size: 0.85em;
@@ -220,12 +227,26 @@ input[type="checkbox"]:checked::after {
   text-overflow: ellipsis;
 }
 
+.track-artists:hover {
+  overflow: visible;
+  background: var(--background);
+  position: relative;
+  z-index: 10;
+}
+
 .track-album {
   flex: 2;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.track-album:hover {
+  overflow: visible;
+  background: var(--background);
+  position: relative;
+  z-index: 10;
 }
 
 .track.selected {
@@ -334,6 +355,13 @@ input[type="checkbox"]:checked::after {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.track-text:hover {
+  overflow: visible;
+  background: var(--background);
+  position: relative;
+  z-index: 10;
 }
 
 .bar {
