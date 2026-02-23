@@ -17,6 +17,7 @@
   font-weight: 500;
   margin: 0;
   text-transform: lowercase;
+  cursor: pointer;
 }
 
 .header-actions {
@@ -36,6 +37,18 @@
 
 .header-btn:hover {
   text-decoration: underline;
+}
+
+/* stats panel */
+.stats-panel {
+  font-size: 0.85em;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--first);
+}
+
+.stats-panel div {
+  margin-bottom: 0.25rem;
 }
 
 /* column picker */
@@ -135,10 +148,7 @@ input[type="checkbox"]:checked::after {
   padding: 0.2em 0.4em;
 }
 
-.stats {
-  font-size: 0.85em;
-  margin-bottom: 0.5rem;
-}
+
 
 .header-row {
   display: flex;
@@ -155,6 +165,7 @@ input[type="checkbox"]:checked::after {
 
 .col-name { flex: 2; }
 .col-artist { flex: 2; }
+.col-album { flex: 2; }
 .col-bpm { width: 50px; text-align: right; }
 .col-bar { width: 70px; }
 .col-queue { width: 24px; }
@@ -174,19 +185,38 @@ input[type="checkbox"]:checked::after {
   align-items: center;
 }
 
-.track-name {
+.track-info {
   flex: 2;
+  min-width: 0;
+}
+
+.track-name {
   font-weight: 500;
   white-space: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-artist-mobile {
+  display: none;
+  font-size: 0.85em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .track-artists {
   flex: 2;
   white-space: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-album {
+  flex: 2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .track-bpm {
@@ -528,13 +558,32 @@ input[type="checkbox"]:checked::after {
   padding-bottom: 120px;
 }
 
+/* active filter chips */
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.filter-chip {
+  background: none;
+  border: 1px solid var(--first);
+  border-radius: 4px;
+  color: var(--first);
+  font-size: 0.8em;
+  font-family: inherit;
+  padding: 0.25em 0.5em;
+  cursor: pointer;
+}
+
 /* filter modal - always modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
   background: var(--background);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   z-index: 100;
 }
@@ -542,19 +591,28 @@ input[type="checkbox"]:checked::after {
 .filter-modal {
   background: var(--background);
   width: 100%;
-  max-width: 400px;
-  max-height: 80vh;
-  border-radius: 8px;
+  max-width: 500px;
+  max-height: 85vh;
+  border-radius: 12px 12px 0 0;
   border: 1px solid var(--first);
+  border-bottom: none;
   display: flex;
   flex-direction: column;
+}
+
+.modal-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--first);
+  border-radius: 2px;
+  margin: 0.75rem auto;
 }
 
 .filter-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0 1rem 1rem;
   border-bottom: 1px solid var(--first);
 }
 
@@ -564,22 +622,13 @@ input[type="checkbox"]:checked::after {
   font-weight: 500;
 }
 
-.filter-modal-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
 .filter-modal-header button {
   background: none;
   border: none;
   color: var(--first);
-  font-size: 1.2rem;
+  font-size: 0.85em;
+  font-family: inherit;
   cursor: pointer;
-}
-
-.clear-all-btn {
-  font-size: 0.85em !important;
 }
 
 .filter-modal-content {
@@ -612,13 +661,50 @@ input[type="checkbox"]:checked::after {
     padding: 0.75rem 1rem;
   }
 
+  .header-btn {
+    padding: 0.5em;
+  }
+
   .track-artists,
-  .col-artist {
+  .col-artist,
+  .track-album,
+  .col-album {
     display: none;
   }
 
-  .bar:nth-child(n+5),
-  .col-bar:nth-child(n+5) {
+  .track-artist-mobile {
+    display: block;
+  }
+
+  .col-bar,
+  .bar {
     display: none;
+  }
+
+  .track-bpm,
+  .col-bpm {
+    display: none;
+  }
+
+  .filter-modal {
+    max-height: 90vh;
+  }
+
+  .filter-item label {
+    min-width: 70px;
+  }
+
+  .filter-item input[type="text"] {
+    width: 100%;
+    flex: 1;
+  }
+
+  .range-slider {
+    flex: 1;
+  }
+
+  .range-slider input[type="number"] {
+    flex: 1;
+    width: auto;
   }
 }

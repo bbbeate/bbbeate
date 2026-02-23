@@ -7,6 +7,7 @@ const ALL_FILTERS = [
   { id: 'search', label: 'search', type: 'search' },
   { id: 'tempo', label: 'bpm', type: 'range', min: 40, max: 220, step: 1 },
   { id: 'sources', label: 'playlist', type: 'multiselect' },
+  { id: 'albums', label: 'album', type: 'multiselect' },
   { id: 'genres', label: 'genre', type: 'multiselect' },
   { id: 'energy', label: 'energy', type: 'range', min: 0, max: 1, step: 0.05 },
   { id: 'danceability', label: 'dance', type: 'range', min: 0, max: 1, step: 0.05 },
@@ -22,6 +23,7 @@ const ALL_FILTERS = [
 const ALL_COLUMNS = [
   { id: 'name', label: 'name' },
   { id: 'artist', label: 'artist' },
+  { id: 'album', label: 'album' },
   { id: 'bpm', label: 'bpm' },
   { id: 'danceability', label: 'dance' },
   { id: 'energy', label: 'energy' },
@@ -43,6 +45,7 @@ const DEFAULT_FILTERS = {
   popularity: [0, 100],
   key: '',
   sources: [],
+  albums: [],
   genres: [],
 }
 
@@ -151,10 +154,12 @@ function App() {
   const [stats, setStats] = useState(null)
   const [sources, setSources] = useState([])
   const [genres, setGenres] = useState([])
+  const [albums, setAlbums] = useState([])
   const [sort, setSort] = useState('name')
   const [detail, setDetail] = useState(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showColumnPicker, setShowColumnPicker] = useState(false)
+  const [showStats, setShowStats] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_COLUMNS)
   const [player, setPlayer] = useState(null)
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
@@ -190,6 +195,7 @@ function App() {
       setStats(data.stats)
       setSources(data.sources || [])
       setGenres(data.genres || [])
+      setAlbums(data.albums || [])
     })
   }, [])
 
@@ -327,7 +333,7 @@ function App() {
           <div className="filter-item" key={filterDef.id}>
             <label>{filterDef.label}</label>
             <MultiSelect
-              options={filterDef.id === 'sources' ? sources : genres}
+              options={filterDef.id === 'sources' ? sources : filterDef.id === 'albums' ? albums : genres}
               selected={filters[filterDef.id]}
               onChange={val => updateFilter(filterDef.id, val)}
               label={filterDef.label}
@@ -356,7 +362,7 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>musikk</h1>
+        <h1 onClick={() => setShowStats(!showStats)}>musikk</h1>
         <div className="header-actions">
           <button className="header-btn" onClick={() => setShowFilterModal(true)}>
             filters {activeFilterCount() > 0 && `(${activeFilterCount()})`}
@@ -366,6 +372,13 @@ function App() {
           </button>
         </div>
       </header>
+
+      {showStats && stats && (
+        <div className="stats-panel">
+          <div>{stats.total_tracks} tracks</div>
+          {stats.last_sync && <div>last sync: {new Date(stats.last_sync).toLocaleString()}</div>}
+        </div>
+      )}
 
       {showColumnPicker && (
         <div className="column-picker">
@@ -382,17 +395,44 @@ function App() {
         </div>
       )}
 
+      {activeFilterCount() > 0 && (
+        <div className="active-filters">
+          {ALL_FILTERS.filter(f => isFilterActive(f.id)).map(f => (
+            <button key={f.id} className="filter-chip" onClick={() => clearFilter(f.id)}>
+              {f.label} x
+            </button>
+          ))}
+          {activeFilterCount() > 1 && (
+            <button className="filter-chip" onClick={clearAllFilters}>clear all</button>
+          )}
+        </div>
+      )}
+
       {showFilterModal && (
-        <div className="modal-overlay" onClick={() => setShowFilterModal(false)}>
-          <div className="filter-modal" onClick={e => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => setShowFilterModal(false)}
+          onKeyDown={e => e.key === 'Enter' && setShowFilterModal(false)}
+        >
+          <div 
+            className="filter-modal" 
+            onClick={e => e.stopPropagation()}
+            onTouchStart={e => {
+              const touch = e.touches[0]
+              e.currentTarget.dataset.startY = touch.clientY
+            }}
+            onTouchEnd={e => {
+              const startY = parseFloat(e.currentTarget.dataset.startY)
+              const endY = e.changedTouches[0].clientY
+              if (endY - startY > 80) setShowFilterModal(false)
+            }}
+          >
+            <div className="modal-handle" />
             <div className="filter-modal-header">
               <h2>filters</h2>
-              <div className="filter-modal-actions">
-                {activeFilterCount() > 0 && (
-                  <button className="clear-all-btn" onClick={clearAllFilters}>clear all</button>
-                )}
-                <button onClick={() => setShowFilterModal(false)}>x</button>
-              </div>
+              {activeFilterCount() > 0 && (
+                <button className="clear-all-btn" onClick={clearAllFilters}>clear all</button>
+              )}
             </div>
             <div className="filter-modal-content">
               {ALL_FILTERS.map(def => renderFilter(def, true))}
@@ -401,17 +441,15 @@ function App() {
         </div>
       )}
 
-      <div className="stats">
-        {stats && `${stats.total_tracks} tracks`}
-        {tracks.length > 0 && ` / showing ${tracks.length}`}
-      </div>
-
       <div className="header-row">
         {visibleColumns.includes('name') && (
           <span className={`col-name ${sort === 'name' ? 'sorted' : ''}`} onClick={() => setSort('name')}>name</span>
         )}
         {visibleColumns.includes('artist') && (
           <span className={`col-artist ${sort === 'artists' ? 'sorted' : ''}`} onClick={() => setSort('artists')}>artist</span>
+        )}
+        {visibleColumns.includes('album') && (
+          <span className={`col-album ${sort === 'album_name' ? 'sorted' : ''}`} onClick={() => setSort('album_name')}>album</span>
         )}
         {visibleColumns.includes('bpm') && (
           <span className={`col-bpm ${sort === 'tempo' ? 'sorted' : ''}`} onClick={() => setSort('tempo')}>bpm</span>
@@ -431,11 +469,17 @@ function App() {
       <ul className="tracks">
         {tracks.map(track => (
           <li key={track.spotify_id} className="track" onClick={() => showDetail(track.spotify_id)}>
-            {visibleColumns.includes('name') && (
-              <span className="track-name">{track.name}</span>
-            )}
+            <div className="track-info">
+              {visibleColumns.includes('name') && (
+                <span className="track-name">{track.name}</span>
+              )}
+              <span className="track-artist-mobile">{parseArtists(track.artists)}</span>
+            </div>
             {visibleColumns.includes('artist') && (
               <span className="track-artists">{parseArtists(track.artists)}</span>
+            )}
+            {visibleColumns.includes('album') && (
+              <span className="track-album">{track.album_name || '-'}</span>
             )}
             {visibleColumns.includes('bpm') && (
               <span className="track-bpm">{track.tempo ? Math.round(track.tempo) : '-'}</span>
