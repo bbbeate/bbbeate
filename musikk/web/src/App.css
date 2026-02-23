@@ -166,6 +166,7 @@ input[type="checkbox"]:checked::after {
 .col-name { flex: 2; min-width: 0; }
 .col-artist { flex: 2; min-width: 0; }
 .col-album { flex: 2; min-width: 0; }
+.col-text { flex: 2; min-width: 0; }
 .col-bpm { width: 50px; text-align: right; }
 .col-bar { width: 70px; }
 .col-num { width: 40px; text-align: right; }
@@ -325,6 +326,14 @@ input[type="checkbox"]:checked::after {
 .track-key {
   width: 30px;
   text-align: center;
+}
+
+.track-text {
+  flex: 2;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bar {

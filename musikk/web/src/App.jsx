@@ -23,6 +23,8 @@ const ALL_COLUMNS = [
   { id: 'name', label: 'name' },
   { id: 'artist', label: 'artist' },
   { id: 'album', label: 'album' },
+  { id: 'sources', label: 'playlists' },
+  { id: 'genres', label: 'genres' },
   { id: 'bpm', label: 'bpm' },
   { id: 'danceability', label: 'dance' },
   { id: 'energy', label: 'energy' },
@@ -588,6 +590,12 @@ function App() {
         {visibleColumns.includes('album') && (
           <span className={`col-album ${sort === 'album_name' ? 'sorted' : ''}`} onClick={() => setSort('album_name')}>album</span>
         )}
+        {visibleColumns.includes('sources') && (
+          <span className="col-text">playlists</span>
+        )}
+        {visibleColumns.includes('genres') && (
+          <span className="col-text">genres</span>
+        )}
         {visibleColumns.includes('bpm') && (
           <span className={`col-bpm ${sort === 'tempo' ? 'sorted' : ''}`} onClick={() => setSort('tempo')}>bpm</span>
         )}
@@ -674,6 +682,12 @@ function App() {
             )}
             {visibleColumns.includes('album') && (
               <span className="track-album">{track.album_name || '-'}</span>
+            )}
+            {visibleColumns.includes('sources') && (
+              <span className="track-text">{track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).join(', ') : '-'}</span>
+            )}
+            {visibleColumns.includes('genres') && (
+              <span className="track-text">{track.genres ? JSON.parse(track.genres).join(', ') : '-'}</span>
             )}
             {visibleColumns.includes('bpm') && (
               <span className="track-bpm">{track.tempo ? Math.round(track.tempo) : '-'}</span>
