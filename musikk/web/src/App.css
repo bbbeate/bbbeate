@@ -743,7 +743,8 @@ input[type="checkbox"]:checked::after {
 /* mobile adjustments */
 @media (max-width: 600px) {
   .app {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem;
+    max-width: 100%;
   }
 
   .header-btn {
@@ -771,6 +772,19 @@ input[type="checkbox"]:checked::after {
     display: none;
   }
 
+  .track-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .track-name,
+  .track-artist-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .filter-modal {
     max-height: 90vh;
   }
@@ -795,5 +809,13 @@ input[type="checkbox"]:checked::after {
 
   .mobile-select-btn {
     display: block;
+  }
+
+  .col-queue {
+    display: none;
+  }
+
+  .header-row {
+    padding: 0.5rem 0;
   }
 }
