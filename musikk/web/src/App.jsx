@@ -213,6 +213,22 @@ function App() {
     return () => clearInterval(interval)
   }, [])
 
+  // cmd+a to select all
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        e.preventDefault()
+        setSelectedTracks(new Set(tracks.map(t => t.spotify_id)))
+      }
+      if (e.key === 'Escape') {
+        setSelectedTracks(new Set())
+        setShowCheckboxes(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [tracks])
+
   const playTrack = async (id) => {
     await fetch(`/api/player/play/${id}`, { method: 'POST' })
   }
