@@ -7,7 +7,6 @@ const ALL_FILTERS = [
   { id: 'search', label: 'search', type: 'search' },
   { id: 'tempo', label: 'bpm', type: 'range', min: 40, max: 220, step: 1 },
   { id: 'sources', label: 'playlist', type: 'multiselect' },
-  { id: 'albums', label: 'album', type: 'multiselect' },
   { id: 'genres', label: 'genre', type: 'multiselect' },
   { id: 'energy', label: 'energy', type: 'range', min: 0, max: 1, step: 0.05 },
   { id: 'danceability', label: 'dance', type: 'range', min: 0, max: 1, step: 0.05 },
@@ -45,7 +44,6 @@ const DEFAULT_FILTERS = {
   popularity: [0, 100],
   key: '',
   sources: [],
-  albums: [],
   genres: [],
 }
 
@@ -154,7 +152,7 @@ function App() {
   const [stats, setStats] = useState(null)
   const [sources, setSources] = useState([])
   const [genres, setGenres] = useState([])
-  const [albums, setAlbums] = useState([])
+
   const [sort, setSort] = useState('name')
   const [detail, setDetail] = useState(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
@@ -195,7 +193,6 @@ function App() {
       setStats(data.stats)
       setSources(data.sources || [])
       setGenres(data.genres || [])
-      setAlbums(data.albums || [])
     })
   }, [])
 
@@ -333,7 +330,7 @@ function App() {
           <div className="filter-item" key={filterDef.id}>
             <label>{filterDef.label}</label>
             <MultiSelect
-              options={filterDef.id === 'sources' ? sources : filterDef.id === 'albums' ? albums : genres}
+              options={filterDef.id === 'sources' ? sources : genres}
               selected={filters[filterDef.id]}
               onChange={val => updateFilter(filterDef.id, val)}
               label={filterDef.label}
