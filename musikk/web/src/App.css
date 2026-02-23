@@ -211,6 +211,8 @@ input[type="checkbox"]:checked::after {
 .track-name:hover {
   overflow: visible;
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 100;
   background: var(--background);
   padding-right: 1rem;
@@ -238,6 +240,8 @@ input[type="checkbox"]:checked::after {
   text-decoration: underline;
   overflow: visible;
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 100;
   background: var(--background);
   padding-right: 1rem;
@@ -257,6 +261,8 @@ input[type="checkbox"]:checked::after {
   text-decoration: underline;
   overflow: visible;
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 100;
   background: var(--background);
   padding-right: 1rem;
@@ -391,6 +397,8 @@ input[type="checkbox"]:checked::after {
 .track-text:hover {
   overflow: visible;
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 100;
   background: var(--background);
   padding-right: 1rem;
