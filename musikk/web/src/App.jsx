@@ -185,6 +185,7 @@ function App() {
   const [selectionStart, setSelectionStart] = useState(null)
   const [selectionBox, setSelectionBox] = useState(null)
   const [showCheckboxes, setShowCheckboxes] = useState(false)
+  const [tooltip, setTooltip] = useState(null)
   const tracksRef = useRef(null)
 
   const loadTracks = useCallback(async () => {
@@ -407,6 +408,14 @@ function App() {
       return artists
     }
   }
+
+  const showTooltip = (e, text) => {
+    if (!text || text === '-') return
+    const rect = e.target.getBoundingClientRect()
+    setTooltip({ text, x: rect.left, y: rect.top })
+  }
+
+  const hideTooltip = () => setTooltip(null)
 
   const fmt = (val) => val != null ? Math.round(val * 100) + '%' : '-'
 
@@ -673,18 +682,18 @@ function App() {
             )}
             <div className="track-info">
               {visibleColumns.includes('name') && (
-                <span className="track-name" data-full={track.name}>{track.name}</span>
+                <span className="track-name" onMouseEnter={e => showTooltip(e, track.name)} onMouseLeave={hideTooltip}>{track.name}</span>
               )}
               <span className="track-artist-mobile">{parseArtists(track.artists)}</span>
             </div>
             {visibleColumns.includes('artist') && (
-              <span className="track-artists" data-full={parseArtists(track.artists)} onClick={(e) => { e.stopPropagation(); updateFilter('search', parseArtists(track.artists)) }}>{parseArtists(track.artists)}</span>
+              <span className="track-artists" onMouseEnter={e => showTooltip(e, parseArtists(track.artists))} onMouseLeave={hideTooltip} onClick={(e) => { e.stopPropagation(); updateFilter('search', parseArtists(track.artists)) }}>{parseArtists(track.artists)}</span>
             )}
             {visibleColumns.includes('album') && (
-              <span className="track-album" data-full={track.album_name || '-'} onClick={(e) => { e.stopPropagation(); updateFilter('search', track.album_name) }}>{track.album_name || '-'}</span>
+              <span className="track-album" onMouseEnter={e => showTooltip(e, track.album_name)} onMouseLeave={hideTooltip} onClick={(e) => { e.stopPropagation(); updateFilter('search', track.album_name) }}>{track.album_name || '-'}</span>
             )}
             {visibleColumns.includes('sources') && (
-              <span className="track-text" data-full={track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).join(', ') : '-'} onClick={e => e.stopPropagation()}>
+              <span className="track-text" onMouseEnter={e => showTooltip(e, track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).join(', ') : null)} onMouseLeave={hideTooltip} onClick={e => e.stopPropagation()}>
                 {track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).map((src, i, arr) => (
                   <span key={src}>
                     <span className="track-link" onClick={() => updateFilter('sources', [...new Set([...filters.sources, src])])}>{src}</span>
@@ -694,7 +703,7 @@ function App() {
               </span>
             )}
             {visibleColumns.includes('genres') && (
-              <span className="track-text" data-full={track.genres ? JSON.parse(track.genres).join(', ') : '-'} onClick={e => e.stopPropagation()}>
+              <span className="track-text" onMouseEnter={e => showTooltip(e, track.genres ? JSON.parse(track.genres).join(', ') : null)} onMouseLeave={hideTooltip} onClick={e => e.stopPropagation()}>
                 {track.genres ? JSON.parse(track.genres).map((g, i, arr) => (
                   <span key={g}>
                     <span className="track-link" onClick={() => updateFilter('genres', [...new Set([...filters.genres, g])])}>{g}</span>
@@ -762,6 +771,12 @@ function App() {
             height: selectionBox.height
           }}
         />
+      )}
+
+      {tooltip && (
+        <div className="tooltip" style={{ left: tooltip.x, top: tooltip.y }}>
+          {tooltip.text}
+        </div>
       )}
 
 

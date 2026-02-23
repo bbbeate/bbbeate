@@ -206,23 +206,6 @@ input[type="checkbox"]:checked::after {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-  position: relative;
-}
-
-.track-name:hover {
-  overflow: visible;
-}
-
-.track-name:hover::after {
-  content: attr(data-full);
-  position: absolute;
-  left: 0;
-  top: 0;
-  background: var(--background);
-  padding-right: 1rem;
-  white-space: nowrap;
-  z-index: 100;
-  font-weight: 500;
 }
 
 .track-artist-mobile {
@@ -239,24 +222,11 @@ input[type="checkbox"]:checked::after {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  position: relative;
   cursor: pointer;
 }
 
 .track-artists:hover {
   text-decoration: underline;
-  overflow: visible;
-}
-
-.track-artists:hover::after {
-  content: attr(data-full);
-  position: absolute;
-  left: 0;
-  top: 0;
-  background: var(--background);
-  padding-right: 1rem;
-  white-space: nowrap;
-  z-index: 100;
 }
 
 .track-album {
@@ -265,24 +235,11 @@ input[type="checkbox"]:checked::after {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  position: relative;
   cursor: pointer;
 }
 
 .track-album:hover {
   text-decoration: underline;
-  overflow: visible;
-}
-
-.track-album:hover::after {
-  content: attr(data-full);
-  position: absolute;
-  left: 0;
-  top: 0;
-  background: var(--background);
-  padding-right: 1rem;
-  white-space: nowrap;
-  z-index: 100;
 }
 
 .track.selected {
@@ -309,6 +266,20 @@ input[type="checkbox"]:checked::after {
   background: transparent;
   pointer-events: none;
   z-index: 1000;
+}
+
+.tooltip {
+  position: fixed;
+  background: var(--background);
+  color: var(--first);
+  border: 1px solid var(--first);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85em;
+  white-space: nowrap;
+  z-index: 2000;
+  pointer-events: none;
+  transform: translateY(-100%);
+  margin-top: -4px;
 }
 
 /* selection bar */
@@ -406,23 +377,6 @@ input[type="checkbox"]:checked::after {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  position: relative;
-}
-
-.track-text:hover {
-  cursor: default;
-  overflow: visible;
-}
-
-.track-text:hover::after {
-  content: attr(data-full);
-  position: absolute;
-  left: 0;
-  top: 0;
-  background: var(--background);
-  padding-right: 1rem;
-  white-space: nowrap;
-  z-index: 100;
 }
 
 .track-link {
