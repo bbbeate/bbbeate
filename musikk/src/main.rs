@@ -105,7 +105,7 @@ async fn main() {
         Commands::Auth => {
             let (client_id, client_secret) = get_spotify_creds();
             let conn = db::open_db(&cli.db).expect("failed to open db");
-            let redirect_uri = "http://127.0.0.1:1670/callback";
+            let redirect_uri = "https://musikk.bbbeate.space/callback";
 
             let mut spotify = spotify::SpotifyClient::new(
                 client_id,

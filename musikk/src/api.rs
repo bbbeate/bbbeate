@@ -30,7 +30,14 @@ pub async fn serve(state: AppState, port: u16) {
         .route("/api/tracks", get(get_tracks))
         .route("/api/tracks/{id}", get(get_track))
         .route("/api/meta", get(get_meta))
+        .route("/api/player", get(get_player))
+        .route("/api/player/play/{id}", post(play_track))
+        .route("/api/player/queue/{id}", post(queue_track))
+        .route("/api/player/pause", post(pause_player))
+        .route("/api/player/resume", post(resume_player))
+        .route("/api/player/next", post(skip_next))
         .route("/api/sync", post(trigger_sync))
+        .route("/callback", get(auth_callback))
         .nest_service("/", ServeDir::new("static").append_index_html_on_directories(true))
         .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any))
         .with_state(shared);
@@ -119,6 +126,125 @@ async fn get_meta(State(state): State<Arc<AppState>>) -> impl IntoResponse {
         "sources": sources,
         "genres": genres
     })).into_response()
+}
+
+async fn get_spotify_client(state: &AppState) -> Result<SpotifyClient, String> {
+    let conn = Connection::open(&state.db_path).map_err(|e| e.to_string())?;
+    let refresh_token = db::get_config(&conn, "spotify_refresh_token")
+        .map_err(|e| e.to_string())?
+        .ok_or("no refresh token")?;
+    
+    let mut spotify = SpotifyClient::new(
+        state.spotify_client_id.clone(),
+        state.spotify_client_secret.clone(),
+        "http://127.0.0.1:1670/callback".to_string(),
+    );
+    
+    spotify.refresh_token(&refresh_token).await?;
+    Ok(spotify)
+}
+
+async fn get_player(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    match get_spotify_client(&state).await {
+        Ok(spotify) => {
+            match spotify.get_playback_state().await {
+                Ok(Some(playback)) => Json(serde_json::json!(playback)).into_response(),
+                Ok(None) => Json(serde_json::json!(null)).into_response(),
+                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+            }
+        }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+async fn play_track(State(state): State<Arc<AppState>>, Path(id): Path<String>) -> impl IntoResponse {
+    match get_spotify_client(&state).await {
+        Ok(spotify) => {
+            match spotify.play_track(&id).await {
+                Ok(_) => Json(serde_json::json!({"status": "playing"})).into_response(),
+                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+            }
+        }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+async fn queue_track(State(state): State<Arc<AppState>>, Path(id): Path<String>) -> impl IntoResponse {
+    match get_spotify_client(&state).await {
+        Ok(spotify) => {
+            match spotify.queue_track(&id).await {
+                Ok(_) => Json(serde_json::json!({"status": "queued"})).into_response(),
+                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+            }
+        }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+async fn pause_player(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    match get_spotify_client(&state).await {
+        Ok(spotify) => {
+            match spotify.pause().await {
+                Ok(_) => Json(serde_json::json!({"status": "paused"})).into_response(),
+                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+            }
+        }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+async fn resume_player(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    match get_spotify_client(&state).await {
+        Ok(spotify) => {
+            match spotify.resume().await {
+                Ok(_) => Json(serde_json::json!({"status": "playing"})).into_response(),
+                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+            }
+        }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+async fn skip_next(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    match get_spotify_client(&state).await {
+        Ok(spotify) => {
+            match spotify.skip_next().await {
+                Ok(_) => Json(serde_json::json!({"status": "skipped"})).into_response(),
+                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+            }
+        }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+#[derive(Deserialize)]
+struct CallbackQuery {
+    code: String,
+}
+
+async fn auth_callback(
+    State(state): State<Arc<AppState>>,
+    Query(q): Query<CallbackQuery>,
+) -> impl IntoResponse {
+    let mut spotify = SpotifyClient::new(
+        state.spotify_client_id.clone(),
+        state.spotify_client_secret.clone(),
+        "https://musikk.bbbeate.space/callback".to_string(),
+    );
+
+    match spotify.exchange_code(&q.code).await {
+        Ok(token) => {
+            if let Some(refresh_token) = token.refresh_token {
+                if let Ok(conn) = Connection::open(&state.db_path) {
+                    let _ = db::set_config(&conn, "spotify_refresh_token", &refresh_token);
+                }
+            }
+            axum::response::Html("<h1>auth complete!</h1><p>you can close this tab.</p>").into_response()
+        }
+        Err(e) => {
+            (StatusCode::INTERNAL_SERVER_ERROR, axum::response::Html(format!("<h1>auth failed</h1><p>{}</p>", e))).into_response()
+        }
+    }
 }
 
 async fn trigger_sync(State(state): State<Arc<AppState>>) -> impl IntoResponse {

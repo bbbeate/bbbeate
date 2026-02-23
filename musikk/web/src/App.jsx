@@ -20,6 +20,7 @@ const ALL_FILTERS = [
 ]
 
 const DEFAULT_VISIBLE = ['search', 'tempo', 'sources']
+const isMobile = () => window.innerWidth <= 600
 
 function MultiSelect({ options, selected, onChange, label }) {
   const [open, setOpen] = useState(false)
@@ -99,23 +100,9 @@ function RangeSlider({ min, max, step, value, onChange }) {
         step={step}
         value={localMin}
         onChange={e => onChange([Number(e.target.value), localMax])}
+        placeholder="min"
       />
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={localMin}
-        onChange={e => onChange([Number(e.target.value), localMax])}
-      />
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={localMax}
-        onChange={e => onChange([localMin, Number(e.target.value)])}
-      />
+      <span className="range-dash">-</span>
       <input
         type="number"
         min={min}
@@ -123,6 +110,7 @@ function RangeSlider({ min, max, step, value, onChange }) {
         step={step}
         value={localMax}
         onChange={e => onChange([localMin, Number(e.target.value)])}
+        placeholder="max"
       />
     </div>
   )
@@ -137,6 +125,8 @@ function App() {
   const [detail, setDetail] = useState(null)
   const [visibleFilters, setVisibleFilters] = useState(DEFAULT_VISIBLE)
   const [showFilterPicker, setShowFilterPicker] = useState(false)
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [player, setPlayer] = useState(null)
   const [filters, setFilters] = useState({
     search: '',
     tempo: [40, 220],
@@ -186,6 +176,36 @@ function App() {
       setGenres(data.genres || [])
     })
   }, [])
+
+  // poll player state
+  useEffect(() => {
+    const fetchPlayer = () => {
+      fetch('/api/player').then(r => r.json()).then(setPlayer).catch(() => {})
+    }
+    fetchPlayer()
+    const interval = setInterval(fetchPlayer, 3000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const playTrack = async (id) => {
+    await fetch(`/api/player/play/${id}`, { method: 'POST' })
+  }
+
+  const queueTrack = async (id) => {
+    await fetch(`/api/player/queue/${id}`, { method: 'POST' })
+  }
+
+  const togglePlayPause = async () => {
+    if (player?.is_playing) {
+      await fetch('/api/player/pause', { method: 'POST' })
+    } else {
+      await fetch('/api/player/resume', { method: 'POST' })
+    }
+  }
+
+  const skipNext = async () => {
+    await fetch('/api/player/next', { method: 'POST' })
+  }
 
   const updateFilter = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }))
@@ -278,11 +298,54 @@ function App() {
     }
   }
 
+  const activeFilterCount = () => {
+    let count = 0
+    if (filters.search) count++
+    if (filters.tempo[0] > 40 || filters.tempo[1] < 220) count++
+    if (filters.sources.length) count++
+    if (filters.genres.length) count++
+    if (filters.energy[0] > 0 || filters.energy[1] < 1) count++
+    if (filters.danceability[0] > 0 || filters.danceability[1] < 1) count++
+    if (filters.valence[0] > 0 || filters.valence[1] < 1) count++
+    if (filters.key) count++
+    return count
+  }
+
   return (
     <div className="app">
       <h1>musikk</h1>
 
-      <div className="filters">
+      {/* mobile: filter button */}
+      <div className="mobile-filter-bar">
+        <input
+          type="text"
+          className="mobile-search"
+          value={filters.search}
+          onChange={e => updateFilter('search', e.target.value)}
+          placeholder="search..."
+        />
+        <button className="mobile-filter-btn" onClick={() => setShowMobileFilters(true)}>
+          filters {activeFilterCount() > 0 && `(${activeFilterCount()})`}
+        </button>
+      </div>
+
+      {/* mobile: filter modal */}
+      {showMobileFilters && (
+        <div className="modal-overlay" onClick={() => setShowMobileFilters(false)}>
+          <div className="filter-modal" onClick={e => e.stopPropagation()}>
+            <div className="filter-modal-header">
+              <h2>filters</h2>
+              <button onClick={() => setShowMobileFilters(false)}>x</button>
+            </div>
+            <div className="filter-modal-content">
+              {ALL_FILTERS.filter(f => f.id !== 'search').map(def => renderFilter(def))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* desktop: inline filters */}
+      <div className="desktop-filters">
         {visibleFilters.map(id => {
           const def = ALL_FILTERS.find(f => f.id === id)
           return def ? renderFilter(def) : null
@@ -327,8 +390,10 @@ function App() {
 
       <ul className="tracks">
         {tracks.map(track => (
-          <li key={track.spotify_id} className="track" onClick={() => showDetail(track.spotify_id)}>
-            <span className="track-name">{track.name}</span>
+          <li key={track.spotify_id} className="track">
+            <button className="track-play" onClick={() => playTrack(track.spotify_id)} title="play">|></button>
+            <button className="track-queue" onClick={() => queueTrack(track.spotify_id)} title="queue">+</button>
+            <span className="track-name" onClick={() => showDetail(track.spotify_id)}>{track.name}</span>
             <span className="track-artists">{parseArtists(track.artists)}</span>
             <span className="track-bpm">{track.tempo ? Math.round(track.tempo) : '-'}</span>
             <div className="bar">
@@ -365,9 +430,27 @@ function App() {
             <div className="detail-row"><span className="detail-label">duration</span><span>{formatDuration(detail.duration_ms)}</span></div>
             <div className="detail-row"><span className="detail-label">popularity</span><span>{detail.popularity || '-'}</span></div>
 
-            <a className="detail-link" href={`https://open.spotify.com/track/${detail.spotify_id}`} target="_blank" rel="noopener">
-              open in spotify
-            </a>
+            <div className="detail-actions">
+              <button onClick={() => { playTrack(detail.spotify_id); setDetail(null) }}>play</button>
+              <button onClick={() => queueTrack(detail.spotify_id)}>queue</button>
+              <a href={`https://open.spotify.com/track/${detail.spotify_id}`} target="_blank" rel="noopener">
+                open in spotify
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* player bar */}
+      {player?.item && (
+        <div className="player-bar">
+          <div className="player-track">
+            <span className="player-name">{player.item.name}</span>
+            <span className="player-artist">{player.item.artists?.map(a => a.name).join(', ')}</span>
+          </div>
+          <div className="player-controls">
+            <button onClick={togglePlayPause}>{player.is_playing ? '||' : '|>'}</button>
+            <button onClick={skipNext}>>|</button>
           </div>
         </div>
       )}

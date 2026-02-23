@@ -36,7 +36,7 @@ pub struct SpotifyTrack {
     pub popularity: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone, serde::Serialize)]
 pub struct SpotifyArtist {
     pub id: String,
     pub name: String,
@@ -155,7 +155,7 @@ impl SpotifyClient {
     }
 
     pub fn auth_url(&self) -> String {
-        let scopes = "user-library-read playlist-read-private playlist-read-collaborative";
+        let scopes = "user-library-read playlist-read-private playlist-read-collaborative user-modify-playback-state user-read-playback-state user-read-currently-playing";
         format!(
             "{}?client_id={}&response_type=code&redirect_uri={}&scope={}",
             SPOTIFY_AUTH_URL,
@@ -163,6 +163,120 @@ impl SpotifyClient {
             urlencoding::encode(&self.redirect_uri),
             urlencoding::encode(scopes)
         )
+    }
+
+    pub async fn get_playback_state(&self) -> Result<Option<PlaybackState>, String> {
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        let resp = self.client
+            .get(&format!("{}/me/player", SPOTIFY_API_URL))
+            .bearer_auth(token)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if resp.status().as_u16() == 204 {
+            return Ok(None); // no active device
+        }
+
+        if !resp.status().is_success() {
+            return Ok(None);
+        }
+
+        resp.json().await.map_err(|e| e.to_string()).map(Some)
+    }
+
+    pub async fn queue_track(&self, track_id: &str) -> Result<(), String> {
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        let uri = format!("spotify:track:{}", track_id);
+        let url = format!("{}/me/player/queue?uri={}", SPOTIFY_API_URL, urlencoding::encode(&uri));
+        
+        let resp = self.client
+            .post(&url)
+            .bearer_auth(token)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(format!("queue failed: {}", text));
+        }
+
+        Ok(())
+    }
+
+    pub async fn play_track(&self, track_id: &str) -> Result<(), String> {
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        let uri = format!("spotify:track:{}", track_id);
+        
+        let resp = self.client
+            .put(&format!("{}/me/player/play", SPOTIFY_API_URL))
+            .bearer_auth(token)
+            .json(&serde_json::json!({ "uris": [uri] }))
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(format!("play failed: {}", text));
+        }
+
+        Ok(())
+    }
+
+    pub async fn pause(&self) -> Result<(), String> {
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        
+        let resp = self.client
+            .put(&format!("{}/me/player/pause", SPOTIFY_API_URL))
+            .bearer_auth(token)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(format!("pause failed: {}", text));
+        }
+
+        Ok(())
+    }
+
+    pub async fn resume(&self) -> Result<(), String> {
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        
+        let resp = self.client
+            .put(&format!("{}/me/player/play", SPOTIFY_API_URL))
+            .bearer_auth(token)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(format!("resume failed: {}", text));
+        }
+
+        Ok(())
+    }
+
+    pub async fn skip_next(&self) -> Result<(), String> {
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        
+        let resp = self.client
+            .post(&format!("{}/me/player/next", SPOTIFY_API_URL))
+            .bearer_auth(token)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(format!("skip failed: {}", text));
+        }
+
+        Ok(())
     }
 
     pub async fn exchange_code(&mut self, code: &str) -> Result<TokenResponse, String> {
@@ -333,6 +447,21 @@ impl SpotifyClient {
         let resp: Response = self.get(&url).await?;
         Ok(resp.artists)
     }
+}
+
+#[derive(Debug, Deserialize, Clone, serde::Serialize)]
+pub struct PlaybackState {
+    pub is_playing: bool,
+    pub item: Option<PlaybackTrack>,
+    pub progress_ms: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, Clone, serde::Serialize)]
+pub struct PlaybackTrack {
+    pub id: Option<String>,
+    pub name: String,
+    pub artists: Vec<SpotifyArtist>,
+    pub duration_ms: i64,
 }
 
 #[derive(Debug, Deserialize, Clone)]
