@@ -199,7 +199,7 @@ input[type="checkbox"]:checked::after {
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: '..';
   max-width: 100%;
 }
 
@@ -222,7 +222,7 @@ input[type="checkbox"]:checked::after {
   font-size: 0.85em;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: '..';
 }
 
 .track-artists {
@@ -230,7 +230,7 @@ input[type="checkbox"]:checked::after {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: '..';
 }
 
 .track-artists:hover {
@@ -246,7 +246,7 @@ input[type="checkbox"]:checked::after {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: '..';
 }
 
 .track-album:hover {
