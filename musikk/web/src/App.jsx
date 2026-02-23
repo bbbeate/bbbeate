@@ -417,6 +417,17 @@ function App() {
 
   const fmt = (val) => val != null ? Math.round(val * 100) + '%' : '-'
 
+  const handleTextHover = (e) => {
+    const el = e.target
+    if (el.scrollWidth > el.clientWidth) {
+      el.classList.add('truncated')
+    }
+  }
+
+  const handleTextLeave = (e) => {
+    e.target.classList.remove('truncated')
+  }
+
   const formatDuration = (ms) => {
     if (!ms) return '-'
     const mins = Math.floor(ms / 60000)
@@ -680,18 +691,18 @@ function App() {
             )}
             <div className="track-info">
               {visibleColumns.includes('name') && (
-                <span className="track-name">{track.name}</span>
+                <span className="track-name" onMouseEnter={handleTextHover} onMouseLeave={handleTextLeave}>{track.name}</span>
               )}
               <span className="track-artist-mobile">{parseArtists(track.artists)}</span>
             </div>
             {visibleColumns.includes('artist') && (
-              <span className="track-artists" onClick={(e) => { e.stopPropagation(); updateFilter('search', parseArtists(track.artists)) }}>{parseArtists(track.artists)}</span>
+              <span className="track-artists" onMouseEnter={handleTextHover} onMouseLeave={handleTextLeave} onClick={(e) => { e.stopPropagation(); updateFilter('search', parseArtists(track.artists)) }}>{parseArtists(track.artists)}</span>
             )}
             {visibleColumns.includes('album') && (
-              <span className="track-album" onClick={(e) => { e.stopPropagation(); updateFilter('search', track.album_name) }}>{track.album_name || '-'}</span>
+              <span className="track-album" onMouseEnter={handleTextHover} onMouseLeave={handleTextLeave} onClick={(e) => { e.stopPropagation(); updateFilter('search', track.album_name) }}>{track.album_name || '-'}</span>
             )}
             {visibleColumns.includes('sources') && (
-              <span className="track-text" onClick={e => e.stopPropagation()}>
+              <span className="track-text" onMouseEnter={handleTextHover} onMouseLeave={handleTextLeave} onClick={e => e.stopPropagation()}>
                 {track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).map((src, i, arr) => (
                   <span key={src}>
                     <span className="track-link" onClick={() => updateFilter('sources', [...new Set([...filters.sources, src])])}>{src}</span>
@@ -701,7 +712,7 @@ function App() {
               </span>
             )}
             {visibleColumns.includes('genres') && (
-              <span className="track-text" onClick={e => e.stopPropagation()}>
+              <span className="track-text" onMouseEnter={handleTextHover} onMouseLeave={handleTextLeave} onClick={e => e.stopPropagation()}>
                 {track.genres ? JSON.parse(track.genres).map((g, i, arr) => (
                   <span key={g}>
                     <span className="track-link" onClick={() => updateFilter('genres', [...new Set([...filters.genres, g])])}>{g}</span>
@@ -711,7 +722,7 @@ function App() {
               </span>
             )}
             {visibleColumns.includes('bpm') && (
-              <span className="track-bpm" onClick={(e) => { e.stopPropagation(); const bpm = Math.round(track.tempo); updateFilter('tempo', [bpm, bpm]) }}>{track.tempo ? Math.round(track.tempo) : '-'}</span>
+              <span className="track-bpm" onClick={(e) => { e.stopPropagation(); const bpm = Math.round(track.tempo); updateFilter('tempo', [bpm, bpm + 0.99]) }}>{track.tempo ? Math.round(track.tempo) : '-'}</span>
             )}
             {visibleColumns.includes('danceability') && (
               <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('danceability', [track.danceability, track.danceability]) }}>

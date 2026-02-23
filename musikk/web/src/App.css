@@ -208,7 +208,7 @@ input[type="checkbox"]:checked::after {
   display: block;
 }
 
-.track-name:hover {
+.track-name.truncated {
   overflow: visible;
   position: absolute;
   top: 0;
@@ -238,6 +238,9 @@ input[type="checkbox"]:checked::after {
 
 .track-artists:hover {
   text-decoration: underline;
+}
+
+.track-artists.truncated {
   overflow: visible;
   position: absolute;
   top: 0;
@@ -259,6 +262,9 @@ input[type="checkbox"]:checked::after {
 
 .track-album:hover {
   text-decoration: underline;
+}
+
+.track-album.truncated {
   overflow: visible;
   position: absolute;
   top: 0;
@@ -394,7 +400,7 @@ input[type="checkbox"]:checked::after {
   position: relative;
 }
 
-.track-text:hover {
+.track-text.truncated {
   overflow: visible;
   position: absolute;
   top: 0;
@@ -892,10 +898,10 @@ input[type="checkbox"]:checked::after {
     white-space: nowrap;
   }
 
-  .track-name:hover,
-  .track-artists:hover,
-  .track-album:hover,
-  .track-text:hover {
+  .track-name.truncated,
+  .track-artists.truncated,
+  .track-album.truncated,
+  .track-text.truncated {
     position: relative;
     overflow: hidden;
   }
