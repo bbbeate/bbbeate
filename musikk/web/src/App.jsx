@@ -673,18 +673,18 @@ function App() {
             )}
             <div className="track-info">
               {visibleColumns.includes('name') && (
-                <span className="track-name" title={track.name}>{track.name}</span>
+                <span className="track-name" data-full={track.name}>{track.name}</span>
               )}
               <span className="track-artist-mobile">{parseArtists(track.artists)}</span>
             </div>
             {visibleColumns.includes('artist') && (
-              <span className="track-artists" title={parseArtists(track.artists)} onClick={(e) => { e.stopPropagation(); updateFilter('search', parseArtists(track.artists)) }}>{parseArtists(track.artists)}</span>
+              <span className="track-artists" data-full={parseArtists(track.artists)} onClick={(e) => { e.stopPropagation(); updateFilter('search', parseArtists(track.artists)) }}>{parseArtists(track.artists)}</span>
             )}
             {visibleColumns.includes('album') && (
-              <span className="track-album" title={track.album_name} onClick={(e) => { e.stopPropagation(); updateFilter('search', track.album_name) }}>{track.album_name || '-'}</span>
+              <span className="track-album" data-full={track.album_name || '-'} onClick={(e) => { e.stopPropagation(); updateFilter('search', track.album_name) }}>{track.album_name || '-'}</span>
             )}
             {visibleColumns.includes('sources') && (
-              <span className="track-text" title={track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).join(', ') : ''} onClick={e => e.stopPropagation()}>
+              <span className="track-text" data-full={track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).join(', ') : '-'} onClick={e => e.stopPropagation()}>
                 {track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).map((src, i, arr) => (
                   <span key={src}>
                     <span className="track-link" onClick={() => updateFilter('sources', [...new Set([...filters.sources, src])])}>{src}</span>
@@ -694,7 +694,7 @@ function App() {
               </span>
             )}
             {visibleColumns.includes('genres') && (
-              <span className="track-text" title={track.genres ? JSON.parse(track.genres).join(', ') : ''} onClick={e => e.stopPropagation()}>
+              <span className="track-text" data-full={track.genres ? JSON.parse(track.genres).join(', ') : '-'} onClick={e => e.stopPropagation()}>
                 {track.genres ? JSON.parse(track.genres).map((g, i, arr) => (
                   <span key={g}>
                     <span className="track-link" onClick={() => updateFilter('genres', [...new Set([...filters.genres, g])])}>{g}</span>
