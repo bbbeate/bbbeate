@@ -199,22 +199,8 @@ input[type="checkbox"]:checked::after {
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: '..';
+  text-overflow: ellipsis;
   max-width: 100%;
-}
-
-.track-info {
-  position: relative;
-  overflow: visible;
-}
-
-.track-name:hover,
-.track-artist-mobile:hover {
-  overflow: visible;
-  position: relative;
-  z-index: 10;
-  background: var(--background);
-  padding-right: 1rem;
 }
 
 .track-artist-mobile {
@@ -222,7 +208,7 @@ input[type="checkbox"]:checked::after {
   font-size: 0.85em;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: '..';
+  text-overflow: ellipsis;
 }
 
 .track-artists {
@@ -230,15 +216,7 @@ input[type="checkbox"]:checked::after {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: '..';
-}
-
-.track-artists:hover {
-  overflow: visible;
-  position: relative;
-  z-index: 10;
-  background: var(--background);
-  padding-right: 1rem;
+  text-overflow: ellipsis;
 }
 
 .track-album {
@@ -246,15 +224,7 @@ input[type="checkbox"]:checked::after {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: '..';
-}
-
-.track-album:hover {
-  overflow: visible;
-  position: relative;
-  z-index: 10;
-  background: var(--background);
-  padding-right: 1rem;
+  text-overflow: ellipsis;
 }
 
 .track.selected {
