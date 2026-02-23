@@ -213,16 +213,24 @@ function App() {
     return () => clearInterval(interval)
   }, [])
 
-  // cmd+a to select all
+  const searchInputRef = useRef(null)
+
+  // keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
         e.preventDefault()
         setSelectedTracks(new Set(tracks.map(t => t.spotify_id)))
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setShowFilterModal(true)
+        setTimeout(() => searchInputRef.current?.focus(), 100)
+      }
       if (e.key === 'Escape') {
         setSelectedTracks(new Set())
         setShowCheckboxes(false)
+        setShowFilterModal(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -398,6 +406,7 @@ function App() {
           <div className="filter-item" key={filterDef.id}>
             <label>{filterDef.label}</label>
             <input
+              ref={inModal ? searchInputRef : null}
               type="text"
               value={filters.search}
               onChange={e => updateFilter('search', e.target.value)}
