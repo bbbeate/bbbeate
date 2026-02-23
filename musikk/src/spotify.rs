@@ -193,6 +193,7 @@ impl SpotifyClient {
         let resp = self.client
             .post(&url)
             .bearer_auth(token)
+            .header("Content-Length", "0")
             .send()
             .await
             .map_err(|e| e.to_string())?;
@@ -231,6 +232,7 @@ impl SpotifyClient {
         let resp = self.client
             .put(&format!("{}/me/player/pause", SPOTIFY_API_URL))
             .bearer_auth(token)
+            .header("Content-Length", "0")
             .send()
             .await
             .map_err(|e| e.to_string())?;
@@ -249,6 +251,7 @@ impl SpotifyClient {
         let resp = self.client
             .put(&format!("{}/me/player/play", SPOTIFY_API_URL))
             .bearer_auth(token)
+            .header("Content-Length", "0")
             .send()
             .await
             .map_err(|e| e.to_string())?;
@@ -267,6 +270,7 @@ impl SpotifyClient {
         let resp = self.client
             .post(&format!("{}/me/player/next", SPOTIFY_API_URL))
             .bearer_auth(token)
+            .header("Content-Length", "0")
             .send()
             .await
             .map_err(|e| e.to_string())?;

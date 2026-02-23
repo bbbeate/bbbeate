@@ -391,7 +391,6 @@ function App() {
       <ul className="tracks">
         {tracks.map(track => (
           <li key={track.spotify_id} className="track">
-            <button className="track-play" onClick={() => playTrack(track.spotify_id)} title="play">|></button>
             <button className="track-queue" onClick={() => queueTrack(track.spotify_id)} title="queue">+</button>
             <span className="track-name" onClick={() => showDetail(track.spotify_id)}>{track.name}</span>
             <span className="track-artists">{parseArtists(track.artists)}</span>
