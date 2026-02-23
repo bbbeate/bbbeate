@@ -223,6 +223,8 @@ pub struct TrackFilter {
     pub valence_max: Option<f64>,
     pub key: Option<i64>,
     pub search: Option<String>,
+    pub sources: Option<Vec<String>>,
+    pub genres: Option<Vec<String>>,
     pub sort: Option<String>,
     pub limit: Option<i64>,
 }
@@ -272,6 +274,26 @@ pub fn query_tracks(conn: &Connection, filter: &TrackFilter) -> rusqlite::Result
         let pattern = format!("%{}%", s);
         params.push(Box::new(pattern.clone()));
         params.push(Box::new(pattern));
+    }
+    if let Some(ref sources) = filter.sources {
+        if !sources.is_empty() {
+            // sources is json array, check if any match
+            let conditions: Vec<String> = sources
+                .iter()
+                .map(|s| format!("sources LIKE '%\"{}%'", s.replace("'", "''")))
+                .collect();
+            sql.push_str(&format!(" AND ({})", conditions.join(" OR ")));
+        }
+    }
+    if let Some(ref genres) = filter.genres {
+        if !genres.is_empty() {
+            // genres is json array, check if any match
+            let conditions: Vec<String> = genres
+                .iter()
+                .map(|g| format!("genres LIKE '%\"{}%'", g.replace("'", "''")))
+                .collect();
+            sql.push_str(&format!(" AND ({})", conditions.join(" OR ")));
+        }
     }
 
     let sort_col = match filter.sort.as_deref() {

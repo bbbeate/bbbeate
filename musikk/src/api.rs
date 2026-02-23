@@ -61,6 +61,8 @@ struct TracksQuery {
     valence_max: Option<f64>,
     key: Option<i64>,
     search: Option<String>,
+    sources: Option<String>,
+    genres: Option<String>,
     sort: Option<String>,
     limit: Option<i64>,
 }
@@ -85,6 +87,8 @@ async fn get_tracks(
         valence_max: q.valence_max,
         key: q.key,
         search: q.search,
+        sources: q.sources.map(|s| s.split(',').map(|x| x.to_string()).collect()),
+        genres: q.genres.map(|s| s.split(',').map(|x| x.to_string()).collect()),
         sort: q.sort,
         limit: q.limit,
     };
