@@ -45,6 +45,11 @@ fn get_spotify_creds() -> (String, String) {
 
 #[tokio::main]
 async fn main() {
+    // load .env from parent directory (where bbbeate/.env lives)
+    let _ = dotenvy::from_filename("../.env");
+    // also try current dir
+    let _ = dotenvy::dotenv();
+    
     let cli = Cli::parse();
 
     match cli.command {
