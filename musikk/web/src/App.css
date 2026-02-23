@@ -163,6 +163,10 @@ input[type="checkbox"]:checked::after {
   cursor: pointer;
 }
 
+.header-row span:hover {
+  text-decoration: underline;
+}
+
 .col-name { flex: 2; min-width: 0; }
 .col-artist { flex: 2; min-width: 0; }
 .col-album { flex: 2; min-width: 0; }
@@ -228,10 +232,8 @@ input[type="checkbox"]:checked::after {
 }
 
 .track-artists:hover {
-  overflow: visible;
-  background: var(--background);
-  position: relative;
-  z-index: 10;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .track-album {
@@ -243,10 +245,8 @@ input[type="checkbox"]:checked::after {
 }
 
 .track-album:hover {
-  overflow: visible;
-  background: var(--background);
-  position: relative;
-  z-index: 10;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .track.selected {
@@ -336,17 +336,32 @@ input[type="checkbox"]:checked::after {
   width: 50px;
   text-align: right;
   font-family: monospace;
+  cursor: pointer;
+}
+
+.track-bpm:hover {
+  text-decoration: underline;
 }
 
 .track-num {
   width: 40px;
   text-align: right;
   font-family: monospace;
+  cursor: pointer;
+}
+
+.track-num:hover {
+  text-decoration: underline;
 }
 
 .track-key {
   width: 30px;
   text-align: center;
+  cursor: pointer;
+}
+
+.track-key:hover {
+  text-decoration: underline;
 }
 
 .track-text {
@@ -358,10 +373,15 @@ input[type="checkbox"]:checked::after {
 }
 
 .track-text:hover {
-  overflow: visible;
-  background: var(--background);
-  position: relative;
-  z-index: 10;
+  cursor: default;
+}
+
+.track-link {
+  cursor: pointer;
+}
+
+.track-link:hover {
+  text-decoration: underline;
 }
 
 .bar {
@@ -371,6 +391,11 @@ input[type="checkbox"]:checked::after {
   border-radius: 2px;
   overflow: hidden;
   align-self: center;
+  cursor: pointer;
+}
+
+.bar:hover {
+  border-width: 2px;
 }
 
 .bar-fill {

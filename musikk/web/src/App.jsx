@@ -673,70 +673,76 @@ function App() {
             )}
             <div className="track-info">
               {visibleColumns.includes('name') && (
-                <span className="track-name">{track.name}</span>
+                <span className="track-name" title={track.name}>{track.name}</span>
               )}
               <span className="track-artist-mobile">{parseArtists(track.artists)}</span>
             </div>
             {visibleColumns.includes('artist') && (
-              <span className="track-artists" onClick={(e) => { e.stopPropagation(); updateFilter('search', parseArtists(track.artists)) }}>{parseArtists(track.artists)}</span>
+              <span className="track-artists" title={parseArtists(track.artists)} onClick={(e) => { e.stopPropagation(); updateFilter('search', parseArtists(track.artists)) }}>{parseArtists(track.artists)}</span>
             )}
             {visibleColumns.includes('album') && (
-              <span className="track-album" onClick={(e) => { e.stopPropagation(); updateFilter('search', track.album_name) }}>{track.album_name || '-'}</span>
+              <span className="track-album" title={track.album_name} onClick={(e) => { e.stopPropagation(); updateFilter('search', track.album_name) }}>{track.album_name || '-'}</span>
             )}
             {visibleColumns.includes('sources') && (
-              <span className="track-text" onClick={(e) => { 
-                e.stopPropagation()
-                const srcs = track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')) : []
-                if (srcs.length) updateFilter('sources', [...new Set([...filters.sources, srcs[0]])])
-              }}>{track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).join(', ') : '-'}</span>
+              <span className="track-text" title={track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).join(', ') : ''} onClick={e => e.stopPropagation()}>
+                {track.sources ? JSON.parse(track.sources).filter(s => !s.startsWith('album:')).map((src, i, arr) => (
+                  <span key={src}>
+                    <span className="track-link" onClick={() => updateFilter('sources', [...new Set([...filters.sources, src])])}>{src}</span>
+                    {i < arr.length - 1 && ', '}
+                  </span>
+                )) : '-'}
+              </span>
             )}
             {visibleColumns.includes('genres') && (
-              <span className="track-text" onClick={(e) => { 
-                e.stopPropagation()
-                const g = track.genres ? JSON.parse(track.genres) : []
-                if (g.length) updateFilter('genres', [...new Set([...filters.genres, g[0]])])
-              }}>{track.genres ? JSON.parse(track.genres).join(', ') : '-'}</span>
+              <span className="track-text" title={track.genres ? JSON.parse(track.genres).join(', ') : ''} onClick={e => e.stopPropagation()}>
+                {track.genres ? JSON.parse(track.genres).map((g, i, arr) => (
+                  <span key={g}>
+                    <span className="track-link" onClick={() => updateFilter('genres', [...new Set([...filters.genres, g])])}>{g}</span>
+                    {i < arr.length - 1 && ', '}
+                  </span>
+                )) : '-'}
+              </span>
             )}
             {visibleColumns.includes('bpm') && (
-              <span className="track-bpm" onClick={(e) => { e.stopPropagation(); updateFilter('tempo', [Math.round(track.tempo) - 5, Math.round(track.tempo) + 5]) }}>{track.tempo ? Math.round(track.tempo) : '-'}</span>
+              <span className="track-bpm" onClick={(e) => { e.stopPropagation(); const bpm = Math.round(track.tempo); updateFilter('tempo', [bpm, bpm]) }}>{track.tempo ? Math.round(track.tempo) : '-'}</span>
             )}
             {visibleColumns.includes('danceability') && (
-              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('danceability', [track.danceability - 0.1, track.danceability + 0.1]) }}>
+              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('danceability', [track.danceability, track.danceability]) }}>
                 <div className="bar-fill" style={{ width: `${(track.danceability || 0) * 100}%` }} />
               </div>
             )}
             {visibleColumns.includes('energy') && (
-              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('energy', [track.energy - 0.1, track.energy + 0.1]) }}>
+              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('energy', [track.energy, track.energy]) }}>
                 <div className="bar-fill" style={{ width: `${(track.energy || 0) * 100}%` }} />
               </div>
             )}
             {visibleColumns.includes('valence') && (
-              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('valence', [track.valence - 0.1, track.valence + 0.1]) }}>
+              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('valence', [track.valence, track.valence]) }}>
                 <div className="bar-fill" style={{ width: `${(track.valence || 0) * 100}%` }} />
               </div>
             )}
             {visibleColumns.includes('acousticness') && (
-              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('acousticness', [track.acousticness - 0.1, track.acousticness + 0.1]) }}>
+              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('acousticness', [track.acousticness, track.acousticness]) }}>
                 <div className="bar-fill" style={{ width: `${(track.acousticness || 0) * 100}%` }} />
               </div>
             )}
             {visibleColumns.includes('instrumentalness') && (
-              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('instrumentalness', [track.instrumentalness - 0.1, track.instrumentalness + 0.1]) }}>
+              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('instrumentalness', [track.instrumentalness, track.instrumentalness]) }}>
                 <div className="bar-fill" style={{ width: `${(track.instrumentalness || 0) * 100}%` }} />
               </div>
             )}
             {visibleColumns.includes('speechiness') && (
-              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('speechiness', [track.speechiness - 0.1, track.speechiness + 0.1]) }}>
+              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('speechiness', [track.speechiness, track.speechiness]) }}>
                 <div className="bar-fill" style={{ width: `${(track.speechiness || 0) * 100}%` }} />
               </div>
             )}
             {visibleColumns.includes('liveness') && (
-              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('liveness', [track.liveness - 0.1, track.liveness + 0.1]) }}>
+              <div className="bar" onClick={(e) => { e.stopPropagation(); updateFilter('liveness', [track.liveness, track.liveness]) }}>
                 <div className="bar-fill" style={{ width: `${(track.liveness || 0) * 100}%` }} />
               </div>
             )}
             {visibleColumns.includes('popularity') && (
-              <span className="track-num" onClick={(e) => { e.stopPropagation(); updateFilter('popularity', [track.popularity - 10, track.popularity + 10]) }}>{track.popularity || '-'}</span>
+              <span className="track-num" onClick={(e) => { e.stopPropagation(); updateFilter('popularity', [track.popularity, track.popularity]) }}>{track.popularity || '-'}</span>
             )}
             {visibleColumns.includes('key') && (
               <span className="track-key" onClick={(e) => { e.stopPropagation(); updateFilter('key', String(track.key)) }}>{track.key != null ? KEYS[track.key] : '-'}</span>
