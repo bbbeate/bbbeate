@@ -19,10 +19,34 @@ const ALL_FILTERS = [
   { id: 'popularity', label: 'popularity', type: 'range', min: 0, max: 100, step: 1 },
 ]
 
-const DEFAULT_VISIBLE = ['search', 'tempo', 'sources']
-const isMobile = () => window.innerWidth <= 600
+const ALL_COLUMNS = [
+  { id: 'name', label: 'name' },
+  { id: 'artist', label: 'artist' },
+  { id: 'bpm', label: 'bpm' },
+  { id: 'danceability', label: 'dance' },
+  { id: 'energy', label: 'energy' },
+  { id: 'valence', label: 'valence' },
+]
 
-function MultiSelect({ options, selected, onChange, label }) {
+const DEFAULT_COLUMNS = ['name', 'artist', 'bpm', 'danceability', 'energy', 'valence']
+
+const DEFAULT_FILTERS = {
+  search: '',
+  tempo: [40, 220],
+  energy: [0, 1],
+  danceability: [0, 1],
+  valence: [0, 1],
+  acousticness: [0, 1],
+  instrumentalness: [0, 1],
+  speechiness: [0, 1],
+  liveness: [0, 1],
+  popularity: [0, 100],
+  key: '',
+  sources: [],
+  genres: [],
+}
+
+function MultiSelect({ options, selected, onChange, label, onClear }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const ref = useRef(null)
@@ -54,6 +78,9 @@ function MultiSelect({ options, selected, onChange, label }) {
       <button className="multiselect-trigger" onClick={() => setOpen(!open)}>
         {selected.length ? `${selected.length} selected` : `any ${label}`}
       </button>
+      {selected.length > 0 && onClear && (
+        <button className="filter-clear" onClick={onClear}>x</button>
+      )}
       {open && (
         <div className="multiselect-dropdown">
           <input
@@ -88,7 +115,7 @@ function MultiSelect({ options, selected, onChange, label }) {
   )
 }
 
-function RangeSlider({ min, max, step, value, onChange }) {
+function RangeSlider({ min, max, step, value, onChange, onClear, isActive }) {
   const [localMin, localMax] = value || [min, max]
   
   return (
@@ -112,6 +139,9 @@ function RangeSlider({ min, max, step, value, onChange }) {
         onChange={e => onChange([localMin, Number(e.target.value)])}
         placeholder="max"
       />
+      {isActive && onClear && (
+        <button className="filter-clear" onClick={onClear}>x</button>
+      )}
     </div>
   )
 }
@@ -123,25 +153,11 @@ function App() {
   const [genres, setGenres] = useState([])
   const [sort, setSort] = useState('name')
   const [detail, setDetail] = useState(null)
-  const [visibleFilters, setVisibleFilters] = useState(DEFAULT_VISIBLE)
-  const [showFilterPicker, setShowFilterPicker] = useState(false)
-  const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [showFilterModal, setShowFilterModal] = useState(false)
+  const [showColumnPicker, setShowColumnPicker] = useState(false)
+  const [visibleColumns, setVisibleColumns] = useState(DEFAULT_COLUMNS)
   const [player, setPlayer] = useState(null)
-  const [filters, setFilters] = useState({
-    search: '',
-    tempo: [40, 220],
-    energy: [0, 1],
-    danceability: [0, 1],
-    valence: [0, 1],
-    acousticness: [0, 1],
-    instrumentalness: [0, 1],
-    speechiness: [0, 1],
-    liveness: [0, 1],
-    popularity: [0, 100],
-    key: '',
-    sources: [],
-    genres: [],
-  })
+  const [filters, setFilters] = useState(DEFAULT_FILTERS)
 
   const loadTracks = useCallback(async () => {
     const params = new URLSearchParams()
@@ -177,7 +193,6 @@ function App() {
     })
   }, [])
 
-  // poll player state
   useEffect(() => {
     const fetchPlayer = () => {
       fetch('/api/player').then(r => r.json()).then(setPlayer).catch(() => {})
@@ -216,11 +231,22 @@ function App() {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
 
-  const toggleVisibleFilter = (id) => {
-    if (visibleFilters.includes(id)) {
-      setVisibleFilters(visibleFilters.filter(f => f !== id))
+  const clearFilter = (id) => {
+    const def = ALL_FILTERS.find(f => f.id === id)
+    if (def) {
+      updateFilter(id, DEFAULT_FILTERS[id])
+    }
+  }
+
+  const clearAllFilters = () => {
+    setFilters(DEFAULT_FILTERS)
+  }
+
+  const toggleColumn = (id) => {
+    if (visibleColumns.includes(id)) {
+      setVisibleColumns(visibleColumns.filter(c => c !== id))
     } else {
-      setVisibleFilters([...visibleFilters, id])
+      setVisibleColumns([...visibleColumns, id])
     }
   }
 
@@ -248,11 +274,27 @@ function App() {
     return `${mins}:${String(secs).padStart(2, '0')}`
   }
 
-  const renderFilter = (filterDef) => {
+  const isFilterActive = (id) => {
+    const def = ALL_FILTERS.find(f => f.id === id)
+    if (!def) return false
+    if (def.type === 'search') return !!filters.search
+    if (def.type === 'multiselect') return filters[id].length > 0
+    if (def.type === 'select') return !!filters[id]
+    if (def.type === 'range') {
+      return filters[id][0] > def.min || filters[id][1] < def.max
+    }
+    return false
+  }
+
+  const activeFilterCount = () => ALL_FILTERS.filter(f => isFilterActive(f.id)).length
+
+  const renderFilter = (filterDef, inModal = false) => {
+    const isActive = isFilterActive(filterDef.id)
+    
     switch (filterDef.type) {
       case 'search':
         return (
-          <div className="filter-row" key={filterDef.id}>
+          <div className="filter-item" key={filterDef.id}>
             <label>{filterDef.label}</label>
             <input
               type="text"
@@ -260,11 +302,14 @@ function App() {
               onChange={e => updateFilter('search', e.target.value)}
               placeholder="name/artist"
             />
+            {isActive && (
+              <button className="filter-clear" onClick={() => clearFilter('search')}>x</button>
+            )}
           </div>
         )
       case 'range':
         return (
-          <div className="filter-row" key={filterDef.id}>
+          <div className="filter-item" key={filterDef.id}>
             <label>{filterDef.label}</label>
             <RangeSlider
               min={filterDef.min}
@@ -272,30 +317,35 @@ function App() {
               step={filterDef.step}
               value={filters[filterDef.id]}
               onChange={val => updateFilter(filterDef.id, val)}
-              label={filterDef.label}
+              onClear={() => clearFilter(filterDef.id)}
+              isActive={isActive}
             />
           </div>
         )
       case 'multiselect':
         return (
-          <div className="filter-row" key={filterDef.id}>
+          <div className="filter-item" key={filterDef.id}>
             <label>{filterDef.label}</label>
             <MultiSelect
               options={filterDef.id === 'sources' ? sources : genres}
               selected={filters[filterDef.id]}
               onChange={val => updateFilter(filterDef.id, val)}
               label={filterDef.label}
+              onClear={() => clearFilter(filterDef.id)}
             />
           </div>
         )
       case 'select':
         return (
-          <div className="filter-row" key={filterDef.id}>
+          <div className="filter-item" key={filterDef.id}>
             <label>{filterDef.label}</label>
             <select value={filters.key} onChange={e => updateFilter('key', e.target.value)}>
               <option value="">any</option>
               {filterDef.options.map((k, i) => <option key={i} value={i}>{k}</option>)}
             </select>
+            {isActive && (
+              <button className="filter-clear" onClick={() => clearFilter('key')}>x</button>
+            )}
           </div>
         )
       default:
@@ -303,79 +353,51 @@ function App() {
     }
   }
 
-  const activeFilterCount = () => {
-    let count = 0
-    if (filters.search) count++
-    if (filters.tempo[0] > 40 || filters.tempo[1] < 220) count++
-    if (filters.sources.length) count++
-    if (filters.genres.length) count++
-    if (filters.energy[0] > 0 || filters.energy[1] < 1) count++
-    if (filters.danceability[0] > 0 || filters.danceability[1] < 1) count++
-    if (filters.valence[0] > 0 || filters.valence[1] < 1) count++
-    if (filters.key) count++
-    return count
-  }
-
   return (
     <div className="app">
-      <h1>musikk</h1>
+      <header className="app-header">
+        <h1>musikk</h1>
+        <div className="header-actions">
+          <button className="header-btn" onClick={() => setShowFilterModal(true)}>
+            filters {activeFilterCount() > 0 && `(${activeFilterCount()})`}
+          </button>
+          <button className="header-btn" onClick={() => setShowColumnPicker(!showColumnPicker)}>
+            cols
+          </button>
+        </div>
+      </header>
 
-      {/* mobile: filter button */}
-      <div className="mobile-filter-bar">
-        <input
-          type="text"
-          className="mobile-search"
-          value={filters.search}
-          onChange={e => updateFilter('search', e.target.value)}
-          placeholder="search..."
-        />
-        <button className="mobile-filter-btn" onClick={() => setShowMobileFilters(true)}>
-          filters {activeFilterCount() > 0 && `(${activeFilterCount()})`}
-        </button>
-      </div>
-
-      {/* mobile: filter modal */}
-      {showMobileFilters && (
-        <div className="modal-overlay" onClick={() => setShowMobileFilters(false)}>
-          <div className="filter-modal" onClick={e => e.stopPropagation()}>
-            <div className="filter-modal-header">
-              <h2>filters</h2>
-              <button onClick={() => setShowMobileFilters(false)}>x</button>
-            </div>
-            <div className="filter-modal-content">
-              {ALL_FILTERS.filter(f => f.id !== 'search').map(def => renderFilter(def))}
-            </div>
-          </div>
+      {showColumnPicker && (
+        <div className="column-picker">
+          {ALL_COLUMNS.map(col => (
+            <label key={col.id} className="picker-option">
+              <input
+                type="checkbox"
+                checked={visibleColumns.includes(col.id)}
+                onChange={() => toggleColumn(col.id)}
+              />
+              {col.label}
+            </label>
+          ))}
         </div>
       )}
 
-      {/* desktop: inline filters */}
-      <div className="desktop-filters">
-        {visibleFilters.map(id => {
-          const def = ALL_FILTERS.find(f => f.id === id)
-          return def ? renderFilter(def) : null
-        })}
-        
-        <div className="filter-row">
-          <button className="filter-picker-btn" onClick={() => setShowFilterPicker(!showFilterPicker)}>
-            +
-          </button>
-        </div>
-      </div>
-
-      {showFilterPicker && (
-        <div className="filter-picker">
-          <div className="filter-picker-title">show/hide filters:</div>
-          {ALL_FILTERS.map(f => (
-            <label key={f.id} className="filter-picker-option">
-              <input
-                type="checkbox"
-                checked={visibleFilters.includes(f.id)}
-                onChange={() => toggleVisibleFilter(f.id)}
-              />
-              {f.label}
-            </label>
-          ))}
+      {showFilterModal && (
+        <div className="modal-overlay" onClick={() => setShowFilterModal(false)}>
+          <div className="filter-modal" onClick={e => e.stopPropagation()}>
+            <div className="filter-modal-header">
+              <h2>filters</h2>
+              <div className="filter-modal-actions">
+                {activeFilterCount() > 0 && (
+                  <button className="clear-all-btn" onClick={clearAllFilters}>clear all</button>
+                )}
+                <button onClick={() => setShowFilterModal(false)}>x</button>
+              </div>
+            </div>
+            <div className="filter-modal-content">
+              {ALL_FILTERS.map(def => renderFilter(def, true))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -385,30 +407,55 @@ function App() {
       </div>
 
       <div className="header-row">
-        <span className={`col-name ${sort === 'name' ? 'sorted' : ''}`} onClick={() => setSort('name')}>name</span>
-        <span className={`col-artist ${sort === 'artists' ? 'sorted' : ''}`} onClick={() => setSort('artists')}>artist</span>
-        <span className={`col-bpm ${sort === 'tempo' ? 'sorted' : ''}`} onClick={() => setSort('tempo')}>bpm</span>
-        <span className={`col-bar ${sort === 'danceability' ? 'sorted' : ''}`} onClick={() => setSort('danceability')}>dance</span>
-        <span className={`col-bar ${sort === 'energy' ? 'sorted' : ''}`} onClick={() => setSort('energy')}>energy</span>
-        <span className={`col-bar ${sort === 'valence' ? 'sorted' : ''}`} onClick={() => setSort('valence')}>valence</span>
+        {visibleColumns.includes('name') && (
+          <span className={`col-name ${sort === 'name' ? 'sorted' : ''}`} onClick={() => setSort('name')}>name</span>
+        )}
+        {visibleColumns.includes('artist') && (
+          <span className={`col-artist ${sort === 'artists' ? 'sorted' : ''}`} onClick={() => setSort('artists')}>artist</span>
+        )}
+        {visibleColumns.includes('bpm') && (
+          <span className={`col-bpm ${sort === 'tempo' ? 'sorted' : ''}`} onClick={() => setSort('tempo')}>bpm</span>
+        )}
+        {visibleColumns.includes('danceability') && (
+          <span className={`col-bar ${sort === 'danceability' ? 'sorted' : ''}`} onClick={() => setSort('danceability')}>dance</span>
+        )}
+        {visibleColumns.includes('energy') && (
+          <span className={`col-bar ${sort === 'energy' ? 'sorted' : ''}`} onClick={() => setSort('energy')}>energy</span>
+        )}
+        {visibleColumns.includes('valence') && (
+          <span className={`col-bar ${sort === 'valence' ? 'sorted' : ''}`} onClick={() => setSort('valence')}>valence</span>
+        )}
+        <span className="col-queue"></span>
       </div>
 
       <ul className="tracks">
         {tracks.map(track => (
-          <li key={track.spotify_id} className="track">
+          <li key={track.spotify_id} className="track" onClick={() => showDetail(track.spotify_id)}>
+            {visibleColumns.includes('name') && (
+              <span className="track-name">{track.name}</span>
+            )}
+            {visibleColumns.includes('artist') && (
+              <span className="track-artists">{parseArtists(track.artists)}</span>
+            )}
+            {visibleColumns.includes('bpm') && (
+              <span className="track-bpm">{track.tempo ? Math.round(track.tempo) : '-'}</span>
+            )}
+            {visibleColumns.includes('danceability') && (
+              <div className="bar">
+                <div className="bar-fill" style={{ width: `${(track.danceability || 0) * 100}%` }} />
+              </div>
+            )}
+            {visibleColumns.includes('energy') && (
+              <div className="bar">
+                <div className="bar-fill" style={{ width: `${(track.energy || 0) * 100}%` }} />
+              </div>
+            )}
+            {visibleColumns.includes('valence') && (
+              <div className="bar">
+                <div className="bar-fill" style={{ width: `${(track.valence || 0) * 100}%` }} />
+              </div>
+            )}
             <button className="track-queue" onClick={(e) => queueTrack(e, track.spotify_id)} title="queue">+</button>
-            <span className="track-name" onClick={() => showDetail(track.spotify_id)}>{track.name}</span>
-            <span className="track-artists">{parseArtists(track.artists)}</span>
-            <span className="track-bpm">{track.tempo ? Math.round(track.tempo) : '-'}</span>
-            <div className="bar">
-              <div className="bar-fill" style={{ width: `${(track.danceability || 0) * 100}%` }} />
-            </div>
-            <div className="bar">
-              <div className="bar-fill" style={{ width: `${(track.energy || 0) * 100}%` }} />
-            </div>
-            <div className="bar">
-              <div className="bar-fill" style={{ width: `${(track.valence || 0) * 100}%` }} />
-            </div>
           </li>
         ))}
       </ul>
@@ -436,7 +483,7 @@ function App() {
 
             <div className="detail-actions">
               <button onClick={() => { playTrack(detail.spotify_id); setDetail(null) }}>play</button>
-              <button onClick={() => queueTrack(detail.spotify_id)}>queue</button>
+              <button onClick={(e) => queueTrack(e, detail.spotify_id)}>queue</button>
               <a href={`https://open.spotify.com/track/${detail.spotify_id}`} target="_blank" rel="noopener">
                 open in spotify
               </a>
@@ -445,7 +492,6 @@ function App() {
         </div>
       )}
 
-      {/* player bar */}
       {player?.item && (
         <div className="player-bar">
           <div 
