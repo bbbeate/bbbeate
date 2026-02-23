@@ -59,6 +59,35 @@
   margin: 0;
 }
 
+/* checkbox styling */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--first);
+  border-radius: 2px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+}
+
+input[type="checkbox"]:checked {
+  background: var(--first);
+}
+
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--background);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
 /* filter items - no boxes */
 .filter-item {
   display: flex;
@@ -104,11 +133,6 @@
   font-size: 0.8em;
   cursor: pointer;
   padding: 0.2em 0.4em;
-  opacity: 0.6;
-}
-
-.filter-clear:hover {
-  opacity: 1;
 }
 
 .stats {
@@ -385,11 +409,6 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  opacity: 0.5;
-}
-
-.track-queue:hover {
-  opacity: 1;
 }
 
 /* detail actions */
@@ -561,11 +580,6 @@
 
 .clear-all-btn {
   font-size: 0.85em !important;
-  opacity: 0.7;
-}
-
-.clear-all-btn:hover {
-  opacity: 1;
 }
 
 .filter-modal-content {
