@@ -300,7 +300,7 @@ function App() {
               type="text"
               value={filters.search}
               onChange={e => updateFilter('search', e.target.value)}
-              placeholder="name/artist"
+              placeholder=""
             />
             {isActive && (
               <button className="filter-clear" onClick={() => clearFilter('search')}>x</button>

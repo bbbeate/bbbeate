@@ -353,7 +353,7 @@ input[type="checkbox"]:checked::after {
 .multiselect-empty {
   padding: 0.5em;
   font-size: 0.85em;
-  color: var(--second, #666);
+  color: var(--first);
 }
 
 /* range filter */
