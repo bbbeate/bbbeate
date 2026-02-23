@@ -1,7 +1,7 @@
 use crate::db::{self, Track};
 use crate::spotify::{SpotifyClient, ReccobeatsClient};
 use rusqlite::Connection;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 pub struct SyncResult {
@@ -30,6 +30,7 @@ pub async fn run_sync(
     println!("syncing library for user: {}", user_id);
 
     let mut tracks: HashMap<String, Track> = HashMap::new();
+    let mut track_artist_ids: HashMap<String, Vec<String>> = HashMap::new(); // track_id -> artist_ids
 
     // fetch liked songs
     println!("fetching liked songs...");
@@ -42,6 +43,8 @@ pub async fn run_sync(
             None => continue,  // skip local files
         };
         let artists: Vec<String> = t.artists.iter().map(|a| a.name.clone()).collect();
+        let artist_ids: Vec<String> = t.artists.iter().map(|a| a.id.clone()).collect();
+        track_artist_ids.insert(track_id.clone(), artist_ids);
         let entry = tracks.entry(track_id.clone()).or_insert_with(|| Track {
             spotify_id: track_id.clone(),
             recco_id: None,
@@ -80,6 +83,8 @@ pub async fn run_sync(
         let album = &sa.album;
         for t in &album.tracks.items {
             let artists: Vec<String> = t.artists.iter().map(|a| a.name.clone()).collect();
+            let artist_ids: Vec<String> = t.artists.iter().map(|a| a.id.clone()).collect();
+            track_artist_ids.entry(t.id.clone()).or_insert(artist_ids);
             let entry = tracks.entry(t.id.clone()).or_insert_with(|| Track {
                 spotify_id: t.id.clone(),
                 recco_id: None,
@@ -133,6 +138,8 @@ pub async fn run_sync(
                     None => continue,  // skip local files
                 };
                 let artists: Vec<String> = t.artists.iter().map(|a| a.name.clone()).collect();
+                let artist_ids: Vec<String> = t.artists.iter().map(|a| a.id.clone()).collect();
+                track_artist_ids.entry(track_id.clone()).or_insert(artist_ids);
                 let entry = tracks.entry(track_id.clone()).or_insert_with(|| Track {
                     spotify_id: track_id.clone(),
                     recco_id: None,
@@ -166,6 +173,52 @@ pub async fn run_sync(
     }
 
     println!("total unique tracks: {}", tracks.len());
+
+    // collect unique artist IDs and fetch genres
+    let all_artist_ids: HashSet<String> = track_artist_ids.values()
+        .flat_map(|ids| ids.iter().cloned())
+        .collect();
+    println!("fetching genres for {} unique artists...", all_artist_ids.len());
+    
+    let mut artist_genres: HashMap<String, Vec<String>> = HashMap::new();
+    let artist_ids_vec: Vec<String> = all_artist_ids.into_iter().collect();
+    
+    for (i, chunk) in artist_ids_vec.chunks(50).enumerate() {
+        if (i + 1) % 10 == 0 || (i + 1) * 50 >= artist_ids_vec.len() {
+            println!("  artists {}/{}", ((i + 1) * 50).min(artist_ids_vec.len()), artist_ids_vec.len());
+        }
+        match spotify.get_artists_batch(&chunk.to_vec()).await {
+            Ok(artists) => {
+                for artist in artists {
+                    if !artist.genres.is_empty() {
+                        artist_genres.insert(artist.id, artist.genres);
+                    }
+                }
+            }
+            Err(e) => {
+                println!("  artist batch failed: {}", e);
+            }
+        }
+    }
+    println!("  got genres for {} artists", artist_genres.len());
+
+    // map genres to tracks
+    for (track_id, artist_ids) in &track_artist_ids {
+        if let Some(track) = tracks.get_mut(track_id) {
+            let mut track_genres: HashSet<String> = HashSet::new();
+            for artist_id in artist_ids {
+                if let Some(genres) = artist_genres.get(artist_id) {
+                    for g in genres {
+                        track_genres.insert(g.clone());
+                    }
+                }
+            }
+            if !track_genres.is_empty() {
+                let genres_vec: Vec<String> = track_genres.into_iter().collect();
+                track.genres = Some(serde_json::to_string(&genres_vec).unwrap());
+            }
+        }
+    }
 
     if dry_run {
         println!("dry run - not saving to database");

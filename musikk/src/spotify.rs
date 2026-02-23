@@ -43,6 +43,14 @@ pub struct SpotifyArtist {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct SpotifyArtistFull {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub genres: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct SpotifyAlbum {
     pub id: String,
     pub name: String,
@@ -306,6 +314,24 @@ impl SpotifyClient {
 
         let resp: Response = self.get(&url).await?;
         Ok(resp.audio_features.into_iter().flatten().collect())
+    }
+
+    pub async fn get_artists_batch(&self, ids: &[String]) -> Result<Vec<SpotifyArtistFull>, String> {
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        // spotify allows max 50 artists per request
+        let ids_str = ids.iter().take(50).cloned().collect::<Vec<_>>().join(",");
+        let url = format!("{}/artists?ids={}", SPOTIFY_API_URL, ids_str);
+
+        #[derive(Deserialize)]
+        struct Response {
+            artists: Vec<SpotifyArtistFull>,
+        }
+
+        let resp: Response = self.get(&url).await?;
+        Ok(resp.artists)
     }
 }
 

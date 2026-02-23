@@ -29,7 +29,7 @@ pub async fn serve(state: AppState, port: u16) {
     let app = Router::new()
         .route("/api/tracks", get(get_tracks))
         .route("/api/tracks/{id}", get(get_track))
-        .route("/api/stats", get(get_stats))
+        .route("/api/meta", get(get_meta))
         .route("/api/sync", post(trigger_sync))
         .nest_service("/", ServeDir::new("static").append_index_html_on_directories(true))
         .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any))
@@ -104,16 +104,21 @@ async fn get_track(
     }
 }
 
-async fn get_stats(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+async fn get_meta(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let conn = match Connection::open(&state.db_path) {
         Ok(c) => c,
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e.to_string()}))).into_response(),
     };
 
-    match db::get_stats(&conn) {
-        Ok(stats) => Json(stats).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e.to_string()}))).into_response(),
-    }
+    let stats = db::get_stats(&conn).ok();
+    let sources = db::get_all_sources(&conn).unwrap_or_default();
+    let genres = db::get_all_genres(&conn).unwrap_or_default();
+
+    Json(serde_json::json!({
+        "stats": stats,
+        "sources": sources,
+        "genres": genres
+    })).into_response()
 }
 
 async fn trigger_sync(State(state): State<Arc<AppState>>) -> impl IntoResponse {

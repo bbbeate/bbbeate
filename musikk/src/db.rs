@@ -407,3 +407,46 @@ pub fn get_tracks_missing_features(conn: &Connection) -> rusqlite::Result<Vec<St
         .collect::<Result<Vec<String>, _>>()?;
     Ok(ids)
 }
+
+pub fn get_all_sources(conn: &Connection) -> rusqlite::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT sources FROM tracks WHERE sources IS NOT NULL")?;
+    let mut all_sources: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
+    for row in rows {
+        if let Ok(sources_json) = row {
+            if let Ok(sources) = serde_json::from_str::<Vec<String>>(&sources_json) {
+                for s in sources {
+                    // skip album sources
+                    if !s.starts_with("album:") {
+                        all_sources.insert(s);
+                    }
+                }
+            }
+        }
+    }
+
+    let mut result: Vec<String> = all_sources.into_iter().collect();
+    result.sort();
+    Ok(result)
+}
+
+pub fn get_all_genres(conn: &Connection) -> rusqlite::Result<Vec<String>> {
+    let mut stmt = conn.prepare("SELECT genres FROM tracks WHERE genres IS NOT NULL")?;
+    let mut all_genres: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;
+    for row in rows {
+        if let Ok(genres_json) = row {
+            if let Ok(genres) = serde_json::from_str::<Vec<String>>(&genres_json) {
+                for g in genres {
+                    all_genres.insert(g);
+                }
+            }
+        }
+    }
+
+    let mut result: Vec<String> = all_genres.into_iter().collect();
+    result.sort();
+    Ok(result)
+}
