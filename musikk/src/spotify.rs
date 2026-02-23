@@ -283,6 +283,44 @@ impl SpotifyClient {
         Ok(())
     }
 
+    pub async fn skip_prev(&self) -> Result<(), String> {
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        
+        let resp = self.client
+            .post(&format!("{}/me/player/previous", SPOTIFY_API_URL))
+            .bearer_auth(token)
+            .header("Content-Length", "0")
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(format!("skip prev failed: {}", text));
+        }
+
+        Ok(())
+    }
+
+    pub async fn seek(&self, position_ms: i64) -> Result<(), String> {
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        
+        let resp = self.client
+            .put(&format!("{}/me/player/seek?position_ms={}", SPOTIFY_API_URL, position_ms))
+            .bearer_auth(token)
+            .header("Content-Length", "0")
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(format!("seek failed: {}", text));
+        }
+
+        Ok(())
+    }
+
     pub async fn exchange_code(&mut self, code: &str) -> Result<TokenResponse, String> {
         let mut params = HashMap::new();
         params.insert("grant_type", "authorization_code");

@@ -191,7 +191,8 @@ function App() {
     await fetch(`/api/player/play/${id}`, { method: 'POST' })
   }
 
-  const queueTrack = async (id) => {
+  const queueTrack = async (e, id) => {
+    e.stopPropagation()
     await fetch(`/api/player/queue/${id}`, { method: 'POST' })
   }
 
@@ -205,6 +206,10 @@ function App() {
 
   const skipNext = async () => {
     await fetch('/api/player/next', { method: 'POST' })
+  }
+
+  const skipPrev = async () => {
+    await fetch('/api/player/prev', { method: 'POST' })
   }
 
   const updateFilter = (key, value) => {
@@ -391,7 +396,7 @@ function App() {
       <ul className="tracks">
         {tracks.map(track => (
           <li key={track.spotify_id} className="track">
-            <button className="track-queue" onClick={() => queueTrack(track.spotify_id)} title="queue">+</button>
+            <button className="track-queue" onClick={(e) => queueTrack(e, track.spotify_id)} title="queue">+</button>
             <span className="track-name" onClick={() => showDetail(track.spotify_id)}>{track.name}</span>
             <span className="track-artists">{parseArtists(track.artists)}</span>
             <span className="track-bpm">{track.tempo ? Math.round(track.tempo) : '-'}</span>
@@ -443,13 +448,34 @@ function App() {
       {/* player bar */}
       {player?.item && (
         <div className="player-bar">
-          <div className="player-track">
-            <span className="player-name">{player.item.name}</span>
-            <span className="player-artist">{player.item.artists?.map(a => a.name).join(', ')}</span>
+          <div 
+            className="player-progress-bar"
+            onClick={async (e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              const percent = (e.clientX - rect.left) / rect.width
+              const position = Math.floor(percent * player.item.duration_ms)
+              await fetch(`/api/player/seek/${position}`, { method: 'POST' })
+            }}
+          >
+            <div 
+              className="player-progress-fill" 
+              style={{ width: `${((player.progress_ms || 0) / (player.item.duration_ms || 1)) * 100}%` }}
+            />
           </div>
-          <div className="player-controls">
-            <button onClick={togglePlayPause}>{player.is_playing ? '||' : '|>'}</button>
-            <button onClick={skipNext}>>|</button>
+          <div className="player-times">
+            <span>{formatDuration(player.progress_ms)}</span>
+            <span>{formatDuration(player.item.duration_ms)}</span>
+          </div>
+          <div className="player-main">
+            <div className="player-track">
+              <span className="player-name">{player.item.name}</span>
+              <span className="player-artist">{player.item.artists?.map(a => a.name).join(', ')}</span>
+            </div>
+            <div className="player-controls">
+              <button onClick={skipPrev}>|&lt;</button>
+              <button onClick={togglePlayPause}>{player.is_playing ? '||' : '|>'}</button>
+              <button onClick={skipNext}>&gt;|</button>
+            </div>
           </div>
         </div>
       )}

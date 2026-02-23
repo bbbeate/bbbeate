@@ -36,6 +36,8 @@ pub async fn serve(state: AppState, port: u16) {
         .route("/api/player/pause", post(pause_player))
         .route("/api/player/resume", post(resume_player))
         .route("/api/player/next", post(skip_next))
+        .route("/api/player/prev", post(skip_prev))
+        .route("/api/player/seek/{position}", post(seek_player))
         .route("/api/sync", post(trigger_sync))
         .route("/callback", get(auth_callback))
         .nest_service("/", ServeDir::new("static").append_index_html_on_directories(true))
@@ -214,6 +216,30 @@ async fn skip_next(State(state): State<Arc<AppState>>) -> impl IntoResponse {
         Ok(spotify) => {
             match spotify.skip_next().await {
                 Ok(_) => Json(serde_json::json!({"status": "skipped"})).into_response(),
+                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+            }
+        }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+async fn skip_prev(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    match get_spotify_client(&state).await {
+        Ok(spotify) => {
+            match spotify.skip_prev().await {
+                Ok(_) => Json(serde_json::json!({"status": "skipped"})).into_response(),
+                Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+            }
+        }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+async fn seek_player(State(state): State<Arc<AppState>>, Path(position): Path<i64>) -> impl IntoResponse {
+    match get_spotify_client(&state).await {
+        Ok(spotify) => {
+            match spotify.seek(position).await {
+                Ok(_) => Json(serde_json::json!({"status": "seeked"})).into_response(),
                 Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
             }
         }

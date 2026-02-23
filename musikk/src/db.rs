@@ -277,22 +277,28 @@ pub fn query_tracks(conn: &Connection, filter: &TrackFilter) -> rusqlite::Result
     }
     if let Some(ref sources) = filter.sources {
         if !sources.is_empty() {
-            // sources is json array, check if any match
-            let conditions: Vec<String> = sources
-                .iter()
-                .map(|s| format!("sources LIKE '%\"{}%'", s.replace("'", "''")))
-                .collect();
-            sql.push_str(&format!(" AND ({})", conditions.join(" OR ")));
+            // use json_each to check if any source matches
+            let placeholders: Vec<String> = sources.iter().map(|_| "?".to_string()).collect();
+            sql.push_str(&format!(
+                " AND EXISTS (SELECT 1 FROM json_each(sources) WHERE value IN ({}))",
+                placeholders.join(",")
+            ));
+            for s in sources {
+                params.push(Box::new(s.clone()));
+            }
         }
     }
     if let Some(ref genres) = filter.genres {
         if !genres.is_empty() {
-            // genres is json array, check if any match
-            let conditions: Vec<String> = genres
-                .iter()
-                .map(|g| format!("genres LIKE '%\"{}%'", g.replace("'", "''")))
-                .collect();
-            sql.push_str(&format!(" AND ({})", conditions.join(" OR ")));
+            // use json_each to check if any genre matches
+            let placeholders: Vec<String> = genres.iter().map(|_| "?".to_string()).collect();
+            sql.push_str(&format!(
+                " AND EXISTS (SELECT 1 FROM json_each(genres) WHERE value IN ({}))",
+                placeholders.join(",")
+            ));
+            for g in genres {
+                params.push(Box::new(g.clone()));
+            }
         }
     }
 
