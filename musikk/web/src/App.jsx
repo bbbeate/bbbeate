@@ -153,14 +153,23 @@ function App() {
   const [sources, setSources] = useState([])
   const [genres, setGenres] = useState([])
 
-  const [sort, setSort] = useState('name')
+  const [sort, setSort] = useState(() => {
+    const saved = localStorage.getItem('musikk-sort')
+    return saved || 'name'
+  })
   const [detail, setDetail] = useState(null)
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [showColumnPicker, setShowColumnPicker] = useState(false)
   const [showStats, setShowStats] = useState(false)
-  const [visibleColumns, setVisibleColumns] = useState(DEFAULT_COLUMNS)
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const saved = localStorage.getItem('musikk-columns')
+    return saved ? JSON.parse(saved) : DEFAULT_COLUMNS
+  })
   const [player, setPlayer] = useState(null)
-  const [filters, setFilters] = useState(DEFAULT_FILTERS)
+  const [filters, setFilters] = useState(() => {
+    const saved = localStorage.getItem('musikk-filters')
+    return saved ? JSON.parse(saved) : DEFAULT_FILTERS
+  })
   
   // selection state
   const [selectedTracks, setSelectedTracks] = useState(new Set())
@@ -195,6 +204,19 @@ function App() {
   useEffect(() => {
     loadTracks()
   }, [loadTracks])
+
+  // persist to localStorage
+  useEffect(() => {
+    localStorage.setItem('musikk-filters', JSON.stringify(filters))
+  }, [filters])
+
+  useEffect(() => {
+    localStorage.setItem('musikk-sort', sort)
+  }, [sort])
+
+  useEffect(() => {
+    localStorage.setItem('musikk-columns', JSON.stringify(visibleColumns))
+  }, [visibleColumns])
 
   useEffect(() => {
     fetch('/api/meta').then(r => r.json()).then(data => {
