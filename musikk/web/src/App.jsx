@@ -161,6 +161,14 @@ function App() {
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_COLUMNS)
   const [player, setPlayer] = useState(null)
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
+  
+  // selection state
+  const [selectedTracks, setSelectedTracks] = useState(new Set())
+  const [isSelecting, setIsSelecting] = useState(false)
+  const [selectionStart, setSelectionStart] = useState(null)
+  const [selectionBox, setSelectionBox] = useState(null)
+  const [showCheckboxes, setShowCheckboxes] = useState(false)
+  const tracksRef = useRef(null)
 
   const loadTracks = useCallback(async () => {
     const params = new URLSearchParams()
@@ -228,6 +236,80 @@ function App() {
 
   const skipPrev = async () => {
     await fetch('/api/player/prev', { method: 'POST' })
+  }
+
+  // selection handlers
+  const handleMouseDown = (e) => {
+    if (e.target.closest('.track-queue') || e.target.closest('button')) return
+    if (window.innerWidth <= 600) return // no drag select on mobile
+    
+    const rect = tracksRef.current?.getBoundingClientRect()
+    if (!rect) return
+    
+    setIsSelecting(true)
+    setSelectionStart({ x: e.clientX, y: e.clientY })
+    setSelectionBox({ x: e.clientX, y: e.clientY, width: 0, height: 0 })
+    setSelectedTracks(new Set())
+  }
+
+  const handleMouseMove = (e) => {
+    if (!isSelecting || !selectionStart) return
+    
+    const x = Math.min(e.clientX, selectionStart.x)
+    const y = Math.min(e.clientY, selectionStart.y)
+    const width = Math.abs(e.clientX - selectionStart.x)
+    const height = Math.abs(e.clientY - selectionStart.y)
+    
+    setSelectionBox({ x, y, width, height })
+    
+    // find tracks in selection box
+    const trackElements = tracksRef.current?.querySelectorAll('.track')
+    const selected = new Set()
+    
+    trackElements?.forEach((el, idx) => {
+      const rect = el.getBoundingClientRect()
+      if (
+        rect.left < x + width &&
+        rect.right > x &&
+        rect.top < y + height &&
+        rect.bottom > y
+      ) {
+        selected.add(tracks[idx]?.spotify_id)
+      }
+    })
+    
+    setSelectedTracks(selected)
+  }
+
+  const handleMouseUp = () => {
+    setIsSelecting(false)
+    setSelectionBox(null)
+  }
+
+  const clearSelection = () => {
+    setSelectedTracks(new Set())
+    setShowCheckboxes(false)
+  }
+
+  const toggleTrackSelection = (id) => {
+    const newSet = new Set(selectedTracks)
+    if (newSet.has(id)) {
+      newSet.delete(id)
+    } else {
+      newSet.add(id)
+    }
+    setSelectedTracks(newSet)
+  }
+
+  const selectAll = () => {
+    setSelectedTracks(new Set(tracks.map(t => t.spotify_id)))
+  }
+
+  const queueSelected = async () => {
+    for (const id of selectedTracks) {
+      await fetch(`/api/player/queue/${id}`, { method: 'POST' })
+    }
+    clearSelection()
   }
 
   const updateFilter = (key, value) => {
@@ -439,6 +521,7 @@ function App() {
       )}
 
       <div className="header-row">
+        <button className="mobile-select-btn" onClick={() => setShowCheckboxes(!showCheckboxes)}>+</button>
         {visibleColumns.includes('name') && (
           <span className={`col-name ${sort === 'name' ? 'sorted' : ''}`} onClick={() => setSort('name')}>name</span>
         )}
@@ -463,9 +546,48 @@ function App() {
         <span className="col-queue"></span>
       </div>
 
-      <ul className="tracks">
+      {(selectedTracks.size > 0 || showCheckboxes) && (
+        <div className="selection-bar">
+          {selectedTracks.size > 0 ? (
+            <>
+              <span>{selectedTracks.size} selected</span>
+              <button onClick={queueSelected}>queue all</button>
+              <button onClick={selectAll}>all</button>
+              <button onClick={clearSelection}>x</button>
+            </>
+          ) : (
+            <>
+              <span>select tracks</span>
+              <button onClick={selectAll}>all</button>
+              <button onClick={() => setShowCheckboxes(false)}>x</button>
+            </>
+          )}
+        </div>
+      )}
+
+      <ul 
+        className="tracks" 
+        ref={tracksRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
         {tracks.map(track => (
-          <li key={track.spotify_id} className="track" onClick={() => showDetail(track.spotify_id)}>
+          <li 
+            key={track.spotify_id} 
+            className={`track ${selectedTracks.has(track.spotify_id) ? 'selected' : ''}`}
+            onClick={() => showCheckboxes ? toggleTrackSelection(track.spotify_id) : (!isSelecting && showDetail(track.spotify_id))}
+          >
+            {showCheckboxes && (
+              <input 
+                type="checkbox" 
+                className="track-checkbox"
+                checked={selectedTracks.has(track.spotify_id)}
+                onChange={() => toggleTrackSelection(track.spotify_id)}
+                onClick={e => e.stopPropagation()}
+              />
+            )}
             <div className="track-info">
               {visibleColumns.includes('name') && (
                 <span className="track-name">{track.name}</span>
@@ -501,6 +623,20 @@ function App() {
         ))}
       </ul>
 
+      {selectionBox && (
+        <div 
+          className="selection-box"
+          style={{
+            left: selectionBox.x,
+            top: selectionBox.y,
+            width: selectionBox.width,
+            height: selectionBox.height
+          }}
+        />
+      )}
+
+
+
       {detail && (
         <div className="detail-overlay" onClick={() => setDetail(null)}>
           <div className="detail" onClick={e => e.stopPropagation()}>
@@ -523,11 +659,7 @@ function App() {
             <div className="detail-row"><span className="detail-label">popularity</span><span>{detail.popularity || '-'}</span></div>
 
             <div className="detail-actions">
-              <button onClick={() => { playTrack(detail.spotify_id); setDetail(null) }}>play</button>
               <button onClick={(e) => queueTrack(e, detail.spotify_id)}>queue</button>
-              <a href={`https://open.spotify.com/track/${detail.spotify_id}`} target="_blank" rel="noopener">
-                open in spotify
-              </a>
             </div>
           </div>
         </div>
