@@ -1,0 +1,6 @@
+data/pdfs/
+data/parsed/
+data/reviewed/
+__pycache__/
+*.pyc
+.venv/
