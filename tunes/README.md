@@ -1,6 +1,6 @@
-# liste
+# tunes
 
-simple list app with github gist as storage backend.
+music discovery app.
 
 ## dev
 
