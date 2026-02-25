@@ -193,6 +193,8 @@ function HueButton({ className, emoji, onPress, onOptions, style }) {
   )
 }
 
+const showSolopp = new URLSearchParams(window.location.search).get('solopp') === 'true'
+
 function App() {
   const [modal, setModal] = useState(null)
   const [settings, setSettings] = useState(defaultSettings)
@@ -211,6 +213,7 @@ function App() {
   }, [settings, settingsLoaded])
 
   useEffect(() => {
+    if (!showSolopp) return
     getOrCreateWakeInstance().then(instance => {
       if (instance) {
         const cfg = instance.configuration
@@ -301,13 +304,13 @@ function App() {
       <HueButton className="on" emoji="🌕" onPress={allOn} onOptions={() => openModal('on')} style={{ backgroundColor: mirekToHex(settings.on.mirek) }} />
       <HueButton className="night" emoji="🌛" onPress={nightMode} onOptions={() => openModal('night')} style={{ backgroundColor: settings.night.color }} />
       <HueButton className="orange" emoji="" onPress={orangeMode} onOptions={() => openModal('orange')} style={{ backgroundColor: settings.orange.color }} />
-      <HueButton
+      {showSolopp && <HueButton
         className="wake"
         emoji={wakeState.enabled ? wakeState.time : ''}
         onPress={() => openModal('wake')}
         onOptions={() => openModal('wake')}
         style={{ backgroundImage: 'url(/hjemme/solopp.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}
-      />
+      />}
 
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
