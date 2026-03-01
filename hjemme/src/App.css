@@ -39,6 +39,10 @@
   background-color: #ff6600;
 }
 
+.hue-button.sparkle {
+  background-color: #ffcc00;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;

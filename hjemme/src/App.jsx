@@ -3,11 +3,14 @@ import './App.css'
 
 const USERNAME = import.meta.env.VITE_HUE_USERNAME
 const ALL_LIGHTS_GROUP = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
+const NATTLYS1 = 'd539b9a8-8ece-4a4b-838b-354ae5375b37'
+const NATTLYS2 = '3d005f56-dbae-486a-afaf-feb45b657b2d'
 
 const defaultSettings = {
   on: { mirek: 300, brightness: 100 },
   night: { color: '#ff9933', brightness: 27 },
-  orange: { color: '#ff6600', brightness: 100 }
+  orange: { color: '#ff6600', brightness: 100 },
+  sparkle: { mirek: 300, brightness: 50 }
 }
 
 async function loadSettingsFromApi() {
@@ -56,12 +59,7 @@ async function getOrCreateWakeInstance() {
   const wakeUpScript = scripts.data?.find(s => s.description?.includes('wake up'))
   if (!wakeUpScript) return null
 
-  // Get room ID from existing wake instances
-  const instances = await hueApiV2('GET', '/behavior_instance')
-  const wakeInstances = instances.data?.filter(i => i.script_id === wakeUpScript.id)
-  const roomId = wakeInstances[0]?.configuration?.where?.[0]?.group?.rid || '967aae17-c8b2-46fe-a63a-253f22532300'
-
-  // Create new instance
+  // Create new instance targeting all lights zone
   const res = await hueApiV2('POST', '/behavior_instance', {
     type: 'behavior_instance',
     script_id: wakeUpScript.id,
@@ -77,7 +75,7 @@ async function getOrCreateWakeInstance() {
           time: { hour: 7, minute: 0 }
         }
       },
-      where: [{ group: { rid: roomId, rtype: 'room' } }]
+      where: [{ group: { rid: ALL_LIGHTS_GROUP, rtype: 'zone' } }]
     }
   })
 
@@ -100,6 +98,17 @@ const WAKE_PRESETS = ['06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:
 
 async function hueCommand(body) {
   await fetch(`/hue-api/clip/v2/resource/grouped_light/${ALL_LIGHTS_GROUP}`, {
+    method: 'PUT',
+    headers: {
+      'hue-application-key': USERNAME,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
+}
+
+async function lightCommand(lightId, body) {
+  await fetch(`/hue-api/clip/v2/resource/light/${lightId}`, {
     method: 'PUT',
     headers: {
       'hue-application-key': USERNAME,
@@ -298,12 +307,26 @@ function App() {
     })
   }
 
+  const sparkleMode = async () => {
+    const nattlysBody = {
+      on: { on: true },
+      dimming: { brightness: settings.sparkle.brightness },
+      color_temperature: { mirek: settings.sparkle.mirek }
+    }
+    await hueCommand({ on: { on: false } })
+    await Promise.all([
+      lightCommand(NATTLYS1, nattlysBody),
+      lightCommand(NATTLYS2, nattlysBody)
+    ])
+  }
+
   return (
     <div className="container">
       <HueButton className="off" emoji="🌑" onPress={allOff} onOptions={() => openModal('off')} />
       <HueButton className="on" emoji="🌕" onPress={allOn} onOptions={() => openModal('on')} style={{ backgroundColor: mirekToHex(settings.on.mirek) }} />
       <HueButton className="night" emoji="🌛" onPress={nightMode} onOptions={() => openModal('night')} style={{ backgroundColor: settings.night.color }} />
       <HueButton className="orange" emoji="" onPress={orangeMode} onOptions={() => openModal('orange')} style={{ backgroundColor: settings.orange.color }} />
+      {showSolopp && <HueButton className="sparkle" emoji="✨" onPress={sparkleMode} onOptions={() => openModal('sparkle')} style={{ backgroundColor: mirekToHex(settings.sparkle.mirek) }} />}
       {showSolopp && <HueButton
         className="wake"
         emoji={wakeState.enabled ? wakeState.time : ''}
@@ -398,6 +421,37 @@ function App() {
                     onChange={e => updateSetting('orange', { ...settings.orange, brightness: parseInt(e.target.value) })}
                   />
                   <span className="value">{settings.orange.brightness}%</span>
+                </label>
+              </>
+            )}
+
+            {modal === 'sparkle' && (
+              <>
+                <h2>✨</h2>
+                <label className="setting-row">
+                  <span>ambient</span>
+                  <input
+                    type="range"
+                    min="153"
+                    max="500"
+                    value={settings.sparkle.mirek}
+                    onChange={e => updateSetting('sparkle', { ...settings.sparkle, mirek: parseInt(e.target.value) })}
+                  />
+                </label>
+                <div className="temp-labels">
+                  <span>kald</span>
+                  <span>varm</span>
+                </div>
+                <label className="setting-row">
+                  <span>styrke</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={settings.sparkle.brightness}
+                    onChange={e => updateSetting('sparkle', { ...settings.sparkle, brightness: parseInt(e.target.value) })}
+                  />
+                  <span className="value">{settings.sparkle.brightness}%</span>
                 </label>
               </>
             )}
