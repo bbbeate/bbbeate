@@ -6,6 +6,7 @@
 
 import sys
 import os
+import time
 
 # load ../.env
 env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
@@ -79,6 +80,7 @@ def sparkle_toggle():
         hue_group_command({'on': {'on': False}})
     else:
         hue_group_command({'on': {'on': False}})
+        time.sleep(0.5)
         nattlys_body = {
             'on': {'on': True},
             'dimming': {'brightness': settings['sparkle']['brightness']},
