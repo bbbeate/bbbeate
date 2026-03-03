@@ -1,0 +1,622 @@
+@import url('@shared/colors.css');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 1px solid var(--second);
+}
+
+@font-face {
+  font-family: 'TextSymbols';
+  src: local('Apple Symbols'), local('Segoe UI Symbol'), local('Noto Sans Symbols 2'), local('Noto Sans Symbols');
+  unicode-range: U+2600-26FF, U+2640-2647, U+2648-2653, U+25A1, U+25B3, U+263D, U+263F, U+2609;
+}
+
+body {
+  background: var(--background);
+  color: var(--first);
+  font-family: 'TextSymbols', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+  min-height: 100dvh;
+}
+
+.app {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+header {
+  text-align: center;
+}
+
+h1 {
+  font-size: 1.4rem;
+  font-weight: 400;
+  letter-spacing: 4px;
+  text-transform: lowercase;
+  color: var(--second);
+}
+
+.date-display {
+  color: var(--second);
+  font-size: 0.85rem;
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* view tabs */
+.view-tabs {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.view-tabs button {
+  background: transparent;
+  border: 1px solid var(--second);
+  color: var(--second);
+  padding: 5px 16px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+.view-tabs button.active {
+  background: var(--second);
+  color: var(--background);
+}
+
+/* chart summary in header */
+.chart-summary {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  color: var(--second);
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+/* date picker */
+.datepicker {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.datepicker-now {
+  background: transparent;
+  border: 1px solid var(--second);
+  color: var(--second);
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.datepicker-now:hover {
+  background: var(--second);
+  color: var(--background);
+}
+
+.datepicker-display {
+  background: var(--background);
+  border: 1px solid var(--second);
+  color: var(--second);
+  padding: 5px 16px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+
+.datepicker-display:hover {
+  background: var(--second);
+  color: var(--background);
+}
+
+.datepicker-time {
+  background: var(--background);
+  border: 1px solid var(--second);
+  color: var(--second);
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+.datepicker-time::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.datepicker-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--background);
+  border: 1px solid var(--second);
+  border-radius: 4px;
+  padding: 10px;
+  z-index: 1000;
+  min-width: 240px;
+}
+
+.datepicker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.datepicker-month {
+  color: var(--first);
+  font-size: 0.85rem;
+}
+
+.datepicker-nav {
+  background: none;
+  border: none;
+  color: var(--second);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.datepicker-nav:hover {
+  background: var(--second);
+  color: var(--background);
+}
+
+.datepicker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.datepicker-weekdays span {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--second);
+}
+
+.datepicker-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.datepicker-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--first);
+}
+
+.datepicker-day.empty {
+  cursor: default;
+}
+
+.datepicker-day:not(.empty):hover {
+  background: var(--second);
+  color: var(--background);
+}
+
+.datepicker-day.today {
+  border: 1px solid var(--second);
+}
+
+.datepicker-day.selected {
+  background: var(--second);
+  color: var(--background);
+}
+
+/* solar system viz */
+.main-view {
+  display: flex;
+  justify-content: center;
+}
+
+.solar-system, .natal-chart {
+  width: 100%;
+  max-width: 600px;
+}
+
+.solar-system text, .natal-chart text {
+  font-family: 'TextSymbols', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* moon */
+.moon-viz {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+}
+
+.moon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.moon-name {
+  color: var(--first);
+  font-size: 0.85rem;
+}
+
+.moon-pct {
+  color: var(--second);
+  font-size: 0.8rem;
+}
+
+/* planet list */
+.planet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.planet-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.planet-row:hover {
+  border: 1px solid var(--second);
+  padding: 5px 11px;
+}
+
+.planet-row.selected {
+  border-left: 2px solid var(--second);
+  padding-left: 10px;
+}
+
+.planet-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.planet-name {
+  width: 90px;
+  color: var(--first);
+}
+
+.planet-sign {
+  flex: 1;
+  color: var(--second);
+}
+
+.planet-deg {
+  color: var(--second);
+  font-size: 0.8rem;
+  text-align: right;
+  width: 50px;
+}
+
+.planet-house {
+  color: var(--second);
+  font-size: 0.8rem;
+  width: 28px;
+  text-align: right;
+}
+
+/* birth input */
+.birth-input {
+  padding: 0;
+}
+
+.birth-fields {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.birth-fields input, .birth-fields select {
+  background: var(--background);
+  border: 1px solid var(--second);
+  color: var(--first);
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.birth-fields input[type="number"] {
+  max-width: 80px;
+}
+
+.birth-fields select {
+  max-width: 120px;
+}
+
+.save-btn {
+  background: transparent;
+  border: 1px solid var(--second);
+  color: var(--second);
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.save-btn:hover {
+  background: var(--second);
+  color: var(--background);
+}
+
+/* section label */
+.section-label {
+  color: var(--second);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+/* aspect list */
+.aspect-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aspect-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.aspect-bodies {
+  color: var(--first);
+  width: 140px;
+}
+
+.aspect-name {
+  color: var(--second);
+  flex: 1;
+}
+
+.aspect-orb {
+  color: var(--second);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+/* daily reading */
+.reading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reading-btn {
+  background: transparent;
+  border: 1px solid var(--second);
+  color: var(--second);
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  align-self: center;
+}
+
+.reading-btn:hover:not(:disabled) {
+  background: var(--second);
+  color: var(--background);
+}
+
+.reading-btn:disabled {
+  border-color: var(--second);
+  color: var(--second);
+  cursor: default;
+}
+
+.reading-text {
+  padding: 14px 0;
+}
+
+.reading-text p {
+  color: var(--first);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.reading-text p:first-child {
+  font-size: 0.7rem;
+  margin-bottom: 4px;
+}
+
+.reading-text p:last-child {
+  margin-bottom: 0;
+}
+
+.ask-form {
+  display: flex;
+  gap: 6px;
+}
+
+.ask-form input {
+  flex: 1;
+  background: var(--background);
+  border: 1px solid var(--second);
+  color: var(--first);
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border-radius: 4px;
+}
+
+.ask-form input::placeholder {
+  color: var(--second);
+}
+
+.ask-form button {
+  background: transparent;
+  border: 1px solid var(--second);
+  color: var(--second);
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.ask-form button:hover:not(:disabled) {
+  background: var(--second);
+  color: var(--background);
+}
+
+.ask-form button:disabled {
+  border-color: var(--second);
+  color: var(--second);
+  cursor: default;
+}
+
+/* for-you highlight */
+.detail-foryou {
+  border-left: 2px solid var(--second);
+  padding-left: 10px;
+}
+
+/* clickable planets */
+.planet-click {
+  cursor: pointer;
+}
+
+/* planet detail panel */
+.planet-detail {
+  padding: 14px 0;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.detail-title {
+  color: var(--first);
+  font-size: 0.95rem;
+  flex: 1;
+}
+
+.detail-close {
+  background: none;
+  border: none;
+  color: var(--second);
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.detail-position {
+  color: var(--second);
+  font-size: 0.8rem;
+  margin: 4px 0 12px 18px;
+}
+
+.detail-section {
+  margin-bottom: 10px;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  color: var(--second);
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+
+.detail-section p {
+  color: var(--first);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* aspect details inside planet detail */
+.detail-aspect {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--second);
+}
+
+.detail-aspect-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--first);
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.detail-aspect-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.detail-aspect-orb {
+  color: var(--second);
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.detail-aspect p {
+  color: var(--second);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
