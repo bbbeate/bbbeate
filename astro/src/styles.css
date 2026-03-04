@@ -189,6 +189,11 @@ h1 {
   color: var(--background);
 }
 
+.datepicker-nav-group {
+  display: flex;
+  gap: 2px;
+}
+
 .datepicker-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);

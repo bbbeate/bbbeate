@@ -579,7 +579,7 @@ export default function App() {
       {view === 'sky' && (
         <>
           <p className="date-display">{dateStr}</p>
-          <DatePicker date={date} onChange={setDate} />
+          <DatePicker date={date} onChange={setDate} showNow />
           <DailyReading text={reading} loading={readingLoading} onRead={fetchReading} snapshot={snapshot} natalChart={natalChart} />
           <MoonViz moon={snapshot.moon} />
           <PlanetList bodies={snapshot.bodies} selected={selectedBody} onSelect={selectBody} />

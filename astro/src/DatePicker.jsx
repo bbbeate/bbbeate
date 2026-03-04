@@ -8,14 +8,14 @@ function fmt(d) {
 }
 
 function fmtDisplay(d) {
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function fmtTime(d) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-export default function DatePicker({ date, onChange }) {
+export default function DatePicker({ date, onChange, showNow }) {
   const [open, setOpen] = useState(false)
   const [viewDate, setViewDate] = useState(new Date(date))
   const ref = useRef()
@@ -33,8 +33,10 @@ export default function DatePicker({ date, onChange }) {
   const lastDay = new Date(year, month + 1, 0)
   const startDay = new Date(year, month, 1).getDay() || 7
 
-  const prev = () => setViewDate(new Date(year, month - 1, 1))
-  const next = () => setViewDate(new Date(year, month + 1, 1))
+  const prevMonth = () => setViewDate(new Date(year, month - 1, 1))
+  const nextMonth = () => setViewDate(new Date(year, month + 1, 1))
+  const prevYear = () => setViewDate(new Date(year - 1, month, 1))
+  const nextYear = () => setViewDate(new Date(year + 1, month, 1))
 
   const select = (day) => {
     const d = new Date(year, month, day, date.getHours(), date.getMinutes())
@@ -55,7 +57,7 @@ export default function DatePicker({ date, onChange }) {
 
   return (
     <div className="datepicker" ref={ref}>
-      <button type="button" className="datepicker-now" onClick={() => onChange(new Date())}>rn</button>
+      {showNow && <button type="button" className="datepicker-now" onClick={() => onChange(new Date())}>rn</button>}
       <button type="button" className="datepicker-display" onClick={() => setOpen(!open)}>
         {fmtDisplay(date)}
       </button>
@@ -64,9 +66,15 @@ export default function DatePicker({ date, onChange }) {
       {open && (
         <div className="datepicker-dropdown">
           <div className="datepicker-header">
-            <button type="button" className="datepicker-nav" onClick={prev}>&larr;</button>
+            <div className="datepicker-nav-group">
+              <button type="button" className="datepicker-nav" onClick={prevYear}>&laquo;</button>
+              <button type="button" className="datepicker-nav" onClick={prevMonth}>&larr;</button>
+            </div>
             <span className="datepicker-month">{MONTHS[month]} {year}</span>
-            <button type="button" className="datepicker-nav" onClick={next}>&rarr;</button>
+            <div className="datepicker-nav-group">
+              <button type="button" className="datepicker-nav" onClick={nextMonth}>&rarr;</button>
+              <button type="button" className="datepicker-nav" onClick={nextYear}>&raquo;</button>
+            </div>
           </div>
           <div className="datepicker-weekdays">
             {WEEKDAYS.map((d, i) => <span key={i}>{d}</span>)}
