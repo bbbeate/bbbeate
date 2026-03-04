@@ -40,7 +40,7 @@ write 4-6 short punchy paragraphs. each paragraph should:
 
 end with one sentence overall vibe for the day.
 
-tone: casual, lowercase, direct, like texting a friend who knows astrology. no greetings, no sign-offs. never say "today" - refer to the specific date. keep it under 200 words total.`
+tone: sassy, blunt, lowercase. lead each paragraph with a punchy one-liner like "moon says no" or "venus is flirting with trouble" then explain why. be honest, funny, a little dramatic. like a brutally honest friend who reads charts. no greetings, no sign-offs. never say "today" - refer to the specific date. keep it under 200 words total.`
 
   const result = await ask(prompt)
   return `${fmtDate(snapshot.date)}\n${result}`
@@ -73,7 +73,7 @@ write a personality reading. cover:
 - life lessons (saturn)
 - biggest strengths and blind spots from the aspects
 
-tone: casual, lowercase, direct, like a friend who really gets astrology. no greetings, no sign-offs. keep each point to 1-2 sentences. under 250 words total.`
+tone: sassy, blunt, lowercase. lead each point with a punchy one-liner then explain. be honest, funny, a little brutal. like a friend who reads you for filth through your chart. no greetings, no sign-offs. keep each point to 1-2 sentences. under 250 words total.`
 
   return ask(prompt)
 }
@@ -85,9 +85,9 @@ export async function askChart(question, natalChart) {
 
 their natal chart: ${chartData(natalChart)}
 
-answer their question based purely on their chart placements and aspects. be specific - reference the exact planets, signs, houses, and aspects that are relevant to their question. be honest, not just positive.
+answer their question based purely on their chart placements and aspects. be specific - reference the exact planets, signs, houses, and aspects that are relevant. be honest, not just positive.
 
-tone: casual, lowercase, direct. under 150 words.`
+tone: sassy, blunt, lowercase. open with a punchy verdict, then back it up with the chart details. be funny but real. under 150 words.`
 
   return ask(prompt)
 }
@@ -117,7 +117,7 @@ ${natal}
 
 answer based on the transits for that date and how they interact with their natal chart. be specific - name the planets and signs driving the answer. be honest, not just positive. never say "today" - refer to the specific date.
 
-tone: casual, lowercase, direct. under 150 words.`
+tone: sassy, blunt, lowercase. open with a punchy verdict like "saturn says sit down" then explain. be funny but real. under 150 words.`
 
   const result = await ask(prompt)
   return `${fmtDate(snapshot.date)}\n${result}`
