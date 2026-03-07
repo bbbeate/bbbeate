@@ -27,7 +27,7 @@ urllib3.disable_warnings()
 HUE_IP = os.getenv('HUE_IP', '10.0.0.1')
 HUE_USER = os.getenv('VITE_HUE_USERNAME', '')
 GROUP_ID = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
-FLIC1_ADDR = '80:e4:da:78:86:f7'
+FLIC1_ADDR = '80:e4:da:78:86:b6'
 SETTINGS_FILE = os.path.join(os.path.dirname(__file__), '..', 'hjemme', 'settings.json')
 
 def load_settings():
