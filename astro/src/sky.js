@@ -233,4 +233,55 @@ export function getSignTransit(bodyId, date) {
   return { entered, exits }
 }
 
+// scan transiting planets aspecting natal planets over a date range
+export function scanTransits(natalChart, startDate, days, stepDays = 1) {
+  const natalBodies = natalChart.bodies
+  const orbs = { conjunction: 3, sextile: 2, square: 3, trine: 3, opposition: 3 }
+  const events = []
+  const active = {}
+  const skipMoon = days > 60
+
+  for (let d = 0; d <= days; d += stepDays) {
+    const date = new Date(startDate.getTime() + d * 86400000)
+    const snapshot = getSnapshot(date)
+    const currentKeys = new Set()
+
+    for (const transit of snapshot.bodies) {
+      if (skipMoon && transit.id === 'Moon') continue
+      for (const natal of natalBodies) {
+        let diff = Math.abs(transit.lon - natal.lon)
+        if (diff > 180) diff = 360 - diff
+        for (const asp of ASPECT_DEFS) {
+          if (Math.abs(diff - asp.angle) <= (orbs[asp.name] || 3)) {
+            const key = `${transit.id}-${natal.id}-${asp.name}`
+            currentKeys.add(key)
+            if (!active[key]) {
+              active[key] = {
+                transit: transit.id, natal: natal.id,
+                natalSign: natal.zodiac.sign, natalHouse: natal.house,
+                aspect: asp.name, startDate: date,
+              }
+            }
+            break
+          }
+        }
+      }
+    }
+
+    for (const key of Object.keys(active)) {
+      if (!currentKeys.has(key)) {
+        events.push({ ...active[key], endDate: new Date(date.getTime() - stepDays * 86400000) })
+        delete active[key]
+      }
+    }
+  }
+
+  const endDate = new Date(startDate.getTime() + days * 86400000)
+  for (const key of Object.keys(active)) {
+    events.push({ ...active[key], endDate })
+  }
+
+  return events
+}
+
 export { ZODIAC_SIGNS, ZODIAC_SYMBOLS, ASPECT_DEFS }

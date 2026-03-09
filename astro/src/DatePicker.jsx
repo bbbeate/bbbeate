@@ -15,6 +15,59 @@ function fmtTime(d) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
+function CalendarGrid({ date, viewDate, setViewDate, onSelect }) {
+  const year = viewDate.getFullYear()
+  const month = viewDate.getMonth()
+  const lastDay = new Date(year, month + 1, 0)
+  const startDay = new Date(year, month, 1).getDay() || 7
+
+  const prevMonth = () => setViewDate(new Date(year, month - 1, 1))
+  const nextMonth = () => setViewDate(new Date(year, month + 1, 1))
+  const prevYear = () => setViewDate(new Date(year - 1, month, 1))
+  const nextYear = () => setViewDate(new Date(year + 1, month, 1))
+
+  const today = fmt(new Date())
+  const selected = fmt(date)
+
+  return (
+    <div className="datepicker-dropdown">
+      <div className="datepicker-header">
+        <div className="datepicker-nav-group">
+          <button type="button" className="datepicker-nav" onClick={prevYear}>&laquo;</button>
+          <button type="button" className="datepicker-nav" onClick={prevMonth}>&larr;</button>
+        </div>
+        <span className="datepicker-month">{MONTHS[month]} {year}</span>
+        <div className="datepicker-nav-group">
+          <button type="button" className="datepicker-nav" onClick={nextMonth}>&rarr;</button>
+          <button type="button" className="datepicker-nav" onClick={nextYear}>&raquo;</button>
+        </div>
+      </div>
+      <div className="datepicker-weekdays">
+        {WEEKDAYS.map((d, i) => <span key={i}>{d}</span>)}
+      </div>
+      <div className="datepicker-days">
+        {Array.from({ length: startDay - 1 }, (_, i) => (
+          <span key={`e${i}`} className="datepicker-day empty" />
+        ))}
+        {Array.from({ length: lastDay.getDate() }, (_, i) => {
+          const day = i + 1
+          const dateStr = fmt(new Date(year, month, day))
+          const isSelected = dateStr === selected
+          const isToday = dateStr === today
+          let cls = 'datepicker-day'
+          if (isSelected) cls += ' selected'
+          if (isToday) cls += ' today'
+          return (
+            <span key={day} className={cls} onClick={() => onSelect(day)}>{day}</span>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+export { CalendarGrid }
+
 export default function DatePicker({ date, onChange, showNow }) {
   const [open, setOpen] = useState(false)
   const [viewDate, setViewDate] = useState(new Date(date))
@@ -28,17 +81,9 @@ export default function DatePicker({ date, onChange, showNow }) {
 
   useEffect(() => { setViewDate(new Date(date)) }, [date.getTime()])
 
-  const year = viewDate.getFullYear()
-  const month = viewDate.getMonth()
-  const lastDay = new Date(year, month + 1, 0)
-  const startDay = new Date(year, month, 1).getDay() || 7
-
-  const prevMonth = () => setViewDate(new Date(year, month - 1, 1))
-  const nextMonth = () => setViewDate(new Date(year, month + 1, 1))
-  const prevYear = () => setViewDate(new Date(year - 1, month, 1))
-  const nextYear = () => setViewDate(new Date(year + 1, month, 1))
-
   const select = (day) => {
+    const year = viewDate.getFullYear()
+    const month = viewDate.getMonth()
     const d = new Date(year, month, day, date.getHours(), date.getMinutes())
     onChange(d)
     setOpen(false)
@@ -52,9 +97,6 @@ export default function DatePicker({ date, onChange, showNow }) {
     onChange(d)
   }
 
-  const today = fmt(new Date())
-  const selected = fmt(date)
-
   return (
     <div className="datepicker" ref={ref}>
       {showNow && <button type="button" className="datepicker-now" onClick={() => onChange(new Date())}>rn</button>}
@@ -63,41 +105,7 @@ export default function DatePicker({ date, onChange, showNow }) {
       </button>
       <input type="time" className="datepicker-time" value={fmtTime(date)}
         onChange={e => changeTime(e.target.value)} />
-      {open && (
-        <div className="datepicker-dropdown">
-          <div className="datepicker-header">
-            <div className="datepicker-nav-group">
-              <button type="button" className="datepicker-nav" onClick={prevYear}>&laquo;</button>
-              <button type="button" className="datepicker-nav" onClick={prevMonth}>&larr;</button>
-            </div>
-            <span className="datepicker-month">{MONTHS[month]} {year}</span>
-            <div className="datepicker-nav-group">
-              <button type="button" className="datepicker-nav" onClick={nextMonth}>&rarr;</button>
-              <button type="button" className="datepicker-nav" onClick={nextYear}>&raquo;</button>
-            </div>
-          </div>
-          <div className="datepicker-weekdays">
-            {WEEKDAYS.map((d, i) => <span key={i}>{d}</span>)}
-          </div>
-          <div className="datepicker-days">
-            {Array.from({ length: startDay - 1 }, (_, i) => (
-              <span key={`e${i}`} className="datepicker-day empty" />
-            ))}
-            {Array.from({ length: lastDay.getDate() }, (_, i) => {
-              const day = i + 1
-              const dateStr = fmt(new Date(year, month, day))
-              const isSelected = dateStr === selected
-              const isToday = dateStr === today
-              let cls = 'datepicker-day'
-              if (isSelected) cls += ' selected'
-              if (isToday) cls += ' today'
-              return (
-                <span key={day} className={cls} onClick={() => select(day)}>{day}</span>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      {open && <CalendarGrid date={date} viewDate={viewDate} setViewDate={setViewDate} onSelect={select} />}
     </div>
   )
 }

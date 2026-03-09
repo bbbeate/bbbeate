@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { getSnapshot, getNatalChart, getSignTransit, ZODIAC_SYMBOLS, ASPECT_DEFS } from './sky.js'
 import { getInterpretation, getAspectMeaning } from './interpret.js'
-import { getReading, analyzeChart, askChart, askDay } from './horoscope.js'
-import DatePicker from './DatePicker.jsx'
+import { getReading, analyzeChart, askChart, askDay, getForecast, askForecast } from './horoscope.js'
+import DatePicker, { CalendarGrid } from './DatePicker.jsx'
+import MapPicker from './MapPicker.jsx'
 
 const DEG = Math.PI / 180
 
@@ -19,6 +20,14 @@ function loadBirth() {
     if (s) return JSON.parse(s)
   } catch {}
   return null
+}
+
+function loadProfiles() {
+  try {
+    const s = localStorage.getItem('astro-profiles')
+    if (s) return JSON.parse(s)
+  } catch {}
+  return []
 }
 
 // convert a local datetime string in a given timezone to a UTC Date
@@ -44,14 +53,6 @@ function toUTC(datetimeStr, tz) {
   }
   return new Date(guess)
 }
-
-const TIMEZONES = [
-  'Europe/Oslo', 'Europe/London', 'Europe/Berlin', 'Europe/Paris',
-  'Europe/Helsinki', 'Europe/Moscow', 'Europe/Istanbul',
-  'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
-  'America/Sao_Paulo', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata',
-  'Asia/Dubai', 'Australia/Sydney', 'Pacific/Auckland', 'UTC',
-]
 
 function SolarSystem({ snapshot, selected, onSelect }) {
   const cx = 300, cy = 300
@@ -277,7 +278,7 @@ function PlanetDetail({ body, allBodies, natalChart, date, onClose }) {
       {interp.transit && (
         <div className="detail-section">
           <div className="detail-label">
-            {body.label} in {body.zodiac.sign}: {fmt(transit.entered)} – {fmt(transit.exits)}
+            {body.label} in {body.zodiac.sign}: {fmt(transit.entered)} - {fmt(transit.exits)}
           </div>
           <p>{interp.transit}</p>
         </div>
@@ -370,17 +371,80 @@ function ReadingBlock({ text }) {
 
 const SKY_DEFAULT_Q = 'what does venus have in store for me?'
 
-function DailyReading({ text, loading, onRead, snapshot, natalChart }) {
+const fmtUntil = d => d.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })
+
+function SkyControls({ date, setDate, snapshot, natalChart }) {
+  const [mode, setMode] = useState('day') // 'day' | '27' | '180'
+  const [loading, setLoading] = useState(null) // which mode is loading
+  const [reading, setReading] = useState('')
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
   const [answerLoading, setAnswerLoading] = useState(false)
+  const [calOpen, setCalOpen] = useState(false)
+  const [calViewDate, setCalViewDate] = useState(new Date(date))
+  const calRef = useRef()
+  const calBtnRef = useRef()
+
+  useEffect(() => {
+    if (!calOpen) return
+    const handler = (e) => {
+      if (calRef.current?.contains(e.target)) return
+      if (calBtnRef.current?.contains(e.target)) return
+      setCalOpen(false)
+    }
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [calOpen])
+
+  const pickMode = async (m) => {
+    if (!natalChart) return
+    setMode(m)
+    setReading('')
+    setAnswer('')
+    if (m === 'day') {
+      setDate(new Date())
+      setLoading('day')
+      const text = await getReading(getSnapshot(new Date()), natalChart)
+      setReading(text)
+      setLoading(null)
+    } else {
+      const days = m === '27' ? 27 : 180
+      setLoading(m)
+      const text = await getForecast(natalChart, new Date(), days)
+      setReading(text)
+      setLoading(null)
+    }
+  }
+
+  const pickDate = async (day) => {
+    if (!natalChart) return
+    const yr = calViewDate.getFullYear()
+    const mo = calViewDate.getMonth()
+    const d = new Date(yr, mo, day, 12, 0)
+    setMode('day')
+    setDate(d)
+    setCalOpen(false)
+    setReading('')
+    setAnswer('')
+    setLoading('cal')
+    const text = await getReading(getSnapshot(d), natalChart)
+    setReading(text)
+    setLoading(null)
+  }
 
   const submitQuestion = async (e) => {
     e.preventDefault()
+    if (!natalChart) return
     const q = question.trim() || SKY_DEFAULT_Q
     setAnswerLoading(true)
     setAnswer('')
-    const result = await askDay(q, snapshot, natalChart)
+    let result
+    if (mode === 'day') {
+      result = await askDay(q, snapshot, natalChart)
+    } else {
+      const days = mode === '27' ? 27 : 180
+      result = await askForecast(q, natalChart, date, days)
+    }
     setAnswer(result)
     setAnswerLoading(false)
   }
@@ -392,12 +456,36 @@ function DailyReading({ text, loading, onRead, snapshot, natalChart }) {
     }
   }
 
+  const endDate27 = new Date(Date.now() + 27 * 86400000)
+  const endDate180 = new Date(Date.now() + 180 * 86400000)
+
+  const dateStr = mode === 'day'
+    ? date.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : `until ${fmtUntil(mode === '27' ? endDate27 : endDate180)}`
+
   return (
     <div className="reading">
-      <button className="reading-btn" onClick={onRead} disabled={loading}>
-        {loading ? 'reading the stars...' : 'read my day'}
-      </button>
-      <ReadingBlock text={text} />
+      <div className="sky-modes">
+        <button className={`sky-mode${mode === 'day' && !calOpen ? ' active' : ''}`}
+          onClick={() => pickMode('day')}>
+          {loading === 'day' ? '...' : 'rn'}
+        </button>
+        <button ref={calBtnRef} className={`sky-mode${calOpen ? ' active' : ''}`}
+          onClick={() => { setCalOpen(o => !o); setCalViewDate(new Date(date)) }}>
+          {loading === 'cal' ? '...' : 'cal'}
+        </button>
+        <button className={`sky-mode${mode === '27' ? ' active' : ''}`}
+          onClick={() => pickMode('27')}>
+          {loading === '27' ? 'scanning...' : '27d'}
+        </button>
+        <button className={`sky-mode${mode === '180' ? ' active' : ''}`}
+          onClick={() => pickMode('180')}>
+          {loading === '180' ? 'scanning...' : '180d'}
+        </button>
+      </div>
+      {calOpen && <div ref={calRef}><CalendarGrid date={date} viewDate={calViewDate} setViewDate={setCalViewDate} onSelect={pickDate} /></div>}
+      <p className="date-display">{dateStr}</p>
+      <ReadingBlock text={reading} />
       <form className="ask-form" onSubmit={submitQuestion}>
         <input type="text" value={question} placeholder={SKY_DEFAULT_Q}
           onChange={e => setQuestion(e.target.value)} onKeyDown={handleKey} />
@@ -474,31 +562,107 @@ function fmtDatetime(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function BirthInput({ draft, onDraft, onSave }) {
+async function fetchTimezone(lat, lng) {
+  try {
+    const res = await fetch(`https://timeapi.io/api/timezone/coordinate?latitude=${lat}&longitude=${lng}`)
+    if (res.ok) {
+      const data = await res.json()
+      return data.timeZone || null
+    }
+  } catch {}
+  return null
+}
+
+function ProfileEditor({ draft, onDraft, onSave, onSaveProfile }) {
+  const [name, setName] = useState(draft.name || '')
+  const [showMap, setShowMap] = useState(false)
+  const [tzLoading, setTzLoading] = useState(false)
   const birthDate = parseDatetime(draft.datetime)
   const onDateChange = (d) => onDraft({ ...draft, datetime: fmtDatetime(d) })
+  const onMapPick = (lat, lng, tz) => onDraft({ ...draft, lat, lng, tz })
+  const draftRef = useRef(draft)
+  draftRef.current = draft
+
+  useEffect(() => {
+    const lat = parseFloat(draft.lat)
+    const lng = parseFloat(draft.lng)
+    if (isNaN(lat) || isNaN(lng)) return
+    setTzLoading(true)
+    const timer = setTimeout(async () => {
+      const tz = await fetchTimezone(lat, lng)
+      if (tz) onDraft({ ...draftRef.current, tz })
+      setTzLoading(false)
+    }, 600)
+    return () => { clearTimeout(timer); setTzLoading(false) }
+  }, [draft.lat, draft.lng])
+
+  const save = () => {
+    const n = name.trim()
+    if (!n) return
+    onSaveProfile(n)
+  }
 
   return (
-    <div className="birth-input">
-      <div className="section-label">birth info</div>
+    <>
       <div className="birth-fields">
         <DatePicker date={birthDate} onChange={onDateChange} />
-        <select value={draft.tz} onChange={e => onDraft({ ...draft, tz: e.target.value })}>
-          {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz.replace(/^.*\//, '').replace(/_/g, ' ')}</option>)}
-        </select>
+        <span className="birth-tz">{tzLoading ? '...' : draft.tz?.replace(/^.*\//, '').replace(/_/g, ' ') || '-'}</span>
       </div>
       <div className="birth-fields">
         <input type="number" step="0.01" placeholder="lat" value={draft.lat}
           onChange={e => onDraft({ ...draft, lat: e.target.value })} />
         <input type="number" step="0.01" placeholder="lng" value={draft.lng}
           onChange={e => onDraft({ ...draft, lng: e.target.value })} />
-        <button className="save-btn" onClick={onSave}>set</button>
+        <button className="map-globe-btn" onClick={() => setShowMap(s => !s)}>{'\u2295'}</button>
       </div>
+      {showMap && <MapPicker lat={draft.lat} lng={draft.lng} onChange={onMapPick} />}
+      <div className="birth-fields" style={{ marginTop: 8 }}>
+        <input type="text" placeholder="name" value={name}
+          onChange={e => setName(e.target.value)} />
+        <button className="save-btn" onClick={save}>save</button>
+        <button className="save-btn" onClick={onSave}>use</button>
+      </div>
+    </>
+  )
+}
+
+function ProfilePanel({ birth, activeName, editing, draft, onDraft, onSave, onSaveProfile, onLoadProfile, onRemove, onEdit, onAdd, profiles }) {
+  return (
+    <div className="profile-panel">
+      {birth && !editing && (
+        <div className="profile-active">
+          <div className="profile-active-name">{activeName || 'unnamed'}</div>
+          <div className="profile-active-info">
+            {birth.datetime?.replace('T', ' ')} / {birth.tz?.replace(/^.*\//, '').replace(/_/g, ' ')} / {birth.lat}, {birth.lng}
+          </div>
+          <div className="profile-actions">
+            <button className="save-btn" onClick={onEdit}>edit</button>
+            <button className="save-btn" onClick={onAdd}>add</button>
+            {activeName && <button className="save-btn" onClick={() => onRemove(activeName)}>remove</button>}
+          </div>
+        </div>
+      )}
+      {(!birth || editing) && (
+        <ProfileEditor draft={draft} onDraft={onDraft} onSave={onSave} onSaveProfile={onSaveProfile} />
+      )}
+      {profiles.length > 0 && (
+        <div className="profile-list">
+          <div className="section-label">saved</div>
+          {profiles.map((p, i) => (
+            <div key={i} className={`profile-row${p.name === activeName ? ' active' : ''}`} onClick={() => onLoadProfile(p)}>
+              <span className="profile-name">{p.name}</span>
+              <span className="profile-date">{p.datetime?.replace('T', ' ')}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
 const VIEWS = ['sky', 'chart']
+
+const EMPTY_BIRTH = { datetime: '', tz: 'Europe/Oslo', lat: '', lng: '' }
 
 export default function App() {
   const [date, setDate] = useState(() => {
@@ -507,19 +671,71 @@ export default function App() {
     return d
   })
   const [view, setView] = useState('sky')
-  const defaultBirth = { datetime: '1990-06-15T12:00', tz: 'Europe/Oslo', lat: '59.91', lng: '10.75' }
-  const [birth, setBirth] = useState(() => loadBirth() || defaultBirth)
-  const [draft, setDraft] = useState(birth)
+  const [birth, setBirth] = useState(() => loadBirth())
+  const [activeName, setActiveName] = useState(() => {
+    const b = loadBirth()
+    return b?.name || null
+  })
+  const [draft, setDraft] = useState(birth || EMPTY_BIRTH)
+  const [profiles, setProfiles] = useState(loadProfiles)
   const [selectedBody, setSelectedBody] = useState(null)
-  const [reading, setReading] = useState('')
-  const [readingLoading, setReadingLoading] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const [profileEditing, setProfileEditing] = useState(false)
 
-  // clear reading when date changes
-  useEffect(() => { setReading('') }, [date.getTime()])
+  const hasBirth = !!birth
 
   const saveBirth = () => {
-    setBirth(draft)
-    localStorage.setItem('astro-birth', JSON.stringify(draft))
+    if (!draft.datetime || !draft.lat || !draft.lng) return
+    const data = { ...draft, name: activeName }
+    setBirth(data)
+    localStorage.setItem('astro-birth', JSON.stringify(data))
+    setProfileEditing(false)
+  }
+
+  const saveProfile = (name) => {
+    if (!draft.datetime || !draft.lat || !draft.lng) return
+    const profile = { ...draft, name }
+    const existing = profiles.filter(p => p.name !== name)
+    const updated = [...existing, profile]
+    setProfiles(updated)
+    localStorage.setItem('astro-profiles', JSON.stringify(updated))
+    const data = { ...draft, name }
+    setBirth(data)
+    setActiveName(name)
+    localStorage.setItem('astro-birth', JSON.stringify(data))
+    setProfileEditing(false)
+  }
+
+  const loadProfile = (p) => {
+    setDraft(p)
+    setBirth(p)
+    setActiveName(p.name)
+    localStorage.setItem('astro-birth', JSON.stringify(p))
+    setProfileEditing(false)
+  }
+
+  const removeProfile = (name) => {
+    const updated = profiles.filter(p => p.name !== name)
+    setProfiles(updated)
+    localStorage.setItem('astro-profiles', JSON.stringify(updated))
+    if (activeName === name) {
+      setBirth(null)
+      setActiveName(null)
+      setDraft(EMPTY_BIRTH)
+      localStorage.removeItem('astro-birth')
+      setProfileEditing(true)
+    }
+  }
+
+  const startAdd = () => {
+    setDraft(EMPTY_BIRTH)
+    setActiveName(null)
+    setProfileEditing(true)
+  }
+
+  const startEdit = () => {
+    setDraft(birth || EMPTY_BIRTH)
+    setProfileEditing(true)
   }
 
   const selectBody = (body) => setSelectedBody(prev => prev === body.id ? null : body.id)
@@ -531,29 +747,20 @@ export default function App() {
     ? snapshot.bodies.find(b => b.id === selectedBody) || null
     : null
 
-  // always compute natal chart from saved birth data
   const natalChart = useMemo(() => {
+    if (!birth) return null
     const lat = parseFloat(birth.lat)
     const lng = parseFloat(birth.lng)
     if (isNaN(lat) || isNaN(lng)) return null
     const d = toUTC(birth.datetime, birth.tz || 'Europe/Oslo')
     if (!d || isNaN(d)) return null
     return getNatalChart(d, lat, lng)
-  }, [birth.datetime, birth.tz, birth.lat, birth.lng])
+  }, [birth?.datetime, birth?.tz, birth?.lat, birth?.lng])
 
-  const fetchReading = useCallback(async () => {
-    setReadingLoading(true)
-    setReading('')
-    const text = await getReading(snapshot, natalChart)
-    setReading(text)
-    setReadingLoading(false)
-  }, [snapshot, natalChart])
-
-  const displayDate = view === 'chart' && natalChart ? natalChart.date : date
-  const dateStr = displayDate.toLocaleDateString('nb-NO', {
+  const chartDateStr = natalChart ? natalChart.date.toLocaleDateString('nb-NO', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     hour: '2-digit', minute: '2-digit'
-  })
+  }) : ''
 
   const sun = natalChart?.bodies.find(b => b.id === 'Sun')
   const moon = natalChart?.bodies.find(b => b.id === 'Moon')
@@ -567,20 +774,28 @@ export default function App() {
             <button key={v} className={v === view ? 'active' : ''} onClick={() => setView(v)}>{v}</button>
           ))}
         </div>
-        {natalChart && (
-          <div className="chart-summary">
-            <span>{natalChart.ascZodiac.symbol} rising</span>
-            <span>{sun?.zodiac.symbol} sun</span>
-            <span>{moon?.zodiac.symbol} moon</span>
-          </div>
-        )}
+        <button className={`profile-dot${!hasBirth ? ' pulse' : ''}`}
+          onClick={() => { setShowProfile(s => !s); if (!hasBirth) setProfileEditing(true) }}>
+          {natalChart ? `${natalChart.ascZodiac.symbol}${sun?.zodiac.symbol}${moon?.zodiac.symbol}` : '?'}
+        </button>
       </header>
+
+      {showProfile && (
+        <div className="modal-overlay" onClick={() => setShowProfile(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowProfile(false)}>x</button>
+            <ProfilePanel birth={birth} activeName={activeName} editing={profileEditing}
+              draft={draft} onDraft={setDraft} onSave={saveBirth}
+              onSaveProfile={saveProfile} onLoadProfile={loadProfile}
+              onRemove={removeProfile} onEdit={startEdit} onAdd={startAdd}
+              profiles={profiles} />
+          </div>
+        </div>
+      )}
 
       {view === 'sky' && (
         <>
-          <p className="date-display">{dateStr}</p>
-          <DatePicker date={date} onChange={setDate} showNow />
-          <DailyReading text={reading} loading={readingLoading} onRead={fetchReading} snapshot={snapshot} natalChart={natalChart} />
+          <SkyControls date={date} setDate={setDate} snapshot={snapshot} natalChart={natalChart} />
           <MoonViz moon={snapshot.moon} />
           <PlanetList bodies={snapshot.bodies} selected={selectedBody} onSelect={selectBody} />
           <PlanetDetail body={selectedBodyData} allBodies={snapshot.bodies} natalChart={natalChart} date={date} onClose={() => setSelectedBody(null)} />
@@ -592,10 +807,9 @@ export default function App() {
 
       {view === 'chart' && (
         <>
-          <BirthInput draft={draft} onDraft={setDraft} onSave={saveBirth} />
           {natalChart && (
             <>
-              <p className="date-display">{dateStr}</p>
+              <p className="date-display">{chartDateStr}</p>
               <ChartAnalysis natalChart={natalChart} />
               <PlanetList bodies={natalChart.bodies} showHouse selected={selectedBody} onSelect={selectBody} />
               <PlanetDetail body={selectedBody ? natalChart.bodies.find(b => b.id === selectedBody) : null} allBodies={natalChart.bodies} natalChart={natalChart} date={natalChart.date} onClose={() => setSelectedBody(null)} />

@@ -24,14 +24,14 @@ body {
   background: var(--background);
   color: var(--first);
   font-family: 'TextSymbols', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   min-height: 100dvh;
 }
 
 .app {
   max-width: 620px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -39,10 +39,11 @@ body {
 
 header {
   text-align: center;
+  position: relative;
 }
 
 h1 {
-  font-size: 1.4rem;
+  font-size: 21px;
   font-weight: 400;
   letter-spacing: 4px;
   text-transform: lowercase;
@@ -51,7 +52,7 @@ h1 {
 
 .date-display {
   color: var(--second);
-  font-size: 0.85rem;
+  font-size: 12px;
   margin-top: 4px;
   text-align: center;
 }
@@ -68,9 +69,9 @@ h1 {
   background: transparent;
   border: 1px solid var(--second);
   color: var(--second);
-  padding: 5px 16px;
+  padding: 6px 15px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 12px;
   cursor: pointer;
   border-radius: 4px;
   letter-spacing: 1px;
@@ -79,17 +80,6 @@ h1 {
 .view-tabs button.active {
   background: var(--second);
   color: var(--background);
-}
-
-/* chart summary in header */
-.chart-summary {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-  color: var(--second);
-  font-size: 0.85rem;
-  margin-top: 4px;
 }
 
 /* date picker */
@@ -104,9 +94,9 @@ h1 {
   background: transparent;
   border: 1px solid var(--second);
   color: var(--second);
-  padding: 5px 8px;
+  padding: 6px 9px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 12px;
   border-radius: 4px;
   cursor: pointer;
   letter-spacing: 1px;
@@ -121,9 +111,9 @@ h1 {
   background: var(--background);
   border: 1px solid var(--second);
   color: var(--second);
-  padding: 5px 16px;
+  padding: 6px 15px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 12px;
   border-radius: 4px;
   cursor: pointer;
   letter-spacing: 1px;
@@ -138,9 +128,9 @@ h1 {
   background: var(--background);
   border: 1px solid var(--second);
   color: var(--second);
-  padding: 5px 8px;
+  padding: 6px 9px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 12px;
   border-radius: 4px;
   letter-spacing: 1px;
 }
@@ -150,37 +140,42 @@ h1 {
 }
 
 .datepicker-dropdown {
+  background: var(--background);
+  border: 1px solid var(--second);
+  border-radius: 4px;
+  padding: 9px;
+  min-width: 240px;
+  max-width: 270px;
+  margin: 0 auto;
+}
+
+.datepicker .datepicker-dropdown {
   position: absolute;
   top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--background);
-  border: 1px solid var(--second);
-  border-radius: 4px;
-  padding: 10px;
   z-index: 1000;
-  min-width: 240px;
 }
 
 .datepicker-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .datepicker-month {
   color: var(--first);
-  font-size: 0.85rem;
+  font-size: 12px;
 }
 
 .datepicker-nav {
   background: none;
   border: none;
   color: var(--second);
-  font-size: 0.9rem;
+  font-size: 12px;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 3px 6px;
   border-radius: 4px;
 }
 
@@ -198,12 +193,12 @@ h1 {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .datepicker-weekdays span {
   text-align: center;
-  font-size: 0.7rem;
+  font-size: 12px;
   color: var(--second);
 }
 
@@ -218,7 +213,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  font-size: 12px;
   border-radius: 50%;
   cursor: pointer;
   color: var(--first);
@@ -262,23 +257,22 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 6px 12px;
 }
 
 .moon-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .moon-name {
   color: var(--first);
-  font-size: 0.85rem;
 }
 
 .moon-pct {
   color: var(--second);
-  font-size: 0.8rem;
+  font-size: 12px;
 }
 
 /* planet list */
@@ -291,7 +285,7 @@ h1 {
 .planet-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
@@ -308,8 +302,8 @@ h1 {
 }
 
 .planet-dot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -326,23 +320,19 @@ h1 {
 
 .planet-deg {
   color: var(--second);
-  font-size: 0.8rem;
+  font-size: 12px;
   text-align: right;
-  width: 50px;
+  width: 48px;
 }
 
 .planet-house {
   color: var(--second);
-  font-size: 0.8rem;
-  width: 28px;
+  font-size: 12px;
+  width: 27px;
   text-align: right;
 }
 
 /* birth input */
-.birth-input {
-  padding: 0;
-}
-
 .birth-fields {
   display: flex;
   gap: 6px;
@@ -353,16 +343,16 @@ h1 {
   background: var(--background);
   border: 1px solid var(--second);
   color: var(--first);
-  padding: 6px 8px;
+  padding: 6px 9px;
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 12px;
   border-radius: 4px;
   flex: 1;
   min-width: 0;
 }
 
 .birth-fields input[type="number"] {
-  max-width: 80px;
+  max-width: 81px;
 }
 
 .birth-fields select {
@@ -373,9 +363,9 @@ h1 {
   background: transparent;
   border: 1px solid var(--second);
   color: var(--second);
-  padding: 6px 14px;
+  padding: 6px 12px;
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 12px;
   cursor: pointer;
   border-radius: 4px;
   flex-shrink: 0;
@@ -389,7 +379,7 @@ h1 {
 /* section label */
 .section-label {
   color: var(--second);
-  font-size: 0.8rem;
+  font-size: 12px;
   letter-spacing: 1px;
 }
 
@@ -403,15 +393,14 @@ h1 {
 .aspect-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
+  gap: 9px;
+  padding: 3px 12px;
   border-radius: 4px;
-  font-size: 0.85rem;
 }
 
 .aspect-bodies {
   color: var(--first);
-  width: 140px;
+  width: 135px;
 }
 
 .aspect-name {
@@ -421,7 +410,7 @@ h1 {
 
 .aspect-orb {
   color: var(--second);
-  font-size: 0.8rem;
+  font-size: 12px;
   text-align: right;
 }
 
@@ -429,16 +418,16 @@ h1 {
 .reading {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
 }
 
 .reading-btn {
   background: transparent;
   border: 1px solid var(--second);
   color: var(--second);
-  padding: 10px 20px;
+  padding: 9px 18px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 12px;
   cursor: pointer;
   border-radius: 4px;
   letter-spacing: 1px;
@@ -457,19 +446,18 @@ h1 {
 }
 
 .reading-text {
-  padding: 14px 0;
+  padding: 12px 0;
 }
 
 .reading-text p {
   color: var(--first);
-  font-size: 0.85rem;
+  font-size: 12px;
   line-height: 1.6;
-  margin-bottom: 8px;
+  margin-bottom: 9px;
 }
 
 .reading-text p:first-child {
-  font-size: 0.7rem;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .reading-text p:last-child {
@@ -486,9 +474,9 @@ h1 {
   background: var(--background);
   border: 1px solid var(--second);
   color: var(--first);
-  padding: 8px 12px;
+  padding: 9px 12px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 12px;
   border-radius: 4px;
 }
 
@@ -500,9 +488,9 @@ h1 {
   background: transparent;
   border: 1px solid var(--second);
   color: var(--second);
-  padding: 8px 16px;
+  padding: 9px 15px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 12px;
   cursor: pointer;
   border-radius: 4px;
   flex-shrink: 0;
@@ -522,7 +510,7 @@ h1 {
 /* for-you highlight */
 .detail-foryou {
   border-left: 2px solid var(--second);
-  padding-left: 10px;
+  padding-left: 9px;
 }
 
 /* clickable planets */
@@ -532,25 +520,24 @@ h1 {
 
 /* planet detail panel */
 .planet-detail {
-  padding: 14px 0;
+  padding: 12px 0;
 }
 
 .detail-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
 }
 
 .detail-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .detail-title {
   color: var(--first);
-  font-size: 0.95rem;
   flex: 1;
 }
 
@@ -559,19 +546,18 @@ h1 {
   border: none;
   color: var(--second);
   font-family: inherit;
-  font-size: 0.95rem;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 3px 6px;
 }
 
 .detail-position {
   color: var(--second);
-  font-size: 0.8rem;
-  margin: 4px 0 12px 18px;
+  font-size: 12px;
+  margin: 3px 0 12px 18px;
 }
 
 .detail-section {
-  margin-bottom: 10px;
+  margin-bottom: 9px;
 }
 
 .detail-section:last-child {
@@ -580,21 +566,20 @@ h1 {
 
 .detail-label {
   color: var(--second);
-  font-size: 0.8rem;
+  font-size: 12px;
   letter-spacing: 0.5px;
   margin-bottom: 3px;
 }
 
 .detail-section p {
   color: var(--first);
-  font-size: 0.85rem;
   line-height: 1.5;
 }
 
 /* aspect details inside planet detail */
 .detail-aspect {
   margin: 6px 0;
-  padding: 8px 10px;
+  padding: 9px;
   border-left: 2px solid var(--second);
 }
 
@@ -603,8 +588,7 @@ h1 {
   align-items: center;
   gap: 6px;
   color: var(--first);
-  font-size: 0.85rem;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .detail-aspect-dot {
@@ -616,12 +600,204 @@ h1 {
 
 .detail-aspect-orb {
   color: var(--second);
-  font-size: 0.75rem;
+  font-size: 12px;
   margin-left: auto;
 }
 
 .detail-aspect p {
   color: var(--second);
-  font-size: 0.8rem;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* sky mode buttons */
+.sky-modes {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sky-mode {
+  background: transparent;
+  border: 1px solid var(--second);
+  color: var(--second);
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+.sky-mode:hover {
+  background: var(--second);
+  color: var(--background);
+}
+
+.sky-mode.active {
+  background: var(--second);
+  color: var(--background);
+}
+
+/* profile dot */
+.profile-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--second);
+  background: var(--background);
+  color: var(--first);
+  font-family: 'TextSymbols', inherit;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.profile-dot:hover {
+  background: var(--second);
+  color: var(--background);
+}
+
+.profile-dot.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); border-color: var(--second); }
+  50% { transform: scale(1.15); border-color: var(--first); }
+}
+
+/* modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--background);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.modal {
+  border: 1px solid var(--second);
+  border-radius: 4px;
+  padding: 18px;
+  max-width: 396px;
+  width: 100%;
+  max-height: 81vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 9px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--second);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 3px 6px;
+}
+
+/* profile panel */
+.profile-panel {
+  padding: 0;
+}
+
+.profile-list {
+  margin-top: 9px;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--first);
+}
+
+.profile-row:hover {
+  border: 1px solid var(--second);
+  padding: 5px 11px;
+}
+
+.profile-date {
+  color: var(--second);
+  font-size: 12px;
+}
+
+.profile-active {
+  margin-bottom: 9px;
+}
+
+.profile-active-name {
+  color: var(--first);
+}
+
+.profile-active-info {
+  color: var(--second);
+  font-size: 12px;
+  margin: 3px 0 9px;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.profile-row.active {
+  color: var(--first);
+}
+
+/* map picker */
+.map-picker {
+  height: 198px;
+  border-radius: 4px;
+  border: 1px solid var(--second);
+  margin-top: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-globe-btn {
+  background: transparent;
+  border: 1px solid var(--second);
+  color: var(--second);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 9px;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.map-globe-btn:hover {
+  background: var(--second);
+  color: var(--background);
+}
+
+.birth-tz {
+  color: var(--second);
+  font-size: 12px;
+  padding: 6px 0;
+}
+
+/* mobile */
+@media (max-width: 600px) {
+  .reading-text p {
+    text-align: center;
+  }
 }
