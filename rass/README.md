@@ -14,6 +14,11 @@ flic button controllers for hue lights on raspberry pi.
 - double-click: half moon (night mode, all lights)
 - hold: full moon (on mode, all lights)
 
+## ir-projector - samsung projector
+
+listens for samsung projector power IR signal (gpio 17), turns off all hue lights.
+runs as `ir-projector` systemd service on the pi.
+
 ## setup
 
 requires `.env` with hue bridge credentials.
