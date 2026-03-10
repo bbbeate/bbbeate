@@ -694,8 +694,12 @@ h1 {
   max-width: 396px;
   width: 100%;
   max-height: 81vh;
-  overflow-y: auto;
+  overflow-y: visible;
   position: relative;
+}
+
+.modal-overlay {
+  overflow-y: auto;
 }
 
 .modal-close {

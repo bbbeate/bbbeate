@@ -22,7 +22,7 @@ export default function MapPicker({ lat, lng, onChange }) {
       zoom: hasPosition ? 8 : DEFAULT_ZOOM,
       attributionControl: false,
     })
-    L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png').addTo(map)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
 
     if (hasPosition) {
       markerRef.current = L.circleMarker(center, {
