@@ -28,7 +28,8 @@ HUE_IP = os.getenv('HUE_IP', '10.0.0.1')
 HUE_USER = os.getenv('VITE_HUE_USERNAME', '')
 GROUP_ID = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
 FLIC1_ADDR = '80:e4:da:78:86:b6'
-SETTINGS_FILE = os.path.join(os.path.dirname(__file__), '..', 'hjemme', 'settings.json')
+FLIC2_ADDR = '80:e4:da:78:86:f7'
+SETTINGS_FILE = os.path.join(os.path.dirname(__file__), '..', 'hjemme', 'hue_settings.json')
 
 def load_settings():
     defaults = {
@@ -116,7 +117,7 @@ client = fliclib.FlicClient('localhost')
 
 def got_info(items):
     for bd_addr in items['bd_addr_of_verified_buttons']:
-        if bd_addr == FLIC1_ADDR:
+        if bd_addr in (FLIC1_ADDR, FLIC2_ADDR):
             continue
         cc = fliclib.ButtonConnectionChannel(bd_addr)
         cc.on_button_single_or_double_click_or_hold = on_button_event

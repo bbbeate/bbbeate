@@ -31,7 +31,7 @@ GROUP_ID = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
 NATTLYS1 = 'd539b9a8-8ece-4a4b-838b-354ae5375b37'
 NATTLYS2 = '3d005f56-dbae-486a-afaf-feb45b657b2d'
 BUTTON_ADDR = '80:e4:da:78:86:b6'
-SETTINGS_FILE = os.path.join(os.path.dirname(__file__), '..', 'hjemme', 'settings.json')
+SETTINGS_FILE = os.path.join(os.path.dirname(__file__), '..', 'hjemme', 'hue_settings.json')
 
 def load_settings():
     defaults = {

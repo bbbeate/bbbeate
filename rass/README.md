@@ -14,6 +14,12 @@ flic button controllers for hue lights on raspberry pi.
 - double-click: half moon (night mode, all lights)
 - hold: full moon (on mode, all lights)
 
+## flic2 - boomblaster button
+
+- click: play/pause
+- double-click: power
+- hold: vol up
+
 ## ir-projector - samsung projector
 
 listens for samsung projector power IR signal (gpio 17), turns off all hue lights.
@@ -31,4 +37,4 @@ python3 /home/bbbeate/fliclib-linux-hci/clientlib/python/new_scan_wizard.py
 # press the button when prompted - it'll print the bd address
 ```
 
-settings are read from `hjemme/settings.json` (shared with the hjemme app).
+settings are read from `hjemme/hue_settings.json` (shared with the hjemme app).
