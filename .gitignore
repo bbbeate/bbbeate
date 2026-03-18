@@ -21,3 +21,9 @@ Thumbs.db
 combined_dist/
 pi_key
 pi_key.pub
+
+# iOS
+hjemme-ios/hjemme/Secrets.swift
+hjemme-ios/**/*.xcuserstate
+hjemme-ios/**/xcuserdata/
+hjemme-ios/**/xcshareddata/
