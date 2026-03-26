@@ -25,6 +25,44 @@ flic button controllers for hue lights on raspberry pi.
 listens for samsung projector power IR signal (gpio 17), turns off all hue lights.
 runs as `ir-projector` systemd service on the pi.
 
+## ir hardware setup
+
+raspberry pi with ir transmitter (sending) and ir receiver on gpio.
+
+### transmitter (sending ir to boomblaster/projector)
+
+```
+gpio 18 (pin 12) ---[200 ohm]---> 2n2222 base (middle leg)
+5v (pin 2) ----> ir led (+) ----> ir led (-) ----> 2n2222 collector (right leg)
+2n2222 emitter (left leg) ----> gnd (pin 6)
+```
+
+2n2222 pinout: flat side facing you, left=E, middle=B, right=C.
+
+device: `/dev/lirc0` (gpio-ir-tx overlay on gpio 18)
+
+### receiver (listening for remote signals)
+
+```
+ir receiver data ----> gpio 17 (pin 11)
+ir receiver vcc  ----> 3.3v (pin 1)
+ir receiver gnd  ----> gnd (pin 6)
+```
+
+device: `/dev/lirc1` (gpio-ir overlay on gpio 17)
+
+### system config
+
+`/boot/firmware/config.txt`:
+```
+dtoverlay=gpio-ir-tx,gpio_pin=18
+dtoverlay=gpio-ir,gpio_pin=17
+```
+
+lircd enabled on boot (`systemctl enable lircd`), device set to `/dev/lirc0` in `/etc/lirc/lirc_options.conf`.
+
+boomblaster commands use `ir-ctl` directly (nec32 protocol), see `hjemme/api/boomblaster.md` for codes.
+
 ## setup
 
 requires `.env` with hue bridge credentials.
