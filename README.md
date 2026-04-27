@@ -1,6 +1,6 @@
 # bbbeate
 
-personal apps at [bbbeate.no](https://bbbeate.no). pnpm, vite, gh-pages.
+personal apps at [bbbeate.space](https://bbbeate.space). pnpm, vite, gh-pages.
 
 ## apps
 
@@ -14,6 +14,7 @@ personal apps at [bbbeate.no](https://bbbeate.no). pnpm, vite, gh-pages.
 | [spaces](spaces/) | 3d space visualization | vanilla js, pwa |
 | [space](space/) | 3d space explorer | vanilla js, pwa |
 | [leser](leser/) | pdf text extraction pipeline | python |
+| [bursdag](bursdag/) | birthday invite + rsvp w/ paint picker | vanilla js |
 
 ## utilities
 

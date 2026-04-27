@@ -1,0 +1,260 @@
+@import url('@shared/colors.css');
+
+:root {
+  --bursdag-bg: var(--background);
+  --bursdag-fg: var(--first);
+  --bursdag-accent: var(--second);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--bursdag-bg);
+  color: var(--bursdag-fg);
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+.bursdag {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6.5rem 1.5rem 2rem;
+  text-align: center;
+  position: relative;
+  gap: 1.5rem;
+}
+
+.bursdag-date {
+  font-size: clamp(1.5rem, 5vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  position: fixed;
+  top: 0;
+  left: 0;
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.bursdag-title {
+  font-size: clamp(2.5rem, 14vw, 7rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.bursdag-text {
+  font-size: clamp(1.05rem, 4.5vw, 1.5rem);
+  line-height: 1.5;
+  max-width: 32ch;
+}
+.bursdag-text.editing {
+  outline: 2px dashed currentColor;
+  outline-offset: 8px;
+  cursor: text;
+}
+.bursdag-text.editing:focus { outline-style: dashed; }
+
+.bursdag-link {
+  display: inline-block;
+  font-size: clamp(2.5rem, 14vw, 7rem);
+  font-weight: 700;
+  color: var(--bursdag-fg);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 0.05em;
+  padding: 1rem 1.5rem;
+  min-height: 44px;
+}
+.bursdag-link:active { opacity: 0.6; }
+
+.bursdag-inline-link {
+  color: var(--bursdag-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 0.08em;
+}
+
+@keyframes spin {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+
+.bursdag-picker {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  padding: 4px;
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  box-shadow: inset 1px 1px 0 #fff;
+}
+.bursdag-swatch {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #404040;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.bursdag-swatch:active { border-style: inset; }
+.bursdag-swatch-default { background: var(--background); }
+
+.bursdag-discoball {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 56px;
+  height: 56px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  z-index: 100;
+  -webkit-tap-highlight-color: transparent;
+}
+.bursdag-discoball img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes float-discoball {
+  0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(-50%, -50%) scale(var(--end-scale, 1.4)); opacity: 0; }
+}
+
+.bursdag-disco-overlay {
+  position: fixed;
+  top: var(--y, 50%);
+  left: var(--x, 50%);
+  width: var(--size, 140px);
+  height: var(--size, 140px);
+  pointer-events: none;
+  z-index: 50;
+  animation: float-discoball 3s ease-out forwards;
+}
+.bursdag-disco-overlay img {
+  width: 100%;
+  height: 100%;
+  filter: hue-rotate(var(--hue, 0deg)) saturate(1.4);
+}
+
+.rsvp {
+  margin-top: 3rem;
+  width: 100%;
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.rsvp-toggle {
+  font-size: 1rem;
+  font-weight: 400;
+  background: #c0c0c0;
+  color: #000;
+  border: 3px outset #c0c0c0;
+  border-radius: 0;
+  padding: 0.5rem 1.6rem;
+  cursor: pointer;
+  font-family: 'Tahoma', 'Geneva', sans-serif;
+  box-shadow: inset 1px 1px 0 #fff;
+}
+.rsvp-toggle:active {
+  border-style: inset;
+  box-shadow: inset 1px 1px 0 #808080;
+}
+.rsvp-toggle:focus { outline: 1px dotted #000; outline-offset: -5px; }
+
+.rsvp-form {
+  width: 100%;
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+.rsvp-form.open { display: grid; }
+
+.rsvp-input {
+  width: 100%;
+  font: inherit;
+  font-size: 1rem;
+  padding: 0.9rem;
+  border: 2px solid var(--bursdag-fg);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--bursdag-fg);
+  min-height: 3.5rem;
+}
+.rsvp-input::placeholder { color: var(--bursdag-fg); opacity: 0.5; }
+.rsvp-input:focus { outline: none; }
+
+.rsvp-submit {
+  grid-column: 1 / -1;
+  justify-self: end;
+  font-family: 'Tahoma', 'Geneva', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  background: #c0c0c0;
+  color: #000;
+  border: 3px outset #c0c0c0;
+  border-radius: 0;
+  padding: 0.4rem 1.6rem;
+  min-width: 5rem;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 0 #fff;
+}
+.rsvp-submit:active { border-style: inset; box-shadow: inset 1px 1px 0 #808080; }
+.rsvp-submit:focus { outline: 1px dotted #000; outline-offset: -5px; }
+.rsvp-submit:disabled { opacity: 0.5; cursor: wait; }
+
+.rsvp-list {
+  width: 100%;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+}
+.rsvp-item {
+  border-top: 1px solid var(--bursdag-fg);
+  padding-top: 0.6rem;
+  opacity: 0.95;
+}
+.rsvp-item-name { font-weight: 700; }
+.rsvp-item-comment { display: block; opacity: 0.8; margin-top: 0.15rem; }
+
+.rsvp-item-star {
+  border-top: 2px solid var(--bursdag-fg);
+  padding-top: 0.8rem;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+.rsvp-item-star .rsvp-item-comment { font-size: 1.2rem; opacity: 1; margin-top: 0.4rem; }
+
+.rsvp-status {
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
