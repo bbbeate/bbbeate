@@ -1,7 +1,7 @@
 <!--
-  ColorPicker — 90s-chrome HSV picker (modal). port of kk's SkinColorPicker.
-  applies the picked color to whichever target is active in $mode. bg picks
-  go through undo (opSetBg) so they can be undone.
+  ColorPicker — 90s-chrome HSV picker (modal). applies the picked color to
+  whichever target is active in $mode. bg picks go through undo (opSetBg)
+  so they can be undone.
 -->
 <script>
   import { onMount } from 'svelte'
@@ -149,8 +149,8 @@
 
       <div class="cp-actions">
         <input type="text" class="cp-hex" value={hex} oninput={handleHexInput} spellcheck="false" />
-        <button type="button" class="kk-btn" onclick={commit}>OK</button>
-        <button type="button" class="kk-btn" onclick={cancel}>Avbryt</button>
+        <button type="button" class="btn" onclick={commit}>OK</button>
+        <button type="button" class="btn" onclick={cancel}>Avbryt</button>
       </div>
     </div>
   </div>
@@ -243,7 +243,7 @@
   }
   .cp-hex:focus { outline: 1px dotted #000; }
 
-  .kk-btn {
+  .btn {
     background: #c0c0c0;
     border: 2px outset #c0c0c0;
     box-shadow: inset 1px 1px 0 #fff;
@@ -252,5 +252,5 @@
     cursor: pointer;
     padding: 3px 12px;
   }
-  .kk-btn:active { border-style: inset; box-shadow: inset 1px 1px 0 #808080; }
+  .btn:active { border-style: inset; box-shadow: inset 1px 1px 0 #808080; }
 </style>

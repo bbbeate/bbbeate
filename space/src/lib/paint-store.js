@@ -1,10 +1,10 @@
 // single source of truth for paint state. svelte stores + helpers.
-// keeps the kk paint mental model (tool mode + color targets) and extends
-// with a world-space camera (for infinite svg zoom) and an in-memory undo
-// stack. persistence (localStorage) lives in persistence.js.
+// tool mode + color targets, a world-space camera (for infinite svg zoom),
+// and the in-memory undo stack. persistence (localStorage) lives in
+// persistence.js.
 import { writable, derived, get } from 'svelte/store'
 
-// ─── palette + sizes (matches kk) ──────────────────────────────────────────
+// ─── palette + sizes ───────────────────────────────────────────────────────
 export const PAINT_COLORS = [
   '#000000', '#ffffff', '#8b1a1a', '#e63946', '#f4a261',
   '#f9d423', '#52b788', '#4dabf7', '#3949ab', '#a259c4',
@@ -21,7 +21,8 @@ export const mode = writable(null)            // 'bg' | 'fg' | 'brush' | 'eraser
 export const panelOpen = writable(false)
 export const pickerOpen = writable(false)
 export const menuOpen = writable(false)
-export const dialogOpen = writable(null)      // 'cummin-soon' | null
+export const dialogOpen = writable(null)      // 'signér' | null
+export const savingState = writable('idle')   // 'idle' | 'saving' | 'error'
 
 export const brushColor = writable(null)
 export const brushSize = writable(BRUSH_SIZES[0])
@@ -31,13 +32,19 @@ export const bgColor = writable(DEFAULT_BG)
 export const fgColor = writable(DEFAULT_FG)
 
 // ─── world state ───────────────────────────────────────────────────────────
-// strokes: array of {id, kind:'brush'|'text', color, size?, pts?, text?, x?, y?, font?}
+// strokes: my unsaved drafts (editable, erasable). array of
+//   {id, kind:'brush'|'text', color, size?, pts?, text?, x?, y?, fontSize?}
 export const strokes = writable([])
+
+// savedBatches: published batches from anyone (incl. me). read-only locally.
+// shape: [{id, signature, timestamp, bgColor, strokes:[...]}, ...]
+export const savedBatches = writable([])
+
 // camera describes the viewport in world coords:
 //   svg viewBox = `${camera.x} ${camera.y} ${vw/zoom} ${vh/zoom}`
 export const camera = writable({ x: 0, y: 0, zoom: 1 })
 
-// ─── color target helpers (matches kk) ─────────────────────────────────────
+// ─── color target helpers ──────────────────────────────────────────────────
 export function currentColorFor(target) {
   if (target === 'brush') return get(brushColor) ?? get(fgColor)
   if (target === 'fg') return get(fgColor)

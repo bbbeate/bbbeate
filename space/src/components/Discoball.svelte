@@ -1,6 +1,6 @@
 <!--
   Discoball — top-right. spinning button; click summons a random disco overlay
-  (kk parity). while painting, swaps to an X exit button.
+  while painting, swaps to an X exit button.
 -->
 <script>
   import { mode, exitPaint } from '../lib/paint-store.js'
@@ -27,7 +27,7 @@
 </script>
 
 {#if paintActive}
-  <button class="kk-btn exit" type="button" aria-label="avslutt tegning" onclick={exitPaint}>
+  <button class="btn exit" type="button" aria-label="avslutt tegning" onclick={exitPaint}>
     X
   </button>
 {:else}

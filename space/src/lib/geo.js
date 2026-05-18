@@ -64,12 +64,13 @@ export function eraserHitsStroke(stroke, ex, ey, eraseRadius) {
     return false
   }
   if (stroke.kind === 'text') {
-    // text bbox is approximate — half the font size in either direction per
-    // visible character. close enough for hit testing; not used for layout.
+    // text is left-anchored (x = leftmost) and vertically centered on y.
+    // bbox is approximate (font-metric without measure). good enough for
+    // eraser hit-testing; not used for layout.
     const fs = stroke.fontSize || 24
     const w = (stroke.text?.length || 1) * fs * 0.6
     const h = fs * 1.2
-    const minX = stroke.x - w / 2, maxX = stroke.x + w / 2
+    const minX = stroke.x, maxX = stroke.x + w
     const minY = stroke.y - h / 2, maxY = stroke.y + h / 2
     const cx = Math.max(minX, Math.min(ex, maxX))
     const cy = Math.max(minY, Math.min(ey, maxY))

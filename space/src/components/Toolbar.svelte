@@ -1,17 +1,16 @@
 <!--
-  Toolbar — bottom-left 4-tool toolbar (bg/fg/brush/eraser) + the panel that
-  opens above it (swatches + sizes). port of kk's SkinToolbar, minus the kk-
-  specific css-var stuff (we just write to bg/fg stores directly).
+  Toolbar — bottom-left 90s-skin paint toolbar (bg / fg-text / brush /
+  eraser + undo). the panel above hosts swatches + brush sizes. eraser has
+  no panel; "fjern alt" lives in the meny.
 -->
 <script>
-  import { get } from 'svelte/store'
   import {
     mode, panelOpen, pickerOpen,
-    brushColor, brushSize, eraserSize, bgColor, fgColor,
-    PAINT_COLORS, BRUSH_SIZES, ERASER_SIZES,
+    brushColor, brushSize, bgColor, fgColor,
+    PAINT_COLORS, BRUSH_SIZES,
     applyToTarget, exitPaint,
   } from '../lib/paint-store.js'
-  import { pushOp, opSetBg, opClearAll } from '../lib/undo.js'
+  import { pushOp, opSetBg, undo, canUndo } from '../lib/undo.js'
 
   $: selectedHex =
     $mode === 'brush' ? $brushColor :
@@ -27,7 +26,8 @@
       exitPaint()
     } else {
       mode.set(m)
-      panelOpen.set(true)
+      // eraser has no settings panel — just activate it
+      panelOpen.set(m !== 'eraser')
     }
   }
 
@@ -40,39 +40,35 @@
       applyToTarget(target, hex)
     }
   }
-
-  function clearAll() {
-    pushOp(opClearAll())
-  }
 </script>
 
-<div class="kk-skin">
+<div class="skin">
   {#if $panelOpen && $mode}
-    <div class="kk-panel">
-      <div class="kk-panel-title">{TITLES[$mode]}</div>
+    <div class="panel">
+      <div class="panel-title">{TITLES[$mode]}</div>
 
       {#if $mode === 'bg' || $mode === 'fg' || $mode === 'brush'}
-        <div class="kk-swatches">
+        <div class="swatches">
           <button
             type="button"
-            class="kk-swatch"
-            class:kk-swatch-default={$mode !== 'brush'}
-            class:kk-swatch-selected={selectedHex === null && $mode === 'brush'}
+            class="swatch"
+            class:swatch-default={$mode !== 'brush'}
+            class:swatch-selected={selectedHex === null && $mode === 'brush'}
             style={$mode === 'brush' ? `background:${$fgColor}` : ''}
             aria-label="standard"
             onclick={() => pickColor($mode, null)}
           ></button>
           <button
             type="button"
-            class="kk-swatch kk-swatch-picker"
+            class="swatch swatch-picker"
             aria-label="velg farge"
             onclick={() => pickerOpen.set(true)}
           ></button>
           {#each PAINT_COLORS as hex}
             <button
               type="button"
-              class="kk-swatch"
-              class:kk-swatch-selected={isSelected(hex)}
+              class="swatch"
+              class:swatch-selected={isSelected(hex)}
               style="background:{hex}"
               aria-label={hex}
               onclick={() => pickColor($mode, hex)}
@@ -82,17 +78,17 @@
       {/if}
 
       {#if $mode === 'brush'}
-        <div class="kk-sizes">
+        <div class="sizes">
           {#each BRUSH_SIZES as s}
             <button
               type="button"
-              class="kk-size"
-              class:kk-size-selected={s === $brushSize}
+              class="size"
+              class:size-selected={s === $brushSize}
               aria-label={`pensel ${s}px`}
               onclick={() => brushSize.set(s)}
             >
               <span
-                class="kk-size-dot"
+                class="size-dot"
                 style="width:{s}px;height:{s}px;background:{$brushColor ?? $fgColor};"
               ></span>
             </button>
@@ -100,30 +96,14 @@
         </div>
       {/if}
 
-      {#if $mode === 'eraser'}
-        <div class="kk-sizes">
-          {#each ERASER_SIZES as s}
-            <button
-              type="button"
-              class="kk-size kk-size-eraser"
-              class:kk-size-selected={s === $eraserSize}
-              aria-label={`viskelær ${s}px`}
-              onclick={() => eraserSize.set(s)}
-            >
-              <span class="kk-size-dot kk-size-square" style="width:{s}px;height:{s}px;"></span>
-            </button>
-          {/each}
-        </div>
-        <button type="button" class="kk-btn kk-clear-all" onclick={clearAll}>fjern alt</button>
-      {/if}
     </div>
   {/if}
 
-  <div class="kk-toolbar">
+  <div class="toolbar">
     <button
       type="button"
-      class="kk-tool"
-      class:kk-tool-active={$mode === 'bg' && $panelOpen}
+      class="tool"
+      class:tool-active={$mode === 'bg' && $panelOpen}
       onclick={() => selectTool('bg')}
       aria-label="bakgrunnsfarge"
     >
@@ -131,8 +111,8 @@
     </button>
     <button
       type="button"
-      class="kk-tool"
-      class:kk-tool-active={$mode === 'fg' && $panelOpen}
+      class="tool"
+      class:tool-active={$mode === 'fg' && $panelOpen}
       onclick={() => selectTool('fg')}
       aria-label="tekstfarge"
     >
@@ -140,8 +120,8 @@
     </button>
     <button
       type="button"
-      class="kk-tool"
-      class:kk-tool-active={$mode === 'brush'}
+      class="tool"
+      class:tool-active={$mode === 'brush'}
       onclick={() => selectTool('brush')}
       aria-label="pensel"
     >
@@ -149,18 +129,27 @@
     </button>
     <button
       type="button"
-      class="kk-tool"
-      class:kk-tool-active={$mode === 'eraser'}
+      class="tool"
+      class:tool-active={$mode === 'eraser'}
       onclick={() => selectTool('eraser')}
       aria-label="viskelær"
     >
       <img src="/paint-eraser.png" alt="" />
     </button>
+    <button
+      type="button"
+      class="tool"
+      onclick={undo}
+      disabled={!$canUndo}
+      aria-label="angre"
+    >
+      <img src="/undo.png" alt="" class="undo-icon" />
+    </button>
   </div>
 </div>
 
 <style>
-  .kk-skin {
+  .skin {
     position: fixed;
     bottom: 1.5rem;
     left: 1.5rem;
@@ -171,7 +160,7 @@
     gap: 6px;
   }
 
-  .kk-toolbar {
+  .toolbar {
     display: flex;
     flex-direction: row;
     padding: 3px;
@@ -180,7 +169,7 @@
     box-shadow: inset 1px 1px 0 #fff;
   }
 
-  .kk-tool {
+  .tool {
     width: 36px;
     height: 36px;
     background: #c0c0c0;
@@ -193,20 +182,32 @@
     box-shadow: inset 1px 1px 0 #fff;
     -webkit-tap-highlight-color: transparent;
   }
-  .kk-tool + .kk-tool { margin-left: 2px; }
-  .kk-tool:active,
-  .kk-tool-active {
+  .tool + .tool { margin-left: 2px; }
+  .tool:active,
+  .tool-active {
     border-style: inset;
     box-shadow: inset 1px 1px 0 #808080;
   }
-  .kk-tool img {
+  .tool img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     image-rendering: pixelated;
   }
-
-  .kk-panel {
+  .tool:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  /* undo icon is high-contrast linework — don't pixelate, and force solid
+     black via filter (the asset itself is blue). slightly smaller than the
+     chunky paint icons so it doesn't feel heavy. */
+  .undo-icon {
+    image-rendering: auto !important;
+    width: 70% !important;
+    height: 70% !important;
+    filter: brightness(0);
+  }
+  .panel {
     background: #c0c0c0;
     border: 2px outset #c0c0c0;
     box-shadow: inset 1px 1px 0 #fff;
@@ -216,7 +217,7 @@
     gap: 6px;
     align-self: flex-start;
   }
-  .kk-panel-title {
+  .panel-title {
     margin: -6px -6px 0 -6px;
     padding: 3px 6px;
     background: linear-gradient(to right, #000080, #1084d0);
@@ -228,12 +229,12 @@
     user-select: none;
   }
 
-  .kk-swatches {
+  .swatches {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
     gap: 2px;
   }
-  .kk-swatch {
+  .swatch {
     width: 18px;
     height: 18px;
     border: 1px solid #404040;
@@ -241,28 +242,28 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  .kk-swatch:focus { outline: none; }
-  .kk-swatch:focus-visible { outline: 2px solid #000; outline-offset: -1px; }
-  .kk-swatch:active { outline: 1px solid #fff; outline-offset: -2px; }
-  .kk-swatch-selected {
+  .swatch:focus { outline: none; }
+  .swatch:focus-visible { outline: 2px solid #000; outline-offset: -1px; }
+  .swatch:active { outline: 1px solid #fff; outline-offset: -2px; }
+  .swatch-selected {
     outline: 2px solid #000;
     outline-offset: -1px;
     box-shadow: inset 0 0 0 1px #fff;
   }
-  .kk-swatch-default {
+  .swatch-default {
     background:
       linear-gradient(45deg, transparent 45%, #404040 45%, #404040 55%, transparent 55%),
       #fff;
   }
-  .kk-swatch-picker {
+  .swatch-picker {
     background: linear-gradient(
       to right,
       #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000
     );
   }
 
-  .kk-sizes { display: flex; gap: 4px; align-items: flex-end; }
-  .kk-size {
+  .sizes { display: flex; gap: 4px; align-items: flex-end; }
+  .size {
     width: 52px;
     height: 52px;
     background: #c0c0c0;
@@ -275,43 +276,25 @@
     justify-content: center;
     -webkit-tap-highlight-color: transparent;
   }
-  .kk-size-selected, .kk-size:active {
+  .size-selected, .size:active {
     border-style: inset;
     box-shadow: inset 1px 1px 0 #808080;
   }
-  .kk-size-dot {
+  .size-dot {
     display: inline-block;
     border-radius: 50%;
     border: 1px solid #000;
     max-width: calc(100% - 6px);
     max-height: calc(100% - 6px);
   }
-  .kk-size-eraser { width: 72px; height: 72px; }
-  .kk-size-square { border-radius: 0; background: #fff; }
-
-  .kk-btn {
-    background: #c0c0c0;
-    border: 2px outset #c0c0c0;
-    box-shadow: inset 1px 1px 0 #fff;
-    color: #000;
-    font-family: 'Tahoma', 'Geneva', 'Verdana', sans-serif;
-    cursor: pointer;
-  }
-  .kk-btn:active {
-    border-style: inset;
-    box-shadow: inset 1px 1px 0 #808080;
-  }
-  .kk-clear-all { width: 100%; font-size: 12px; padding: 4px 8px; }
-
   @media (max-width: 640px) {
-    .kk-skin {
+    .skin {
       bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
       left: calc(env(safe-area-inset-left, 0px) + 0.75rem);
       gap: 4px;
     }
-    .kk-tool { width: 30px; height: 30px; }
-    .kk-swatch { width: 28px; height: 28px; }
-    .kk-size { width: 44px; height: 44px; }
-    .kk-size-eraser { width: 60px; height: 60px; }
+    .tool { width: 30px; height: 30px; }
+    .swatch { width: 28px; height: 28px; }
+    .size { width: 44px; height: 44px; }
   }
 </style>

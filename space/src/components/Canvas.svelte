@@ -5,13 +5,13 @@
    - brush tool: single pointer draws, two-finger pinch still zooms
    - eraser tool: drag deletes strokes that intersect; one undo step per drag
    - fg tool: tap places a text input at that world coord
-   - double-tap exits paint mode (kk parity)
+   - double-tap exits paint mode
 -->
 <script>
   import { onMount } from 'svelte'
   import { get } from 'svelte/store'
   import {
-    strokes, camera, mode, panelOpen, pickerOpen, dialogOpen, menuOpen,
+    strokes, savedBatches, camera, mode, panelOpen, pickerOpen, dialogOpen, menuOpen,
     brushColor, brushSize, eraserSize, fgColor, bgColor,
     nextId, exitPaint, currentColorFor,
   } from '../lib/paint-store.js'
@@ -255,7 +255,7 @@
       }
     }
 
-    // close panel on first interaction (kk parity)
+    // close any open color/size panel on first interaction
     panelOpen.set(false)
 
     // 2+ pointers → cancel any in-flight single-pointer op, switch to pinch
@@ -374,10 +374,10 @@
     }
   })
 
-  // cursor hint
+  // cursor hint — eraser uses a custom png pointer so it's obvious you're erasing
   $: cursor =
     $mode === 'brush' ? 'crosshair' :
-    $mode === 'eraser' ? 'cell' :
+    $mode === 'eraser' ? `url('/paint-eraser-cursor.png') 4 28, cell` :
     $mode === 'fg' ? 'text' :
     $mode === null ? 'grab' : 'default'
 </script>
@@ -397,6 +397,35 @@
   onpointercancel={onPointerCancel}
   onwheel={onWheel}
 >
+  <!-- saved (published) batches — read-only, drawn first so drafts sit on top -->
+  {#each $savedBatches as batch (batch.id)}
+    {#each batch.strokes as stroke (stroke.id)}
+      {#if stroke.kind === 'brush'}
+        <path
+          d={strokeToPathD(stroke.pts)}
+          stroke={stroke.color}
+          stroke-width={stroke.size}
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          vector-effect="non-scaling-stroke"
+        />
+      {:else if stroke.kind === 'text'}
+        <text
+          x={stroke.x}
+          y={stroke.y}
+          fill={stroke.color}
+          font-size={stroke.fontSize}
+          font-family="system-ui, -apple-system, sans-serif"
+          text-anchor="start"
+          dominant-baseline="middle"
+          style="user-select: none; pointer-events: none;"
+        >{stroke.text}</text>
+      {/if}
+    {/each}
+  {/each}
+
+  <!-- my drafts — editable + erasable -->
   {#each $strokes as stroke (stroke.id)}
     {#if stroke.kind === 'brush'}
       <path
@@ -416,7 +445,7 @@
         fill={stroke.color}
         font-size={stroke.fontSize}
         font-family="system-ui, -apple-system, sans-serif"
-        text-anchor="middle"
+        text-anchor="start"
         dominant-baseline="middle"
         style="cursor: pointer; user-select: none;"
         onpointerdown={(e) => editText(stroke, e)}
