@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
@@ -6,10 +7,11 @@ export default defineConfig({
   envDir: '..',
   resolve: {
     alias: {
-      '@shared': path.resolve(__dirname, '../shared')
-    }
+      '@shared': path.resolve(__dirname, '../shared'),
+    },
   },
   plugins: [
+    svelte(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['discoball-icon.png'],
@@ -17,7 +19,7 @@ export default defineConfig({
         navigateFallback: null,
         skipWaiting: true,
         clientsClaim: true,
-        cleanupOutdatedCaches: true
+        cleanupOutdatedCaches: true,
       },
       manifest: {
         name: 'space',
@@ -31,11 +33,11 @@ export default defineConfig({
           {
             src: '/discoball-icon.png',
             sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
-      }
-    })
+            type: 'image/png',
+          },
+        ],
+      },
+    }),
   ],
   base: '/',
 })
