@@ -44,6 +44,10 @@ export const savedBatches = writable([])
 //   svg viewBox = `${camera.x} ${camera.y} ${vw/zoom} ${vh/zoom}`
 export const camera = writable({ x: 0, y: 0, zoom: 1 })
 
+// pendingText: floating text-entry state. null when not editing.
+//   {wx, wy, color, editing?: existing stroke}
+export const pendingText = writable(null)
+
 // ─── color target helpers ──────────────────────────────────────────────────
 export function currentColorFor(target) {
   if (target === 'brush') return get(brushColor) ?? get(fgColor)

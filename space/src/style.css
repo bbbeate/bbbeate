@@ -12,6 +12,10 @@ html, body {
   background: #f2ecdc;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+  /* no browser pinch-zoom — the canvas owns all gestures (and zooms
+     itself via svg viewBox). prevents the chrome ui from scaling. */
+  touch-action: none;
+  -ms-touch-action: none;
 }
 
 body {

@@ -103,7 +103,7 @@
     <button
       type="button"
       class="tool"
-      class:tool-active={$mode === 'bg' && $panelOpen}
+      class:tool-active={$mode === 'bg'}
       onclick={() => selectTool('bg')}
       aria-label="bakgrunnsfarge"
     >
@@ -112,7 +112,7 @@
     <button
       type="button"
       class="tool"
-      class:tool-active={$mode === 'fg' && $panelOpen}
+      class:tool-active={$mode === 'fg'}
       onclick={() => selectTool('fg')}
       aria-label="tekstfarge"
     >

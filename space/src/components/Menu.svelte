@@ -3,8 +3,9 @@
   redo + save. save fires the "cummin' soon" dialog (no backend yet).
 -->
 <script>
-  import { menuOpen, dialogOpen, strokes } from '../lib/paint-store.js'
+  import { menuOpen, dialogOpen, strokes, savedBatches } from '../lib/paint-store.js'
   import { redo, canRedo } from '../lib/undo.js'
+  import { fitAll } from '../lib/fit.js'
 
   function toggle() { menuOpen.update((v) => !v) }
   function close() { menuOpen.set(false) }
@@ -14,6 +15,15 @@
     dialogOpen.set('signér')
     close()
   }
+  function doFit() {
+    fitAll()
+    close()
+  }
+
+  // "se alt" only useful when there's something on the canvas
+  let hasAnything = $derived(
+    $strokes.length > 0 || $savedBatches.some((b) => b.strokes?.length > 0)
+  )
 
   function onWindowClick(e) {
     if (!$menuOpen) return
@@ -34,6 +44,15 @@
     >
       <img src="/redo.png" alt="" class="icon" />
       <span>gjør om</span>
+    </button>
+    <button
+      type="button"
+      class="item"
+      disabled={!hasAnything}
+      onclick={doFit}
+    >
+      <span class="icon icon-glyph" aria-hidden="true">⤢</span>
+      <span>se alt</span>
     </button>
     <button
       type="button"
@@ -151,6 +170,19 @@
   .save-icon { filter: none; }
   .item:hover:not(:disabled) .save-icon { filter: none; }
   .item:disabled .icon { opacity: 0.5; }
+
+  /* unicode glyph icons (eg ⤢) fill the same 18×18 slot */
+  .icon-glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    filter: none;
+  }
+  .item:hover:not(:disabled) .icon-glyph { color: #fff; }
 
   @media (max-width: 640px) {
     .menu-root {

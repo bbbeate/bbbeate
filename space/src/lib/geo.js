@@ -102,3 +102,52 @@ export function distance(a, b) {
   const dx = a.x - b.x, dy = a.y - b.y
   return Math.hypot(dx, dy)
 }
+
+// bounding box of a collection of strokes in world coords.
+// returns null if no strokes (or no points).
+export function strokesBBox(strokes) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+  let any = false
+  for (const s of strokes) {
+    if (s.kind === 'brush' && s.pts?.length >= 2) {
+      const half = (s.size || 0) / 2
+      for (let i = 0; i < s.pts.length; i += 2) {
+        const x = s.pts[i], y = s.pts[i + 1]
+        if (x - half < minX) minX = x - half
+        if (y - half < minY) minY = y - half
+        if (x + half > maxX) maxX = x + half
+        if (y + half > maxY) maxY = y + half
+        any = true
+      }
+    } else if (s.kind === 'text') {
+      const fs = s.fontSize || 24
+      const w = (s.text?.length || 1) * fs * 0.6
+      const h = fs * 1.2
+      if (s.x < minX) minX = s.x
+      if (s.y - h / 2 < minY) minY = s.y - h / 2
+      if (s.x + w > maxX) maxX = s.x + w
+      if (s.y + h / 2 > maxY) maxY = s.y + h / 2
+      any = true
+    }
+  }
+  if (!any) return null
+  return { minX, minY, maxX, maxY }
+}
+
+// fit a bbox into a viewport (in css pixels). returns a camera state.
+// padding is in screen pixels (visible margin around the content).
+export function fitCameraToBBox(bbox, viewportW, viewportH, padding = 64) {
+  const bw = Math.max(1, bbox.maxX - bbox.minX)
+  const bh = Math.max(1, bbox.maxY - bbox.minY)
+  const availW = Math.max(1, viewportW - padding * 2)
+  const availH = Math.max(1, viewportH - padding * 2)
+  const zoom = clampZoom(Math.min(availW / bw, availH / bh))
+  // center the bbox in the viewport
+  const cx = (bbox.minX + bbox.maxX) / 2
+  const cy = (bbox.minY + bbox.maxY) / 2
+  return {
+    zoom,
+    x: cx - viewportW / 2 / zoom,
+    y: cy - viewportH / 2 / zoom,
+  }
+}

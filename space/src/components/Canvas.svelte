@@ -13,10 +13,11 @@
   import {
     strokes, savedBatches, camera, mode, panelOpen, pickerOpen, dialogOpen, menuOpen,
     brushColor, brushSize, eraserSize, fgColor, bgColor,
+    pendingText,
     nextId, exitPaint, currentColorFor,
   } from '../lib/paint-store.js'
   import {
-    screenToWorld, zoomAt, clampZoom, eraserHitsStroke, strokeToPathD,
+    screenToWorld, worldToScreen, zoomAt, clampZoom, eraserHitsStroke, strokeToPathD,
     distance, midpoint,
   } from '../lib/geo.js'
   import {
@@ -32,7 +33,8 @@
   let svg
   let vw = 0
   let vh = 0
-  let pendingText = null // {wx, wy, color, editing?:Stroke}
+  // pendingText is now a store (paint-store.js) so reactivity is guaranteed
+  // regardless of svelte 4 vs 5 mode quirks.
 
   // pointers currently down on this svg
   const pointers = new Map() // id → {x, y, startX, startY, kind}
@@ -121,14 +123,14 @@
     const [sx, sy] = localScreen(e.clientX, e.clientY)
     const [wx, wy] = screenToWorld(get(camera), sx, sy)
     const color = get(brushColor) ?? get(fgColor)
-    const size = get(brushSize) / get(camera).zoom // size given in screen-px feel
+    // size is "screen px at the moment of drawing" → store in world units so
+    // the stroke scales naturally with future zoom. zoomed-out drawings end
+    // up huge in the world; zoomed-in drawings are tiny details.
     activeStroke = {
       id: nextId(),
       kind: 'brush',
       color,
-      // store size in screen-px (matches user expectation); render multiplies
-      // by 1 since svg vector-effect handles scaling — see template
-      size: get(brushSize),
+      size: get(brushSize) / get(camera).zoom,
       pts: [wx, wy],
     }
     strokes.update((s) => [...s, activeStroke])
@@ -189,13 +191,20 @@
   function placeTextInputAt(e) {
     const [sx, sy] = localScreen(e.clientX, e.clientY)
     const [wx, wy] = screenToWorld(get(camera), sx, sy)
-    pendingText = { wx, wy, color: get(fgColor) }
+    // fontSize is in world units; pass through to the input so its on-screen
+    // size at the current zoom = TEXT_DEFAULT_FONT_SIZE px (readable),
+    // regardless of how zoomed-out we are.
+    pendingText.set({
+      wx, wy,
+      color: get(fgColor),
+      fontSize: TEXT_DEFAULT_FONT_SIZE / get(camera).zoom,
+    })
   }
 
   function commitText(text) {
-    if (!pendingText) return
-    const t = pendingText
-    pendingText = null
+    const t = get(pendingText)
+    if (!t) return
+    pendingText.set(null)
     if (!text) return
     if (t.editing) {
       const oldStroke = t.editing
@@ -209,21 +218,27 @@
         x: t.wx,
         y: t.wy,
         color: t.color,
-        fontSize: TEXT_DEFAULT_FONT_SIZE,
+        fontSize: t.fontSize, // already in world units, computed at place-time
       }
       pushOp(opAddStroke(stroke))
     }
   }
 
   function cancelText() {
-    pendingText = null
+    pendingText.set(null)
   }
 
   // edit existing text on click (only when no paint tool active)
   function editText(stroke, e) {
     if (get(mode)) return // tools active → eraser/etc handles it
     e.stopPropagation()
-    pendingText = { wx: stroke.x, wy: stroke.y, color: stroke.color, editing: stroke }
+    pendingText.set({
+      wx: stroke.x,
+      wy: stroke.y,
+      color: stroke.color,
+      fontSize: stroke.fontSize,
+      editing: stroke,
+    })
   }
 
   // ─── pointer routing ─────────────────────────────────────────────────────
@@ -357,7 +372,7 @@
       e.preventDefault()
       redo()
     } else if (e.key === 'Escape') {
-      if (pendingText) { pendingText = null; return }
+      if (get(pendingText)) { pendingText.set(null); return }
       if (get(menuOpen)) { menuOpen.set(false); return }
       exitPaint()
     }
@@ -408,7 +423,6 @@
           fill="none"
           stroke-linecap="round"
           stroke-linejoin="round"
-          vector-effect="non-scaling-stroke"
         />
       {:else if stroke.kind === 'text'}
         <text
@@ -435,7 +449,6 @@
         fill="none"
         stroke-linecap="round"
         stroke-linejoin="round"
-        vector-effect="non-scaling-stroke"
       />
     {:else if stroke.kind === 'text'}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -454,12 +467,13 @@
   {/each}
 </svg>
 
-{#if pendingText}
+{#if $pendingText}
   <TextInput
-    wx={pendingText.wx}
-    wy={pendingText.wy}
-    color={pendingText.color}
-    initial={pendingText.editing?.text ?? ''}
+    wx={$pendingText.wx}
+    wy={$pendingText.wy}
+    color={$pendingText.color}
+    fontSize={$pendingText.fontSize}
+    initial={$pendingText.editing?.text ?? ''}
     onCommit={commitText}
     onCancel={cancelText}
   />
