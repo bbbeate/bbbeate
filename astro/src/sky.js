@@ -284,4 +284,37 @@ export function scanTransits(natalChart, startDate, days, stepDays = 1) {
   return events
 }
 
+// cross-aspects between two charts (synastry): every planet of A vs every planet of B
+export function getSynastry(chartA, chartB) {
+  const aspects = []
+  for (const a of chartA.bodies) {
+    for (const b of chartB.bodies) {
+      let diff = Math.abs(a.lon - b.lon)
+      if (diff > 180) diff = 360 - diff
+      for (const asp of ASPECT_DEFS) {
+        if (Math.abs(diff - asp.angle) <= asp.orb) {
+          aspects.push({ a, b, ...asp, exact: Math.abs(diff - asp.angle) })
+          break
+        }
+      }
+    }
+  }
+  return aspects
+}
+
+// pairwise synastry across a group. people: [{ name, chart }]
+export function getGroupSynastry(people) {
+  const pairs = []
+  for (let i = 0; i < people.length; i++) {
+    for (let j = i + 1; j < people.length; j++) {
+      pairs.push({
+        a: people[i].name,
+        b: people[j].name,
+        aspects: getSynastry(people[i].chart, people[j].chart),
+      })
+    }
+  }
+  return pairs
+}
+
 export { ZODIAC_SIGNS, ZODIAC_SYMBOLS, ASPECT_DEFS }

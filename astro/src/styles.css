@@ -799,9 +799,112 @@ h1 {
   padding: 6px 0;
 }
 
+/* group / relations */
+.group-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.group-chip {
+  background: transparent;
+  border: 1px solid var(--second);
+  color: var(--second);
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+.group-chip.active {
+  background: var(--second);
+  color: var(--background);
+}
+
+.group-hint {
+  color: var(--second);
+  font-size: 12px;
+  text-align: center;
+  margin-top: 12px;
+}
+
+.group-columns {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+.group-col {
+  flex: 1;
+  min-width: 200px;
+}
+
+.synastry-pair {
+  margin-top: 8px;
+}
+
+.synastry-names {
+  color: var(--first);
+  font-size: 12px;
+  letter-spacing: 1px;
+  padding: 3px 12px;
+}
+
+.section-hint {
+  color: var(--second);
+  opacity: 0.6;
+  font-size: 10px;
+  letter-spacing: 0;
+  margin-left: 8px;
+}
+
+.synastry-row {
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.synastry-head {
+  justify-content: space-between;
+}
+
+.aspect-bodies.big {
+  font-size: 20px;
+  width: auto;
+  letter-spacing: 4px;
+}
+
+.aspect-term {
+  color: var(--second);
+  letter-spacing: 1px;
+}
+
+.synastry-row:hover,
+.synastry-row.open {
+  background: var(--second-bg, rgba(127, 127, 127, 0.08));
+}
+
+.synastry-meaning {
+  padding: 2px 12px 8px 12px;
+  color: var(--second);
+  font-size: 12px;
+}
+
+.synastry-meaning p {
+  margin: 4px 0;
+}
+
 /* mobile */
 @media (max-width: 600px) {
   .reading-text p {
     text-align: center;
+  }
+
+  .group-columns {
+    flex-direction: column;
   }
 }

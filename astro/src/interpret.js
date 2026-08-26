@@ -251,4 +251,68 @@ export function getAspectMeaning(aspectName) {
   return ASPECT_MEANING[aspectName] || ''
 }
 
+export function getPlanetMeaning(id) {
+  return PLANET_MEANING[id] || ''
+}
+
+// how one person's planet acts on another's, per aspect
+const ASPECT_CONNECTIVE = {
+  conjunction: 'fuses with',
+  sextile: 'gently supports',
+  square: 'clashes with',
+  trine: 'flows easily with',
+  opposition: 'pulls against',
+}
+
+const ASPECT_RELATION = {
+  conjunction: 'these two energies blend into one force - amplifying each other, for better or worse, and hard to tell apart.',
+  sextile: 'they draw out easy opportunities in each other, if they put in a little effort.',
+  square: 'the friction here creates pressure and growth - expect tension, pushback, and things that need working through.',
+  trine: 'this flows naturally between them - supportive and easy, but easy to take for granted.',
+  opposition: 'a push-pull: they either balance each other out or end up butting heads.',
+}
+
+// plain-language explainer of the aspect term itself (the angle between the planets)
+const ASPECT_GLOSS = {
+  conjunction: '0° apart - the two planets sit right on top of each other, so their energies merge.',
+  sextile: '60° apart - a friendly, easy angle that opens up opportunities.',
+  square: '90° apart - a hard, tense angle that creates friction and pressure.',
+  trine: '120° apart - the smoothest angle, where energy flows without effort.',
+  opposition: '180° apart - the planets face off across the chart, pulling in opposite directions.',
+}
+
+// what each planet says about someone in a group/relationship context
+const PLANET_IN_RELATIONS = {
+  Sun: 'how they show up and take the spotlight in the group',
+  Moon: 'what they need emotionally from the people around them',
+  Mercury: 'how they communicate and trade ideas with others',
+  Venus: 'how they show affection and what they value in people',
+  Mars: 'how they assert themselves and handle conflict',
+  Jupiter: 'where they bring optimism, generosity, and growth to others',
+  Saturn: 'where they bring structure, limits, or seriousness',
+  Uranus: 'how they shake things up or need their independence',
+  Neptune: 'how they dream, idealize, or blur boundaries with others',
+  Pluto: 'where they bring intensity, power, and transformation',
+}
+
+export function getRelationRole(id) {
+  return PLANET_IN_RELATIONS[id] || ''
+}
+
+// short version of what a planet governs, without the leading "your"
+function planetShort(id) {
+  return (PLANET_MEANING[id] || '').replace(/^your /, '')
+}
+
+// synthesize how person A's planet affects person B's planet across this aspect
+export function getSynastryMeaning(aspectName, aId, bId) {
+  return {
+    gloss: ASPECT_GLOSS[aspectName] || '',
+    connective: ASPECT_CONNECTIVE[aspectName] || 'connects with',
+    relation: ASPECT_RELATION[aspectName] || '',
+    aShort: planetShort(aId),
+    bShort: planetShort(bId),
+  }
+}
+
 export { SIGNS_ORDER }

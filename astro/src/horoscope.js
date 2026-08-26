@@ -248,6 +248,146 @@ tone: sassy, blunt, lowercase. keep it real. under 150 words.`
   return ask(prompt)
 }
 
+// --- group / synastry readings ---
+// people: [{ name, chart }], groupSynastry: output of getGroupSynastry
+
+function peopleData(people) {
+  return people.map(p => `${p.name}: ${chartData(p.chart)}`).join('\n\n')
+}
+
+function synastryData(groupSynastry) {
+  return groupSynastry.map(pair => {
+    const lines = pair.aspects.length
+      ? pair.aspects.map(a => `  ${pair.a}'s ${a.a.label} ${a.name} ${pair.b}'s ${a.b.label} (${a.exact.toFixed(1)}°)`).join('\n')
+      : '  no major aspects'
+    return `${pair.a} & ${pair.b}:\n${lines}`
+  }).join('\n\n')
+}
+
+const GROUP_TONE = 'tone: sassy, blunt, lowercase. be honest, funny, a little brutal. always refer to people by name. never assume anyone\'s gender - use their name or they/them, never he/she/him/her. no greetings, no sign-offs.'
+
+export async function analyzeGroup(people, groupSynastry) {
+  if (!API_KEY) return 'missing api key'
+  const names = people.map(p => p.name).join(', ')
+  const prompt = `you are a warm, insightful astrologer reading the dynamics of a group: ${names}.
+
+each person's natal chart:
+${peopleData(people)}
+
+synastry (cross-aspects between their charts):
+${synastryData(groupSynastry)}
+
+write a reading about how these people work together. cover the key bonds, the friction points, and who balances who. reference the specific synastry aspects and whose planets are involved. be honest, not just positive.
+
+${GROUP_TONE} lead each point with a punchy one-liner then explain. under 300 words.`
+  return ask(prompt)
+}
+
+export async function askGroupChart(question, people, groupSynastry) {
+  if (!API_KEY) return 'missing api key'
+  const names = people.map(p => p.name).join(', ')
+  const prompt = `you are a wise astrologer. the group is: ${names}. someone asks: "${question}"
+
+each person's natal chart:
+${peopleData(people)}
+
+synastry (cross-aspects):
+${synastryData(groupSynastry)}
+
+answer based purely on their charts and the synastry between them. be specific - reference exact planets, signs, and aspects, and whose they are. be honest, not just positive.
+
+${GROUP_TONE} open with a punchy verdict, then back it up. under 200 words.`
+  return ask(prompt)
+}
+
+export async function getGroupReading(people, snapshot, groupSynastry) {
+  if (!API_KEY) return 'missing api key'
+  const names = people.map(p => p.name).join(', ')
+  const planets = snapshot.bodies.map(b => `${b.label} in ${b.zodiac.sign} ${b.zodiac.degree.toFixed(0)}°`).join(', ')
+  const moon = `${snapshot.moon.phaseName} (${Math.round(snapshot.moon.illumination * 100)}% lit)`
+  const date = snapshot.date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const prompt = `you are a warm, wise astrologer. give a group reading for ${date} about: ${names}.
+
+sky on that date: ${planets}. moon phase: ${moon}.
+
+each person's natal chart:
+${peopleData(people)}
+
+synastry between them:
+${synastryData(groupSynastry)}
+
+write how this specific day's transits play out for the group - who's energized, who's tense, how they can support each other, and any friction to watch. reference the transiting planets and whose natal placements they hit.
+
+${GROUP_TONE} never say "today" - refer to the specific date. under 250 words.`
+  const result = await ask(prompt)
+  return `${fmtDate(snapshot.date)}\n${result}`
+}
+
+export async function askGroupDay(question, snapshot, people, groupSynastry) {
+  if (!API_KEY) return 'missing api key'
+  const names = people.map(p => p.name).join(', ')
+  const parsedDate = parseDateFromQuestion(question, snapshot.date)
+  const targetSnapshot = parsedDate ? getSnapshot(parsedDate) : snapshot
+  const planets = targetSnapshot.bodies.map(b => `${b.label} in ${b.zodiac.sign} ${b.zodiac.degree.toFixed(0)}°`).join(', ')
+  const moon = `${targetSnapshot.moon.phaseName} (${Math.round(targetSnapshot.moon.illumination * 100)}% lit)`
+  const date = targetSnapshot.date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const prompt = `you are a wise astrologer. the group is: ${names}. someone asks about ${date}: "${question}"
+
+date: ${date}. sky on that date: ${planets}. moon phase: ${moon}.
+
+each person's natal chart:
+${peopleData(people)}
+
+synastry:
+${synastryData(groupSynastry)}
+
+answer based on the transits for ${date}, how they hit each person's chart, and the synastry between them. be specific - name the planets and whose chart they touch. be honest, not just positive.
+
+${GROUP_TONE} never say "today" - refer to the specific date. under 200 words.`
+  const result = await ask(prompt)
+  return `${fmtDate(targetSnapshot.date)}\n${result}`
+}
+
+export async function getGroupForecast(people, startDate, days, groupSynastry) {
+  if (!API_KEY) return 'missing api key'
+  const names = people.map(p => p.name).join(', ')
+  const period = days <= 60 ? 'next 27 days' : 'next 6 months'
+  const perPerson = people.map(p => `${p.name}:\n${buildTransitsText(p.chart, startDate, days)}`).join('\n\n')
+  const prompt = `you are a wise astrologer giving a ${period} group forecast for: ${names}.
+
+each person's upcoming transits (computed positions):
+${perPerson}
+
+synastry between them:
+${synastryData(groupSynastry)}
+
+write a forecast for the group by theme (who's rising, who's struggling, when they clash or click). give specific date ranges. prioritize conjunctions, squares, and oppositions.
+
+${GROUP_TONE} under 350 words.`
+  const result = await ask(prompt)
+  return `${period} from ${fmtShort(startDate)}\n${result}`
+}
+
+export async function askGroupForecast(question, people, startDate, days, groupSynastry) {
+  if (!API_KEY) return 'missing api key'
+  const names = people.map(p => p.name).join(', ')
+  const period = days <= 60 ? 'next 27 days' : 'next 180 days'
+  const endDate = new Date(startDate.getTime() + days * 86400000)
+  const perPerson = people.map(p => `${p.name}:\n${buildTransitsText(p.chart, startDate, days)}`).join('\n\n')
+  const prompt = `you are a wise astrologer. the group is: ${names}. someone asks about the ${period} (${fmtShort(startDate)} to ${fmtShort(endDate)}): "${question}"
+
+each person's upcoming transits (computed positions):
+${perPerson}
+
+synastry between them:
+${synastryData(groupSynastry)}
+
+answer based on the specific transits, dates, and the synastry between them. reference exact dates and whose chart is affected. be honest, not just positive.
+
+${GROUP_TONE} under 200 words.`
+  return ask(prompt)
+}
+
 async function ask(prompt) {
   try {
     const res = await fetch(API_URL, {

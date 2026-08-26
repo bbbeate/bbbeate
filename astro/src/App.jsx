@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { getSnapshot, getNatalChart, getSignTransit, ZODIAC_SYMBOLS, ASPECT_DEFS } from './sky.js'
-import { getInterpretation, getAspectMeaning } from './interpret.js'
+import { getSnapshot, getNatalChart, getSignTransit, getGroupSynastry, ZODIAC_SYMBOLS, ASPECT_DEFS } from './sky.js'
+import { getInterpretation, getAspectMeaning, getSynastryMeaning, getRelationRole } from './interpret.js'
 import { getReading, analyzeChart, askChart, askDay, getForecast, askForecast } from './horoscope.js'
+import { analyzeGroup, askGroupChart, getGroupReading, askGroupDay, getGroupForecast, askGroupForecast } from './horoscope.js'
 import DatePicker, { CalendarGrid } from './DatePicker.jsx'
 import MapPicker from './MapPicker.jsx'
 
@@ -28,6 +29,24 @@ function loadProfiles() {
     if (s) return JSON.parse(s)
   } catch {}
   return []
+}
+
+function loadGroup() {
+  try {
+    const s = localStorage.getItem('astro-group')
+    if (s) return JSON.parse(s)
+  } catch {}
+  return []
+}
+
+// build a natal chart from a saved profile, or null if its data is incomplete
+function chartFromProfile(p) {
+  const lat = parseFloat(p.lat)
+  const lng = parseFloat(p.lng)
+  if (isNaN(lat) || isNaN(lng)) return null
+  const d = toUTC(p.datetime, p.tz || 'Europe/Oslo')
+  if (!d || isNaN(d)) return null
+  return getNatalChart(d, lat, lng)
 }
 
 // convert a local datetime string in a given timezone to a UTC Date
@@ -660,7 +679,257 @@ function ProfilePanel({ birth, activeName, editing, draft, onDraft, onSave, onSa
   )
 }
 
-const VIEWS = ['sky', 'chart']
+function GroupPicker({ profiles, group, onToggle }) {
+  if (!profiles.length) return <p className="group-hint">no saved people yet - add profiles from the chart dot first.</p>
+  return (
+    <div className="group-picker">
+      {profiles.map(p => (
+        <button key={p.name} className={`group-chip${group.includes(p.name) ? ' active' : ''}`}
+          onClick={() => onToggle(p.name)}>{p.name}</button>
+      ))}
+    </div>
+  )
+}
+
+function GroupPlanetRow({ body }) {
+  const [open, setOpen] = useState(false)
+  const interp = open ? getInterpretation(body, null) : null
+  return (
+    <div className={`synastry-row${open ? ' open' : ''}`} onClick={() => setOpen(o => !o)}>
+      <div className="planet-row">
+        <span className="planet-dot" style={{ background: body.color }} />
+        <span className="planet-name">{body.symbol} {body.label}</span>
+        <span className="planet-sign">{body.zodiac.symbol} {body.zodiac.sign}</span>
+        <span className="planet-deg">{body.zodiac.degree.toFixed(1)}°</span>
+        <span className="planet-house">H{body.house}</span>
+      </div>
+      {open && (
+        <div className="synastry-meaning">
+          <p><b>{body.label}</b> ({interp.meaning.replace(/^your /, '')}) in <b>{body.zodiac.sign}</b> ({interp.flavor})</p>
+          <p>in the group: {getRelationRole(body.id)}.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function GroupColumns({ people }) {
+  return (
+    <div className="group-columns">
+      {people.map(p => (
+        <div key={p.name} className="group-col">
+          <div className="section-label">{p.name}</div>
+          <div className="planet-list">
+            {p.chart.bodies.map(b => <GroupPlanetRow key={b.id} body={b} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SynastryAspect({ pair, a }) {
+  const [open, setOpen] = useState(false)
+  const m = open ? getSynastryMeaning(a.name, a.a.id, a.b.id) : null
+  return (
+    <div className={`synastry-row${open ? ' open' : ''}`} onClick={() => setOpen(o => !o)}>
+      <div className="aspect-row synastry-head">
+        <span className="aspect-bodies big">{a.a.symbol} {a.symbol} {a.b.symbol}</span>
+        {open && <span className="aspect-term">{a.name}</span>}
+        <span className="aspect-orb">{a.exact.toFixed(1)}°</span>
+      </div>
+      {open && (
+        <div className="synastry-meaning">
+          <p>{pair.a}'s <b>{a.a.label}</b> ({m.aShort}) {m.connective} {pair.b}'s <b>{a.b.label}</b> ({m.bShort}).</p>
+          <p>{m.relation}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SynastryList({ synastry }) {
+  if (!synastry.length) return null
+  return (
+    <div className="aspect-list">
+      <div className="section-label">synastry <span className="section-hint">tap a row for meaning</span></div>
+      {synastry.map((pair, i) => (
+        <div key={i} className="synastry-pair">
+          <div className="synastry-names">{pair.a} &amp; {pair.b}</div>
+          {pair.aspects.length
+            ? pair.aspects.map((a, j) => <SynastryAspect key={j} pair={pair} a={a} />)
+            : <div className="aspect-row"><span className="aspect-name">no major aspects</span></div>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const GROUP_CHART_DEFAULT_Q = 'how do we work together?'
+
+function GroupChart({ people, synastry }) {
+  const [analysis, setAnalysis] = useState('')
+  const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [question, setQuestion] = useState('')
+  const [answer, setAnswer] = useState('')
+  const [answerLoading, setAnswerLoading] = useState(false)
+
+  const analyze = async () => {
+    setAnalysisLoading(true)
+    setAnalysis('')
+    setAnalysis(await analyzeGroup(people, synastry))
+    setAnalysisLoading(false)
+  }
+
+  const submitQuestion = async (e) => {
+    e.preventDefault()
+    const q = question.trim() || GROUP_CHART_DEFAULT_Q
+    setAnswerLoading(true)
+    setAnswer('')
+    setAnswer(await askGroupChart(q, people, synastry))
+    setAnswerLoading(false)
+  }
+
+  const handleKey = (e) => {
+    if (e.key === 'Tab' && !question) { e.preventDefault(); setQuestion(GROUP_CHART_DEFAULT_Q) }
+  }
+
+  return (
+    <div className="reading">
+      <button className="reading-btn" onClick={analyze} disabled={analysisLoading}>
+        {analysisLoading ? 'analyzing...' : 'analyze group'}
+      </button>
+      <ReadingBlock text={analysis} />
+      <form className="ask-form" onSubmit={submitQuestion}>
+        <input type="text" value={question} placeholder={GROUP_CHART_DEFAULT_Q}
+          onChange={e => setQuestion(e.target.value)} onKeyDown={handleKey} />
+        <button type="submit" disabled={answerLoading}>{answerLoading ? '...' : 'ask'}</button>
+      </form>
+      <ReadingBlock text={answer} />
+      <GroupColumns people={people} />
+      <SynastryList synastry={synastry} />
+    </div>
+  )
+}
+
+const GROUP_SKY_DEFAULT_Q = 'how can we help each other today?'
+
+function GroupSky({ people, synastry }) {
+  const [date, setDate] = useState(() => new Date())
+  const [mode, setMode] = useState('day')
+  const [loading, setLoading] = useState(null)
+  const [reading, setReading] = useState('')
+  const [question, setQuestion] = useState('')
+  const [answer, setAnswer] = useState('')
+  const [answerLoading, setAnswerLoading] = useState(false)
+  const [calOpen, setCalOpen] = useState(false)
+  const [calViewDate, setCalViewDate] = useState(() => new Date())
+  const calRef = useRef()
+  const calBtnRef = useRef()
+
+  const snapshot = useMemo(() => getSnapshot(date), [date.getTime()])
+
+  useEffect(() => {
+    if (!calOpen) return
+    const handler = (e) => {
+      if (calRef.current?.contains(e.target)) return
+      if (calBtnRef.current?.contains(e.target)) return
+      setCalOpen(false)
+    }
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [calOpen])
+
+  const pickMode = async (m) => {
+    setMode(m)
+    setReading('')
+    setAnswer('')
+    if (m === 'day') {
+      const now = new Date()
+      setDate(now)
+      setLoading('day')
+      setReading(await getGroupReading(people, getSnapshot(now), synastry))
+      setLoading(null)
+    } else {
+      const days = m === '27' ? 27 : 180
+      setLoading(m)
+      setReading(await getGroupForecast(people, new Date(), days, synastry))
+      setLoading(null)
+    }
+  }
+
+  const pickDate = async (day) => {
+    const d = new Date(calViewDate.getFullYear(), calViewDate.getMonth(), day, 12, 0)
+    setMode('day')
+    setDate(d)
+    setCalOpen(false)
+    setReading('')
+    setAnswer('')
+    setLoading('cal')
+    setReading(await getGroupReading(people, getSnapshot(d), synastry))
+    setLoading(null)
+  }
+
+  const submitQuestion = async (e) => {
+    e.preventDefault()
+    const q = question.trim() || GROUP_SKY_DEFAULT_Q
+    setAnswerLoading(true)
+    setAnswer('')
+    let result
+    if (mode === 'day') {
+      result = await askGroupDay(q, snapshot, people, synastry)
+    } else {
+      const days = mode === '27' ? 27 : 180
+      result = await askGroupForecast(q, people, date, days, synastry)
+    }
+    setAnswer(result)
+    setAnswerLoading(false)
+  }
+
+  const handleKey = (e) => {
+    if (e.key === 'Tab' && !question) { e.preventDefault(); setQuestion(GROUP_SKY_DEFAULT_Q) }
+  }
+
+  const endDate27 = new Date(Date.now() + 27 * 86400000)
+  const endDate180 = new Date(Date.now() + 180 * 86400000)
+  const dateStr = mode === 'day'
+    ? date.toLocaleDateString('nb-NO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    : `until ${fmtUntil(mode === '27' ? endDate27 : endDate180)}`
+
+  return (
+    <div className="reading">
+      <div className="sky-modes">
+        <button className={`sky-mode${mode === 'day' && !calOpen ? ' active' : ''}`} onClick={() => pickMode('day')}>
+          {loading === 'day' ? '...' : 'rn'}
+        </button>
+        <button ref={calBtnRef} className={`sky-mode${calOpen ? ' active' : ''}`}
+          onClick={() => { setCalOpen(o => !o); setCalViewDate(new Date(date)) }}>
+          {loading === 'cal' ? '...' : 'cal'}
+        </button>
+        <button className={`sky-mode${mode === '27' ? ' active' : ''}`} onClick={() => pickMode('27')}>
+          {loading === '27' ? 'scanning...' : '27d'}
+        </button>
+        <button className={`sky-mode${mode === '180' ? ' active' : ''}`} onClick={() => pickMode('180')}>
+          {loading === '180' ? 'scanning...' : '180d'}
+        </button>
+      </div>
+      {calOpen && <div ref={calRef}><CalendarGrid date={date} viewDate={calViewDate} setViewDate={setCalViewDate} onSelect={pickDate} /></div>}
+      <p className="date-display">{dateStr}</p>
+      <ReadingBlock text={reading} />
+      <form className="ask-form" onSubmit={submitQuestion}>
+        <input type="text" value={question} placeholder={GROUP_SKY_DEFAULT_Q}
+          onChange={e => setQuestion(e.target.value)} onKeyDown={handleKey} />
+        <button type="submit" disabled={answerLoading}>{answerLoading ? '...' : 'ask'}</button>
+      </form>
+      <ReadingBlock text={answer} />
+      <MoonViz moon={snapshot.moon} />
+      <PlanetList bodies={snapshot.bodies} selected={null} onSelect={() => {}} />
+      <SynastryList synastry={synastry} />
+    </div>
+  )
+}
+
+const VIEWS = ['sky', 'chart', 'group sky', 'group chart']
 
 const EMPTY_BIRTH = { datetime: '', tz: 'Europe/Oslo', lat: '', lng: '' }
 
@@ -678,6 +947,7 @@ export default function App() {
   })
   const [draft, setDraft] = useState(birth || EMPTY_BIRTH)
   const [profiles, setProfiles] = useState(loadProfiles)
+  const [group, setGroup] = useState(loadGroup)
   const [selectedBody, setSelectedBody] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
   const [profileEditing, setProfileEditing] = useState(false)
@@ -738,6 +1008,14 @@ export default function App() {
     setProfileEditing(true)
   }
 
+  const toggleGroup = (name) => {
+    setGroup(prev => {
+      const next = prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+      localStorage.setItem('astro-group', JSON.stringify(next))
+      return next
+    })
+  }
+
   const selectBody = (body) => setSelectedBody(prev => prev === body.id ? null : body.id)
 
   const snapshot = useMemo(() => getSnapshot(date), [date.getTime()])
@@ -756,6 +1034,17 @@ export default function App() {
     if (!d || isNaN(d)) return null
     return getNatalChart(d, lat, lng)
   }, [birth?.datetime, birth?.tz, birth?.lat, birth?.lng])
+
+  const groupPeople = useMemo(() =>
+    group.map(name => {
+      const p = profiles.find(x => x.name === name)
+      if (!p) return null
+      const chart = chartFromProfile(p)
+      return chart ? { name, chart } : null
+    }).filter(Boolean),
+    [group, profiles])
+
+  const groupSynastry = useMemo(() => getGroupSynastry(groupPeople), [groupPeople])
 
   const chartDateStr = natalChart ? natalChart.date.toLocaleDateString('nb-NO', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -818,6 +1107,19 @@ export default function App() {
                 <NatalChart chart={natalChart} />
               </div>
             </>
+          )}
+        </>
+      )}
+
+      {(view === 'group sky' || view === 'group chart') && (
+        <>
+          <GroupPicker profiles={profiles} group={group} onToggle={toggleGroup} />
+          {groupPeople.length < 2 ? (
+            <p className="group-hint">pick at least 2 people</p>
+          ) : view === 'group sky' ? (
+            <GroupSky key={group.join(',')} people={groupPeople} synastry={groupSynastry} />
+          ) : (
+            <GroupChart key={group.join(',')} people={groupPeople} synastry={groupSynastry} />
           )}
         </>
       )}
