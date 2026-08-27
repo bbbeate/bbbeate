@@ -62,7 +62,7 @@ h1 {
   display: flex;
   gap: 4px;
   justify-content: center;
-  margin-top: 8px;
+  margin-top: 28px;
 }
 
 .view-tabs button {
@@ -641,10 +641,18 @@ h1 {
 }
 
 /* profile dot */
+.title-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .profile-dot {
   position: absolute;
-  top: 0;
+  top: 50%;
   right: 0;
+  transform: translateY(-50%);
   width: 36px;
   height: 36px;
   border-radius: 50%;

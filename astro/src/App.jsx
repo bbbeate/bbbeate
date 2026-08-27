@@ -1057,16 +1057,18 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>astro</h1>
+        <div className="title-row">
+          <h1>astro</h1>
+          <button className={`profile-dot${!hasBirth ? ' pulse' : ''}`}
+            onClick={() => { setShowProfile(s => !s); if (!hasBirth) setProfileEditing(true) }}>
+            {natalChart ? `${natalChart.ascZodiac.symbol}${sun?.zodiac.symbol}${moon?.zodiac.symbol}` : '?'}
+          </button>
+        </div>
         <div className="view-tabs">
           {VIEWS.map(v => (
             <button key={v} className={v === view ? 'active' : ''} onClick={() => setView(v)}>{v}</button>
           ))}
         </div>
-        <button className={`profile-dot${!hasBirth ? ' pulse' : ''}`}
-          onClick={() => { setShowProfile(s => !s); if (!hasBirth) setProfileEditing(true) }}>
-          {natalChart ? `${natalChart.ascZodiac.symbol}${sun?.zodiac.symbol}${moon?.zodiac.symbol}` : '?'}
-        </button>
       </header>
 
       {showProfile && (
