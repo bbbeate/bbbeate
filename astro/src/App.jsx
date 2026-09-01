@@ -39,6 +39,29 @@ function loadGroup() {
   return []
 }
 
+function encodeProfile(p) {
+  const json = JSON.stringify({ name: p.name, datetime: p.datetime, tz: p.tz, lat: p.lat, lng: p.lng })
+  return btoa(unescape(encodeURIComponent(json)))
+}
+
+function decodeProfile(param) {
+  try {
+    const json = decodeURIComponent(escape(atob(param)))
+    const p = JSON.parse(json)
+    if (!p || !p.name || !p.datetime || p.lat === undefined || p.lng === undefined) return null
+    return { name: String(p.name), datetime: String(p.datetime), tz: p.tz || 'Europe/Oslo', lat: p.lat, lng: p.lng }
+  } catch {
+    return null
+  }
+}
+
+function uniqueName(name, existing) {
+  const taken = new Set(existing.map(p => p.name))
+  let n = name
+  while (taken.has(n)) n += '$'
+  return n
+}
+
 // build a natal chart from a saved profile, or null if its data is incomplete
 function chartFromProfile(p) {
   const lat = parseFloat(p.lat)
@@ -645,7 +668,7 @@ function ProfileEditor({ draft, onDraft, onSave, onSaveProfile }) {
   )
 }
 
-function ProfilePanel({ birth, activeName, editing, draft, onDraft, onSave, onSaveProfile, onLoadProfile, onRemove, onEdit, onAdd, profiles }) {
+function ProfilePanel({ birth, activeName, editing, draft, onDraft, onSave, onSaveProfile, onLoadProfile, onRemove, onEdit, onAdd, onShare, shareUrl, onCopy, profiles }) {
   return (
     <div className="profile-panel">
       {birth && !editing && (
@@ -657,8 +680,16 @@ function ProfilePanel({ birth, activeName, editing, draft, onDraft, onSave, onSa
           <div className="profile-actions">
             <button className="save-btn" onClick={onEdit}>edit</button>
             <button className="save-btn" onClick={onAdd}>add</button>
+            <button className="save-btn" onClick={onShare}>share</button>
             {activeName && <button className="save-btn" onClick={() => onRemove(activeName)}>remove</button>}
           </div>
+          {shareUrl && (
+            <div className="share-row">
+              <input className="share-link" readOnly value={shareUrl}
+                onFocus={e => e.target.select()} onClick={e => e.target.select()} />
+              <button className="save-btn" onClick={onCopy}>copy</button>
+            </div>
+          )}
         </div>
       )}
       {(!birth || editing) && (
@@ -951,8 +982,56 @@ export default function App() {
   const [selectedBody, setSelectedBody] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
   const [profileEditing, setProfileEditing] = useState(false)
+  const [toast, setToast] = useState('')
+  const [shareUrl, setShareUrl] = useState('')
+  const importedRef = useRef(false)
 
   const hasBirth = !!birth
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(''), 2800)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  useEffect(() => { if (!showProfile) setShareUrl('') }, [showProfile])
+
+  useEffect(() => {
+    if (importedRef.current) return
+    importedRef.current = true
+    const add = new URLSearchParams(window.location.search).get('add')
+    if (!add) return
+    window.history.replaceState(null, '', window.location.pathname + window.location.hash)
+    const incoming = decodeProfile(add)
+    if (!incoming) { setToast('invalid share link'); return }
+    const current = loadProfiles()
+    const name = uniqueName(incoming.name, current)
+    const profile = { ...incoming, name }
+    const updated = [...current, profile]
+    setProfiles(updated)
+    localStorage.setItem('astro-profiles', JSON.stringify(updated))
+    if (!loadBirth()) {
+      setBirth(profile)
+      setActiveName(name)
+      setDraft(profile)
+      localStorage.setItem('astro-birth', JSON.stringify(profile))
+    }
+    setToast(name === incoming.name ? `added ${name}` : `added ${name} (name taken)`)
+  }, [])
+
+  const shareProfile = async () => {
+    if (!birth) return
+    const b64 = encodeProfile({ ...birth, name: activeName || birth.name })
+    const url = `${window.location.origin}${window.location.pathname}?add=${encodeURIComponent(b64)}`
+    setShareUrl(url)
+    try { await navigator.clipboard.writeText(url); setToast('link copied') } catch {}
+  }
+
+  const copyShare = async () => {
+    if (!shareUrl) return
+    try { await navigator.clipboard.writeText(shareUrl); setToast('link copied') }
+    catch { setToast('select the link and copy') }
+  }
 
   const saveBirth = () => {
     if (!draft.datetime || !draft.lat || !draft.lng) return
@@ -1079,6 +1158,7 @@ export default function App() {
               draft={draft} onDraft={setDraft} onSave={saveBirth}
               onSaveProfile={saveProfile} onLoadProfile={loadProfile}
               onRemove={removeProfile} onEdit={startEdit} onAdd={startAdd}
+              onShare={shareProfile} shareUrl={shareUrl} onCopy={copyShare}
               profiles={profiles} />
           </div>
         </div>
@@ -1125,6 +1205,8 @@ export default function App() {
           )}
         </>
       )}
+
+      {toast && <div className="toast">{toast}</div>}
     </div>
   )
 }
