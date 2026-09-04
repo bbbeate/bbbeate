@@ -3,6 +3,16 @@ import { getSnapshot, scanTransits } from './sky.js'
 const API_KEY = import.meta.env.VITE_MISTRAL_API_KEY
 const API_URL = 'https://api.mistral.ai/v1/chat/completions'
 
+const STATUS_MESSAGES = {
+  400: "the stars couldn't read that request - something's off",
+  401: 'no cosmic access - api key missing or invalid',
+  403: 'the heavens denied entry - access forbidden',
+  404: "lost in the void - couldn't find that",
+  422: 'the planets rejected these details - check your input',
+  429: 'the cosmos needs a breather - too many questions, try again soon'
+}
+const statusMessage = status => `${STATUS_MESSAGES[status] || 'the stars are silent'} (${status} from mistral)`
+
 function fmtDate(d) {
   return d.toLocaleDateString('nb-NO', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
@@ -388,24 +398,35 @@ ${GROUP_TONE} under 200 words.`
   return ask(prompt)
 }
 
+const sleep = ms => new Promise(r => setTimeout(r, ms))
+
 async function ask(prompt) {
+  const maxRetries = 3
   try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'mistral-small-latest',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7
+    for (let attempt = 0; ; attempt++) {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'mistral-small-latest',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7
+        })
       })
-    })
-    if (!res.ok) throw new Error(`mistral ${res.status}`)
-    const data = await res.json()
-    return (data.choices[0]?.message?.content || 'no response').replace(/\*+/g, '').replace(/—/g, ' - ').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
+      if (res.status === 429 && attempt < maxRetries) {
+        const retryAfter = Number(res.headers.get('retry-after'))
+        const wait = retryAfter > 0 ? retryAfter * 1000 : 2 ** attempt * 1000
+        await sleep(wait)
+        continue
+      }
+      if (!res.ok) return statusMessage(res.status)
+      const data = await res.json()
+      return (data.choices[0]?.message?.content || 'no response').replace(/\*+/g, '').replace(/—/g, ' - ').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
+    }
   } catch (e) {
-    return `error: ${e.message}`
+    return `something drifted off course - ${e.message}`
   }
 }
