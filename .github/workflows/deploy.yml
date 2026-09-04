@@ -86,10 +86,8 @@ jobs:
       working-directory: ./astro
       run: pnpm install --frozen-lockfile
 
-    - name: Build astro with secrets
+    - name: Build astro
       working-directory: ./astro
-      env:
-        VITE_MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
       run: pnpm run build
 
     - name: Install dependencies for bursdag
@@ -101,6 +99,14 @@ jobs:
       env:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
         VITE_BURSDAG_PASS: ${{ secrets.BURSDAG_PASS }}
+      run: pnpm run build
+
+    - name: Install dependencies for 6510
+      working-directory: ./6510
+      run: pnpm install --frozen-lockfile
+
+    - name: Build 6510
+      working-directory: ./6510
       run: pnpm run build
 
     - name: Create combined dist
@@ -119,6 +125,8 @@ jobs:
         cp -r ./astro/dist/* combined_dist/astro/
         mkdir -p combined_dist/bursdag
         cp -r ./bursdag/dist/* combined_dist/bursdag/
+        mkdir -p combined_dist/6510
+        cp -r ./6510/dist/* combined_dist/6510/
         cp ./spaces/public/404.html combined_dist/404.html
         cp CNAME combined_dist/CNAME
 

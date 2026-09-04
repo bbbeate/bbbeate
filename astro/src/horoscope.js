@@ -1,7 +1,6 @@
 import { getSnapshot, scanTransits } from './sky.js'
 
-const API_KEY = import.meta.env.VITE_MISTRAL_API_KEY
-const API_URL = 'https://api.mistral.ai/v1/chat/completions'
+const API_URL = '/api/mistral'
 
 const STATUS_MESSAGES = {
   400: "the stars couldn't read that request - something's off",
@@ -21,8 +20,6 @@ function fmtDate(d) {
 }
 
 export async function getReading(snapshot, natalChart) {
-  if (!API_KEY) return 'missing api key'
-
   const planets = snapshot.bodies.map(b =>
     `${b.label} in ${b.zodiac.sign} ${b.zodiac.degree.toFixed(0)}°`
   ).join(', ')
@@ -69,8 +66,6 @@ function chartData(natalChart) {
 }
 
 export async function analyzeChart(natalChart) {
-  if (!API_KEY) return 'missing api key'
-
   const prompt = `you are a warm, insightful astrologer reading a natal birth chart.
 
 chart: ${chartData(natalChart)}
@@ -91,8 +86,6 @@ tone: sassy, blunt, lowercase. lead each point with a punchy one-liner then expl
 }
 
 export async function askChart(question, natalChart) {
-  if (!API_KEY) return 'missing api key'
-
   const prompt = `you are a wise astrologer. someone asks: "${question}"
 
 their natal chart: ${chartData(natalChart)}
@@ -158,8 +151,6 @@ function parseDateFromQuestion(question, referenceDate) {
 }
 
 export async function askDay(question, snapshot, natalChart) {
-  if (!API_KEY) return 'missing api key'
-
   // if user mentions a specific date, compute sky for that date
   const parsedDate = parseDateFromQuestion(question, snapshot.date)
   const targetSnapshot = parsedDate ? getSnapshot(parsedDate) : snapshot
@@ -197,8 +188,6 @@ function fmtShort(d) {
 }
 
 export async function getForecast(natalChart, startDate, days) {
-  if (!API_KEY) return 'missing api key'
-
   const step = days > 60 ? 3 : 1
   const events = scanTransits(natalChart, startDate, days, step)
 
@@ -235,8 +224,6 @@ function buildTransitsText(natalChart, startDate, days) {
 }
 
 export async function askForecast(question, natalChart, startDate, days) {
-  if (!API_KEY) return 'missing api key'
-
   const transitsText = buildTransitsText(natalChart, startDate, days)
   const sun = natalChart.bodies.find(b => b.id === 'Sun')
   const moon = natalChart.bodies.find(b => b.id === 'Moon')
@@ -277,7 +264,6 @@ function synastryData(groupSynastry) {
 const GROUP_TONE = 'tone: sassy, blunt, lowercase. be honest, funny, a little brutal. always refer to people by name. never assume anyone\'s gender - use their name or they/them, never he/she/him/her. no greetings, no sign-offs.'
 
 export async function analyzeGroup(people, groupSynastry) {
-  if (!API_KEY) return 'missing api key'
   const names = people.map(p => p.name).join(', ')
   const prompt = `you are a warm, insightful astrologer reading the dynamics of a group: ${names}.
 
@@ -294,7 +280,6 @@ ${GROUP_TONE} lead each point with a punchy one-liner then explain. under 300 wo
 }
 
 export async function askGroupChart(question, people, groupSynastry) {
-  if (!API_KEY) return 'missing api key'
   const names = people.map(p => p.name).join(', ')
   const prompt = `you are a wise astrologer. the group is: ${names}. someone asks: "${question}"
 
@@ -311,7 +296,6 @@ ${GROUP_TONE} open with a punchy verdict, then back it up. under 200 words.`
 }
 
 export async function getGroupReading(people, snapshot, groupSynastry) {
-  if (!API_KEY) return 'missing api key'
   const names = people.map(p => p.name).join(', ')
   const planets = snapshot.bodies.map(b => `${b.label} in ${b.zodiac.sign} ${b.zodiac.degree.toFixed(0)}°`).join(', ')
   const moon = `${snapshot.moon.phaseName} (${Math.round(snapshot.moon.illumination * 100)}% lit)`
@@ -334,7 +318,6 @@ ${GROUP_TONE} never say "today" - refer to the specific date. under 250 words.`
 }
 
 export async function askGroupDay(question, snapshot, people, groupSynastry) {
-  if (!API_KEY) return 'missing api key'
   const names = people.map(p => p.name).join(', ')
   const parsedDate = parseDateFromQuestion(question, snapshot.date)
   const targetSnapshot = parsedDate ? getSnapshot(parsedDate) : snapshot
@@ -359,7 +342,6 @@ ${GROUP_TONE} never say "today" - refer to the specific date. under 200 words.`
 }
 
 export async function getGroupForecast(people, startDate, days, groupSynastry) {
-  if (!API_KEY) return 'missing api key'
   const names = people.map(p => p.name).join(', ')
   const period = days <= 60 ? 'next 27 days' : 'next 6 months'
   const perPerson = people.map(p => `${p.name}:\n${buildTransitsText(p.chart, startDate, days)}`).join('\n\n')
@@ -379,7 +361,6 @@ ${GROUP_TONE} under 350 words.`
 }
 
 export async function askGroupForecast(question, people, startDate, days, groupSynastry) {
-  if (!API_KEY) return 'missing api key'
   const names = people.map(p => p.name).join(', ')
   const period = days <= 60 ? 'next 27 days' : 'next 180 days'
   const endDate = new Date(startDate.getTime() + days * 86400000)
@@ -406,12 +387,8 @@ async function ask(prompt) {
     for (let attempt = 0; ; attempt++) {
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${API_KEY}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'mistral-small-latest',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.7
         })

@@ -14,6 +14,9 @@ export default defineConfig({
   server: {
     port: 1674,
     strictPort: true,
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    proxy: {
+      '/api/mistral': { target: 'https://bbbeate.space', changeOrigin: true }
+    }
   }
 })
