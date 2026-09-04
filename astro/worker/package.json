@@ -1,0 +1,13 @@
+{
+  "name": "astro-mistral-worker",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "login": "wrangler login",
+    "secret": "wrangler secret put MISTRAL_API_KEY"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}
