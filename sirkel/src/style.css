@@ -139,10 +139,17 @@ body {
   word-break: break-word;
 }
 
-.post-del {
-  margin-top: 0.5rem;
+.foot {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--text);
+}
+
+.foot-btn {
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text);
   background: none;
   border: 0;
@@ -150,6 +157,6 @@ body {
   opacity: 0.6;
   cursor: pointer;
 }
-.post-del:hover {
+.foot-btn:hover {
   opacity: 1;
 }

@@ -16,27 +16,30 @@ export type Sirkel = {
   feed: Y.Array<Post>
   provider: WebrtcProvider
   awareness: Awareness
+  persistence: IndexeddbPersistence
+  room: string
 }
 
 export function connect(room: string, key: string): Sirkel {
   const doc = new Y.Doc()
-  new IndexeddbPersistence(`sirkel-${room}`, doc)
+  const persistence = new IndexeddbPersistence(`sirkel-${room}`, doc)
   const provider = new WebrtcProvider(room, doc, { password: key, signaling: SIGNALING })
   const feed = doc.getArray<Post>('feed')
-  return { doc, feed, provider, awareness: provider.awareness }
+  return { doc, feed, provider, awareness: provider.awareness, persistence, room }
+}
+
+export async function forget(s: Sirkel) {
+  s.provider.destroy()
+  await s.persistence.destroy()
+  await new Promise((resolve) => {
+    const req = indexedDB.deleteDatabase(`sirkel-${s.room}`)
+    req.onsuccess = req.onerror = req.onblocked = () => resolve(null)
+  })
+  s.doc.destroy()
 }
 
 export function addPost(feed: Y.Array<Post>, user: string, text: string) {
   feed.push([{ id: crypto.randomUUID(), user, text, ts: Date.now() }])
-}
-
-export function deletePost(feed: Y.Array<Post>, id: string) {
-  for (let i = 0; i < feed.length; i++) {
-    if (feed.get(i).id === id) {
-      feed.delete(i, 1)
-      return
-    }
-  }
 }
 
 export function setUser(awareness: Awareness, name: string) {

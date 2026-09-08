@@ -17,7 +17,9 @@ Open two browser tabs — they peer via BroadcastChannel and sync instantly, no 
 ## How it works
 
 - **Room + key:** access is `/#room=<uuid>&key=<secret>`. The key encrypts all peer traffic (y-webrtc password). No key in the URL → a keyhole gate prompts for room + secret, then writes the hash so the link is shareable.
-- **Feed:** posts (`author · date`, expand to read) are a synced `Y.Array`. Delete your own posts.
+- **Feed:** posts (heading `YYYY-MM-DD: name`, click to expand) are a synced `Y.Array`. **Append-only** — posts can't be deleted from the shared feed.
+- **Download:** `last ned .txt` exports the whole feed to a plain text file.
+- **Forget my copy:** `slett min kopi` wipes this room's IndexedDB on your own device only and returns to the keyhole. It doesn't touch anyone else's copy; rejoining with the right key re-syncs the posts from peers who still have them.
 - **Colors:** `tekst` and `bakgrunn` color inputs restyle your own view (device-local, saved to `localStorage`). Defaults come from `shared/colors.css`.
 - **Peers:** the header shows how many friends are connected (via y-webrtc awareness).
 

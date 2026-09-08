@@ -1,6 +1,6 @@
 import '@shared/colors.css'
 import './style.css'
-import { connect, addPost, deletePost, setUser, onPeers, type Post, type Sirkel } from './sync'
+import { connect, addPost, forget, setUser, onPeers, type Post, type Sirkel } from './sync'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 
@@ -17,12 +17,9 @@ function parseHash() {
 }
 
 function fmt(ts: number) {
-  return new Date(ts).toLocaleString('no', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  const d = new Date(ts)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
 function defaultColor(name: string, fallback: string) {
@@ -51,9 +48,8 @@ function renderGate() {
   const gate = el('button', 'gate')
   gate.setAttribute('aria-label', 'apne sirkel')
   gate.innerHTML = `
-    <svg viewBox="0 0 64 96" width="120" height="180" aria-hidden="true">
-      <circle cx="32" cy="34" r="22" fill="none" stroke="currentColor" stroke-width="4" />
-      <path d="M24 50 L20 82 H44 L40 50 Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" />
+    <svg viewBox="0 0 60 82" width="115" height="157" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" aria-hidden="true">
+      <path d="M40 38 A16 16 0 1 0 20 38 Q15 58 13 74 L47 74 Q45 58 40 38 Z" />
     </svg>`
   gate.onclick = () => {
     const r = prompt('rom (uuid)')?.trim()
@@ -116,7 +112,7 @@ function render(s: Sirkel, user: string) {
   function renderFeed() {
     list.replaceChildren()
     const posts = s.feed.toArray().slice().reverse()
-    for (const p of posts) list.append(postRow(p, user, s))
+    for (const p of posts) list.append(postRow(p))
   }
 
   s.feed.observe(renderFeed)
@@ -126,7 +122,31 @@ function render(s: Sirkel, user: string) {
     peers.title = names.join(', ')
   })
 
-  app.append(header, composer, list)
+  const footer = el('footer', 'foot')
+  const dl = el('button', 'foot-btn', 'last ned .txt')
+  dl.onclick = () => download(s)
+  const wipe = el('button', 'foot-btn', 'slett min kopi')
+  wipe.onclick = async () => {
+    if (!confirm('slette din kopi av dette rommet? bare pa denne enheten.')) return
+    await forget(s)
+    location.hash = ''
+    renderGate()
+  }
+  footer.append(dl, wipe)
+
+  app.append(header, composer, list, footer)
+}
+
+function download(s: Sirkel) {
+  const text = s.feed
+    .toArray()
+    .map((p) => `${fmt(p.ts)}: ${p.user}\n${p.text}`)
+    .join('\n\n')
+  const a = el('a')
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }))
+  a.download = `sirkel-${s.room}.txt`
+  a.click()
+  URL.revokeObjectURL(a.href)
 }
 
 function colorField(label: string, value: string, onChange: (v: string) => void) {
@@ -146,19 +166,14 @@ function toHex(v: string) {
   return ctx.fillStyle
 }
 
-function postRow(p: Post, user: string, s: Sirkel) {
+function postRow(p: Post) {
   const row = el('div', 'post')
-  const head = el('button', 'post-head', `${p.user} · ${fmt(p.ts)}`)
+  const head = el('button', 'post-head', `${fmt(p.ts)}: ${p.user}`)
   const body = el('div', 'post-body', p.text)
   body.hidden = true
   head.onclick = () => {
     body.hidden = !body.hidden
   }
   row.append(head, body)
-  if (p.user === user) {
-    const del = el('button', 'post-del', 'slett')
-    del.onclick = () => deletePost(s.feed, p.id)
-    row.append(del)
-  }
   return row
 }
