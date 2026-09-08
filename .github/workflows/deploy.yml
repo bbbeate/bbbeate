@@ -101,6 +101,16 @@ jobs:
         VITE_BURSDAG_PASS: ${{ secrets.BURSDAG_PASS }}
       run: pnpm run build
 
+    - name: Install dependencies for sirkel
+      working-directory: ./sirkel
+      run: pnpm install --frozen-lockfile
+
+    - name: Build sirkel
+      working-directory: ./sirkel
+      env:
+        VITE_SIGNALING_URL: ${{ secrets.SIRKEL_SIGNALING_URL }}
+      run: pnpm run build
+
     - name: Create combined dist
       run: |
         mkdir -p combined_dist
@@ -117,6 +127,8 @@ jobs:
         cp -r ./astro/dist/* combined_dist/astro/
         mkdir -p combined_dist/bursdag
         cp -r ./bursdag/dist/* combined_dist/bursdag/
+        mkdir -p combined_dist/sirkel
+        cp -r ./sirkel/dist/* combined_dist/sirkel/
         cp ./spaces/public/404.html combined_dist/404.html
         cp CNAME combined_dist/CNAME
 

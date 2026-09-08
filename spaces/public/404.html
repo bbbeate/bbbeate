@@ -23,6 +23,8 @@
       window.location.replace('/hjemme/');
     } else if (path.startsWith('/bursdag/') || path === '/bursdag') {
       window.location.replace('/bursdag/');
+    } else if (path.startsWith('/sirkel/') || path === '/sirkel') {
+      window.location.replace('/sirkel/' + hash);
     } else {
       // For other 404s, go to root
       window.location.replace('/');
