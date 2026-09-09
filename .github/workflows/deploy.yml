@@ -107,8 +107,6 @@ jobs:
 
     - name: Build sirkel
       working-directory: ./sirkel
-      env:
-        VITE_SIGNALING_URL: ${{ secrets.SIRKEL_SIGNALING_URL }}
       run: pnpm run build
 
     - name: Create combined dist

@@ -2,7 +2,9 @@ import * as Y from 'yjs'
 import { IndexeddbPersistence } from 'y-indexeddb'
 import { WebrtcProvider } from 'y-webrtc'
 
-const raw = (import.meta.env.VITE_SIGNALING_URL as string | undefined) || 'wss://y-webrtc-eu.fly.dev'
+const raw =
+  (import.meta.env.VITE_SIGNALING_URL as string | undefined) ||
+  'wss://sirkel-signaling.beatebog.workers.dev'
 const SIGNALING = raw
   .split(',')
   .map((s) => s.trim())
