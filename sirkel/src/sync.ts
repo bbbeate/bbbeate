@@ -10,7 +10,14 @@ const SIGNALING = raw
   .map((s) => s.trim())
   .filter(Boolean)
 
-export type Post = { id: string; user: string; text: string; ts: number }
+export type Post = {
+  id: string
+  parentId: string | null
+  user: string
+  title: string
+  text: string
+  ts: number
+}
 type Awareness = WebrtcProvider['awareness']
 
 export type Sirkel = {
@@ -40,8 +47,22 @@ export async function forget(s: Sirkel) {
   s.doc.destroy()
 }
 
-export function addPost(feed: Y.Array<Post>, user: string, text: string) {
-  feed.push([{ id: crypto.randomUUID(), user, text, ts: Date.now() }])
+export function addPost(
+  feed: Y.Array<Post>,
+  post: { parentId?: string | null; user: string; title?: string; text: string }
+) {
+  const id = crypto.randomUUID()
+  feed.push([
+    {
+      id,
+      parentId: post.parentId ?? null,
+      user: post.user,
+      title: post.title ?? '',
+      text: post.text,
+      ts: Date.now()
+    }
+  ])
+  return id
 }
 
 export function setUser(awareness: Awareness, name: string) {
