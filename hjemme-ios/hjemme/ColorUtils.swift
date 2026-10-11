@@ -53,5 +53,7 @@ func colorToHex(_ color: Color) -> String {
     let uiColor = UIColor(color)
     var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
     uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
-    return String(format: "#%02x%02x%02x", Int(r * 255), Int(g * 255), Int(b * 255))
+    func channel(_ value: CGFloat) -> Int { Int((min(max(value, 0), 1) * 255).rounded()) }
+    return String(format: "#%02x%02x%02x", channel(r), channel(g), channel(b))
 }
+

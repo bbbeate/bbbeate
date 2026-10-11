@@ -7,6 +7,8 @@ struct HueButton: View {
     let onPress: () -> Void
     let onLongPress: () -> Void
     var overlayText: String? = nil
+    var fontSize: CGFloat = 60
+    var textColor: Color = Theme.first
 
     @State private var isPressed = false
     @State private var didLongPress = false
@@ -23,7 +25,11 @@ struct HueButton: View {
                     .foregroundStyle(Theme.first)
             } else {
                 Text(emoji)
-                    .font(.system(size: 60))
+                    .font(.system(size: fontSize))
+                    .foregroundStyle(textColor)
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.5)
+                    .padding(8)
             }
         }
         .aspectRatio(1, contentMode: .fit)

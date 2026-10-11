@@ -15,6 +15,9 @@
 		A10006 /* SoloppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20006 /* SoloppView.swift */; };
 		A10007 /* BoomBlasterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20007 /* BoomBlasterView.swift */; };
 		A10008 /* ColorUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20008 /* ColorUtils.swift */; };
+		A10022 /* DynamicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20022 /* DynamicView.swift */; };
+		A10021 /* RoomsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20021 /* RoomsView.swift */; };
+		A10020 /* LightControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20020 /* LightControls.swift */; };
 		A10009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20009 /* Assets.xcassets */; };
 		A10010 /* AlarmManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20010 /* AlarmManager.swift */; };
 		A10011 /* AlarmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20011 /* AlarmView.swift */; };
@@ -31,6 +34,9 @@
 		A20006 /* SoloppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoloppView.swift; sourceTree = "<group>"; };
 		A20007 /* BoomBlasterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoomBlasterView.swift; sourceTree = "<group>"; };
 		A20008 /* ColorUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorUtils.swift; sourceTree = "<group>"; };
+		A20022 /* DynamicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicView.swift; sourceTree = "<group>"; };
+		A20021 /* RoomsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomsView.swift; sourceTree = "<group>"; };
+		A20020 /* LightControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightControls.swift; sourceTree = "<group>"; };
 		A20009 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20010 /* AlarmManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmManager.swift; sourceTree = "<group>"; };
 		A20011 /* AlarmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmView.swift; sourceTree = "<group>"; };
@@ -70,6 +76,9 @@
 				A20006 /* SoloppView.swift */,
 				A20007 /* BoomBlasterView.swift */,
 				A20008 /* ColorUtils.swift */,
+				A20022 /* DynamicView.swift */,
+				A20021 /* RoomsView.swift */,
+				A20020 /* LightControls.swift */,
 				A20010 /* AlarmManager.swift */,
 				A20011 /* AlarmView.swift */,
 				A20012 /* Theme.swift */,
@@ -165,6 +174,9 @@
 				A10006 /* SoloppView.swift in Sources */,
 				A10007 /* BoomBlasterView.swift in Sources */,
 				A10008 /* ColorUtils.swift in Sources */,
+				A10022 /* DynamicView.swift in Sources */,
+				A10021 /* RoomsView.swift in Sources */,
+				A10020 /* LightControls.swift in Sources */,
 				A10010 /* AlarmManager.swift in Sources */,
 				A10011 /* AlarmView.swift in Sources */,
 				A10012 /* Theme.swift in Sources */,

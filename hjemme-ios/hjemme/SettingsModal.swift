@@ -1,8 +1,9 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-enum ModalType: Identifiable {
+enum ModalType: Identifiable, Hashable {
     case off, on, night, orange, sparkle, wake, boomblaster, config
+    case room(String)
 
     var id: Self { self }
 }
@@ -53,29 +54,16 @@ struct SettingsModal: View {
                 Text("\u{1F315}")
                     .font(.system(size: 48))
 
-                SettingRow(label: "ambient") {
-                    BarSlider(value: Binding(
-                        get: { Double(api.settings.on.mirek) },
-                        set: { api.settings.on.mirek = Int($0) }
-                    ), range: 153...500, step: 1, onEditingChanged: {
-                        Task { await api.saveSettings() }
-                    })
+                AmbientSlider(mirek: api.settings.on.mirek) { mirek in
+                    api.settings.on.mirek = mirek
+                    Task { await api.previewMode(.on) }
                 }
-                HStack {
-                    Text("kald").font(.caption).foregroundStyle(Theme.second)
-                    Spacer()
-                    Text("varm").font(.caption).foregroundStyle(Theme.second)
-                }
-                .padding(.horizontal, 70)
-                .padding(.top, -8)
 
                 SettingRow(label: "styrke", value: "\(api.settings.on.brightness)%") {
                     BarSlider(value: Binding(
                         get: { Double(api.settings.on.brightness) },
-                        set: { api.settings.on.brightness = Int($0) }
-                    ), range: 1...100, step: 1, onEditingChanged: {
-                        Task { await api.saveSettings() }
-                    })
+                        set: { api.settings.on.brightness = Int($0); Task { await api.previewMode(.on) } }
+                    ), range: 1...100, step: 1)
                 }
             }
 
@@ -84,41 +72,31 @@ struct SettingsModal: View {
                 Text("\u{1F31B}")
                     .font(.system(size: 48))
 
-                SettingRow(label: "farge") {
-                    ColorPicker("", selection: Binding(
-                        get: { hexToColor(api.settings.night.color) },
-                        set: { api.settings.night.color = colorToHex($0) }
-                    ))
-                    .labelsHidden()
+                AmbientSlider(mirek: api.settings.night.mirek) { mirek in
+                    api.settings.night.mirek = mirek
+                    Task { await api.previewMode(.night) }
                 }
 
                 SettingRow(label: "styrke", value: "\(api.settings.night.brightness)%") {
                     BarSlider(value: Binding(
                         get: { Double(api.settings.night.brightness) },
-                        set: { api.settings.night.brightness = Int($0) }
-                    ), range: 1...100, step: 1, onEditingChanged: {
-                        Task { await api.saveSettings() }
-                    })
+                        set: { api.settings.night.brightness = Int($0); Task { await api.previewMode(.night) } }
+                    ), range: 1...100, step: 1)
                 }
             }
 
         case .orange:
             VStack(spacing: 12) {
-                SettingRow(label: "farge") {
-                    ColorPicker("", selection: Binding(
-                        get: { hexToColor(api.settings.orange.color) },
-                        set: { api.settings.orange.color = colorToHex($0) }
-                    ))
-                    .labelsHidden()
+                ColorField(hex: api.settings.orange.color) { color in
+                    api.settings.orange.color = color
+                    Task { await api.previewMode(.orange) }
                 }
 
                 SettingRow(label: "styrke", value: "\(api.settings.orange.brightness)%") {
                     BarSlider(value: Binding(
                         get: { Double(api.settings.orange.brightness) },
-                        set: { api.settings.orange.brightness = Int($0) }
-                    ), range: 1...100, step: 1, onEditingChanged: {
-                        Task { await api.saveSettings() }
-                    })
+                        set: { api.settings.orange.brightness = Int($0); Task { await api.previewMode(.orange) } }
+                    ), range: 1...100, step: 1)
                 }
             }
 
@@ -127,29 +105,16 @@ struct SettingsModal: View {
                 Text("\u{2728}")
                     .font(.system(size: 48))
 
-                SettingRow(label: "ambient") {
-                    BarSlider(value: Binding(
-                        get: { Double(api.settings.sparkle.mirek) },
-                        set: { api.settings.sparkle.mirek = Int($0) }
-                    ), range: 153...500, step: 1, onEditingChanged: {
-                        Task { await api.saveSettings() }
-                    })
+                AmbientSlider(mirek: api.settings.sparkle.mirek) { mirek in
+                    api.settings.sparkle.mirek = mirek
+                    Task { await api.previewMode(.sparkle) }
                 }
-                HStack {
-                    Text("kald").font(.caption).foregroundStyle(Theme.second)
-                    Spacer()
-                    Text("varm").font(.caption).foregroundStyle(Theme.second)
-                }
-                .padding(.horizontal, 70)
-                .padding(.top, -8)
 
                 SettingRow(label: "styrke", value: "\(api.settings.sparkle.brightness)%") {
                     BarSlider(value: Binding(
                         get: { Double(api.settings.sparkle.brightness) },
-                        set: { api.settings.sparkle.brightness = Int($0) }
-                    ), range: 1...100, step: 1, onEditingChanged: {
-                        Task { await api.saveSettings() }
-                    })
+                        set: { api.settings.sparkle.brightness = Int($0); Task { await api.previewMode(.sparkle) } }
+                    ), range: 1...100, step: 1)
                 }
             }
 
@@ -161,6 +126,11 @@ struct SettingsModal: View {
 
         case .config:
             ConfigView()
+
+        case .room(let roomId):
+            if let room = api.rooms?.first(where: { $0.id == roomId }) {
+                RoomSettingsView(api: api, room: room)
+            }
         }
     }
 }
@@ -243,7 +213,9 @@ struct SettingRow<Content: View>: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(label)
-                .frame(width: 60, alignment: .leading)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(width: 80, alignment: .leading)
             content()
             if let value = value {
                 Text(value)
