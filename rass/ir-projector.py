@@ -36,6 +36,10 @@ def match_signal(pulses):
 def lights_off():
     url = f"https://{HUE_IP}/clip/v2/resource/grouped_light/{GROUP_ID}"
     try:
+        requests.delete("http://localhost:1669/api/dynamic", timeout=2)
+    except Exception as e:
+        print(f"stop dynamic error: {e}")
+    try:
         requests.put(url, json={"on": {"on": False}},
                      headers={"hue-application-key": HUE_USER}, verify=False, timeout=3)
         print("lights off")

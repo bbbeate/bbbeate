@@ -75,4 +75,4 @@ python3 /home/bbbeate/fliclib-linux-hci/clientlib/python/new_scan_wizard.py
 # press the button when prompted - it'll print the bd address
 ```
 
-settings are read from `hjemme/hue_settings.json` (shared with the hjemme app).
+settings are read from `hjemme/hue_settings.json` (shared with the hjemme app). flic and projector light commands stop the hjemme dynamisk loop first (`DELETE localhost:1669/api/dynamic`).

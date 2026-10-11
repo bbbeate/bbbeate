@@ -36,14 +36,14 @@ SETTINGS_FILE = os.path.join(os.path.dirname(__file__), '..', 'hjemme', 'hue_set
 def load_settings():
     defaults = {
         'on': {'mirek': 300, 'brightness': 100},
-        'night': {'color': '#ff9933', 'brightness': 27},
+        'night': {'mirek': 454, 'brightness': 27},
         'orange': {'color': '#ff6600', 'brightness': 100},
         'sparkle': {'mirek': 300, 'brightness': 50}
     }
     try:
         with open(SETTINGS_FILE) as f:
             saved = json.load(f)
-        return {**defaults, **saved}
+        return {**saved, **{key: {**defaults[key], **saved.get(key, {})} for key in defaults}}
     except:
         return defaults
 
@@ -63,7 +63,19 @@ def hex_to_xy(hex_color):
     total = X + Y + Z
     return {'x': X / total, 'y': Y / total} if total else {'x': 0, 'y': 0}
 
+DYNAMIC_URL = 'http://localhost:1669/api/dynamic'
+
+def stop_dynamic():
+    try:
+        requests.delete(DYNAMIC_URL, timeout=2)
+    except requests.RequestException as e:
+        print(f'stop dynamic failed: {e}')
+
+def night_body(night):
+    return {'on': {'on': True}, 'dimming': {'brightness': night['brightness']}, 'color_temperature': {'mirek': night['mirek']}}
+
 def hue_group_command(body):
+    stop_dynamic()
     url = f'https://{HUE_IP}/clip/v2/resource/grouped_light/{GROUP_ID}'
     requests.put(url, json=body, headers={'hue-application-key': HUE_USER}, verify=False)
 
@@ -93,12 +105,7 @@ def sparkle_toggle():
 def half_moon():
     global sparkle_on
     settings = load_settings()
-    xy = hex_to_xy(settings['night']['color'])
-    hue_group_command({
-        'on': {'on': True},
-        'dimming': {'brightness': settings['night']['brightness']},
-        'color': {'xy': xy}
-    })
+    hue_group_command(night_body(settings['night']))
     sparkle_on = False
 
 def full_moon():
