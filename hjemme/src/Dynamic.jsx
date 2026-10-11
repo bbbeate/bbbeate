@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { startDynamic, stopDynamic } from './hue.js'
-import ColorSliders from './ColorSliders.jsx'
 
 const MIN_COLORS = 2
 const MAX_COLORS = 5
@@ -16,7 +15,6 @@ function resolveTargets(targets, rooms, allLightsGroup) {
 
 export default function Dynamic({ config, onConfigChange, running, onRunningChange, rooms, allLightsGroup }) {
   const [error, setError] = useState(null)
-  const [selected, setSelected] = useState(0)
 
   if (!rooms) return <p className="loading">laster...</p>
 
@@ -43,14 +41,8 @@ export default function Dynamic({ config, onConfigChange, running, onRunningChan
   }
 
   const setColor = (i, color) => update({ colors: config.colors.map((c, j) => j === i ? color : c) })
-  const removeColor = (i) => {
-    update({ colors: config.colors.filter((_, j) => j !== i) })
-    setSelected(0)
-  }
-  const addColor = () => {
-    update({ colors: [...config.colors, '#ffffff'] })
-    setSelected(config.colors.length)
-  }
+  const removeColor = (i) => update({ colors: config.colors.filter((_, j) => j !== i) })
+  const addColor = () => update({ colors: [...config.colors, '#ffffff'] })
 
   const toggleTarget = (id) => {
     if (id === 'all') return update({ targets: ['all'] })
@@ -64,18 +56,12 @@ export default function Dynamic({ config, onConfigChange, running, onRunningChan
       <div className="dynamic-colors">
         {config.colors.map((color, i) => (
           <div key={i} className="dynamic-color">
-            <button
-              className={`swatch ${selected === i ? 'active' : ''}`}
-              style={{ backgroundColor: color }}
-              onClick={() => setSelected(i)}
-            />
+            <input type="color" value={color} onChange={e => setColor(i, e.target.value)} />
             {config.colors.length > MIN_COLORS && <button className="chip" onClick={() => removeColor(i)}>-</button>}
           </div>
         ))}
         {config.colors.length < MAX_COLORS && <button className="chip" onClick={addColor}>+</button>}
       </div>
-
-      <ColorSliders key={selected} value={config.colors[selected]} onChange={color => setColor(selected, color)} />
 
       <div className="chips">
         {[{ id: 'all', name: 'alle' }, ...rooms].map(room => (

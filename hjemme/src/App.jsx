@@ -3,7 +3,8 @@ import './App.css'
 import { mirekToHex, hexToXy } from './color.js'
 import Rooms from './Rooms.jsx'
 import HueButton from './HueButton.jsx'
-import ColorSliders from './ColorSliders.jsx'
+import ColorInput from './ColorInput.jsx'
+import AmbientSlider from './AmbientSlider.jsx'
 import Dynamic from './Dynamic.jsx'
 import { hueApiV2, putLatest, stopDynamic, getDynamicState, fetchRooms } from './hue.js'
 
@@ -12,7 +13,7 @@ const NATTLYS = ['d539b9a8-8ece-4a4b-838b-354ae5375b37', '3d005f56-dbae-486a-afa
 
 const defaultSettings = {
   on: { mirek: 300, brightness: 100 },
-  night: { color: '#ff9933', brightness: 27 },
+  night: { mirek: 454, brightness: 27 },
   orange: { color: '#ff6600', brightness: 100 },
   sparkle: { mirek: 300, brightness: 50 },
   rooms: {},
@@ -23,7 +24,8 @@ async function loadSettingsFromApi() {
   try {
     const res = await fetch('/api/settings')
     const data = await res.json()
-    return { ...defaultSettings, ...data }
+    const presets = Object.fromEntries(['on', 'night', 'orange', 'sparkle'].map(key => [key, { ...defaultSettings[key], ...data[key] }]))
+    return { ...defaultSettings, ...data, ...presets }
   } catch {
     return defaultSettings
   }
@@ -96,7 +98,7 @@ const lightCommand = (lightId, body) => hueApiV2('PUT', `/light/${lightId}`, bod
 
 const colorBody = s => ({ on: { on: true }, dimming: { brightness: s.brightness }, color: { xy: hexToXy(s.color) } })
 const ambientBody = s => ({ on: { on: true }, dimming: { brightness: s.brightness }, color_temperature: { mirek: s.mirek } })
-const modeBodies = { on: ambientBody, night: colorBody, orange: colorBody, sparkle: ambientBody }
+const modeBodies = { on: ambientBody, night: ambientBody, orange: colorBody, sparkle: ambientBody }
 const LIVE_TRANSITION = { duration: 100 }
 
 const showSolopp = new URLSearchParams(window.location.search).get('solopp') === 'true'
@@ -233,7 +235,7 @@ function App() {
       {tab === 'alt' && <div className="container">
       <HueButton className="off" emoji="🌑" onPress={allOff} onOptions={() => openModal('off')} />
       <HueButton className="on" emoji="🌕" onPress={() => applyMode('on')} onOptions={() => openModal('on')} style={{ backgroundColor: mirekToHex(settings.on.mirek) }} />
-      <HueButton className="night" emoji="🌛" onPress={() => applyMode('night')} onOptions={() => openModal('night')} style={{ backgroundColor: settings.night.color }} />
+      <HueButton className="night" emoji="🌛" onPress={() => applyMode('night')} onOptions={() => openModal('night')} style={{ backgroundColor: mirekToHex(settings.night.mirek) }} />
       <HueButton className="orange" emoji="" onPress={() => applyMode('orange')} onOptions={() => openModal('orange')} style={{ backgroundColor: settings.orange.color }} />
       {showSolopp && <HueButton className="sparkle" emoji="✨" onPress={() => applyMode('sparkle')} onOptions={() => openModal('sparkle')} style={{ backgroundColor: mirekToHex(settings.sparkle.mirek) }} />}
       {showSolopp && <HueButton
@@ -284,20 +286,7 @@ function App() {
             {modal === 'on' && (
               <>
                 <h2>🌕</h2>
-                <label className="setting-row">
-                  <span>ambient</span>
-                  <input
-                    type="range"
-                    min="153"
-                    max="500"
-                    value={settings.on.mirek}
-                    onChange={e => updateMode('on', { ...settings.on, mirek: parseInt(e.target.value) })}
-                  />
-                </label>
-                <div className="temp-labels">
-                  <span>kald</span>
-                  <span>varm</span>
-                </div>
+                <AmbientSlider value={settings.on.mirek} onChange={mirek => updateMode('on', { ...settings.on, mirek })} />
                 <label className="setting-row">
                   <span>styrke</span>
                   <input
@@ -315,7 +304,7 @@ function App() {
             {modal === 'night' && (
               <>
                 <h2>🌛</h2>
-                <ColorSliders value={settings.night.color} onChange={color => updateMode('night', { ...settings.night, color })} />
+                <AmbientSlider value={settings.night.mirek} onChange={mirek => updateMode('night', { ...settings.night, mirek })} />
                 <label className="setting-row">
                   <span>styrke</span>
                   <input
@@ -333,7 +322,7 @@ function App() {
             {modal === 'orange' && (
               <>
                 <h2></h2>
-                <ColorSliders value={settings.orange.color} onChange={color => updateMode('orange', { ...settings.orange, color })} />
+                <ColorInput value={settings.orange.color} onChange={color => updateMode('orange', { ...settings.orange, color })} />
                 <label className="setting-row">
                   <span>styrke</span>
                   <input
@@ -351,20 +340,7 @@ function App() {
             {modal === 'sparkle' && (
               <>
                 <h2>✨</h2>
-                <label className="setting-row">
-                  <span>ambient</span>
-                  <input
-                    type="range"
-                    min="153"
-                    max="500"
-                    value={settings.sparkle.mirek}
-                    onChange={e => updateMode('sparkle', { ...settings.sparkle, mirek: parseInt(e.target.value) })}
-                  />
-                </label>
-                <div className="temp-labels">
-                  <span>kald</span>
-                  <span>varm</span>
-                </div>
+                <AmbientSlider value={settings.sparkle.mirek} onChange={mirek => updateMode('sparkle', { ...settings.sparkle, mirek })} />
                 <label className="setting-row">
                   <span>styrke</span>
                   <input

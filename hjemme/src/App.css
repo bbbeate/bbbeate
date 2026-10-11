@@ -3,7 +3,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   padding: 1rem;
-  min-height: calc(100vh - 4rem);
+  min-height: calc(100vh - var(--tabs-height));
   box-sizing: border-box;
   place-content: center;
 }
@@ -211,7 +211,7 @@
 
   .hue-button {
     width: 100%;
-    max-width: min(320px, calc((100vh - 10rem) / 2));
+    max-width: min(320px, calc((100vh - var(--tabs-height) - 6rem) / 2));
     font-size: clamp(4rem, 15vw, 8rem);
   }
 
@@ -221,7 +221,8 @@
 }
 
 .app {
-  padding-bottom: 4rem;
+  --tabs-height: calc(5.5rem + env(safe-area-inset-bottom));
+  padding-bottom: var(--tabs-height);
 }
 
 .tabs {
@@ -230,22 +231,25 @@
   left: 0;
   right: 0;
   display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
   background: var(--background);
-  border-top: 1px solid var(--first);
 }
 
 .tab {
   flex: 1;
-  padding: 1rem;
-  border: none;
-  background: none;
-  color: var(--second);
-  font-size: 1rem;
+  min-height: 4rem;
+  border: 1px solid var(--first);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--first);
+  font-size: 1.25rem;
   cursor: pointer;
 }
 
 .tab.active {
-  color: var(--first);
+  background: var(--first);
+  color: var(--background);
 }
 
 .panel {
@@ -313,26 +317,6 @@
   cursor: pointer;
 }
 
-.setting-row input[type="range"].gradient {
-  background: var(--track);
-}
-
-.setting-row input[type="range"].gradient::-webkit-slider-thumb {
-  width: 6px;
-  background: var(--background);
-  box-shadow: 0 0 0 2px var(--first);
-}
-
-.setting-row input[type="range"].gradient::-moz-range-thumb {
-  width: 6px;
-  background: var(--background);
-  box-shadow: 0 0 0 2px var(--first);
-}
-
-.setting-row input[type="range"].gradient::-moz-range-progress {
-  background: transparent;
-}
-
 .mode-switch {
   display: flex;
   gap: 0.5rem;
@@ -340,17 +324,4 @@
 
 .mode-switch .chip {
   flex: 1;
-}
-
-.dynamic-color .swatch {
-  width: 60px;
-  height: 60px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.dynamic-color .swatch.active {
-  outline: 3px solid var(--first);
-  outline-offset: 2px;
 }

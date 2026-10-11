@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { hexToXy, mirekToHex } from './color.js'
 import { putLatest } from './hue.js'
 import HueButton from './HueButton.jsx'
-import ColorSliders from './ColorSliders.jsx'
+import ColorInput from './ColorInput.jsx'
+import AmbientSlider from './AmbientSlider.jsx'
+import ModeSwitch from './ModeSwitch.jsx'
 
 const DEFAULT_SETTING = { mode: 'ambient', color: '#ffcc66', mirek: 300 }
 const OFF_COLOR = '#1a1a1a'
@@ -64,37 +66,10 @@ export default function Rooms({ rooms, roomSettings, onRoomChange, onRoomSetting
           <div className="modal" onClick={e => e.stopPropagation()}>
             <button className="modal-close" onClick={close}>×</button>
             <h2>{openRoom.name}</h2>
-            <div className="mode-switch">
-              {[['ambient', 'ambient'], ['color', 'farge']].map(([mode, label]) => (
-                <button
-                  key={mode}
-                  className={`chip ${openSetting.mode === mode ? 'active' : ''}`}
-                  onClick={() => updateLight(openRoom, { mode })}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            {openSetting.mode === 'ambient' ? (
-              <>
-                <label className="setting-row">
-                  <span>ambient</span>
-                  <input
-                    type="range"
-                    min="153"
-                    max="500"
-                    value={openSetting.mirek}
-                    onChange={e => updateLight(openRoom, { mirek: parseInt(e.target.value) })}
-                  />
-                </label>
-                <div className="temp-labels">
-                  <span>kald</span>
-                  <span>varm</span>
-                </div>
-              </>
-            ) : (
-              <ColorSliders value={openSetting.color} onChange={color => updateLight(openRoom, { color })} />
-            )}
+            <ModeSwitch value={openSetting.mode} onChange={mode => updateLight(openRoom, { mode })} />
+            {openSetting.mode === 'ambient'
+              ? <AmbientSlider value={openSetting.mirek} onChange={mirek => updateLight(openRoom, { mirek })} />
+              : <ColorInput value={openSetting.color} onChange={color => updateLight(openRoom, { color })} />}
             <label className="setting-row">
               <span>styrke</span>
               <input

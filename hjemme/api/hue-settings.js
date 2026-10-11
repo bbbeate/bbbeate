@@ -20,7 +20,16 @@ export function hueSettingsApi() {
           let body = ''
           req.on('data', chunk => body += chunk)
           req.on('end', () => {
-            fs.writeFileSync(settingsFile, body)
+            let incoming
+            try {
+              incoming = JSON.parse(body)
+            } catch {
+              res.statusCode = 400
+              res.end('invalid json')
+              return
+            }
+            const current = fs.existsSync(settingsFile) ? JSON.parse(fs.readFileSync(settingsFile, 'utf-8')) : {}
+            fs.writeFileSync(settingsFile, JSON.stringify({ ...current, ...incoming }))
             res.end('ok')
           })
         }

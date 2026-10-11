@@ -24,26 +24,3 @@ export function hexToXy(hex) {
   return sum === 0 ? { x: 0, y: 0 } : { x: X / sum, y: Y / sum }
 }
 
-export function hexToHsv(hex) {
-  if (!/^#[0-9a-f]{6}$/i.test(hex)) throw new Error(`invalid hex color: ${hex}`)
-  const r = parseInt(hex.slice(1, 3), 16) / 255
-  const g = parseInt(hex.slice(3, 5), 16) / 255
-  const b = parseInt(hex.slice(5, 7), 16) / 255
-  const max = Math.max(r, g, b)
-  const d = max - Math.min(r, g, b)
-  let h = 0
-  if (d !== 0 && max === r) h = 60 * (((g - b) / d) % 6)
-  else if (d !== 0 && max === g) h = 60 * ((b - r) / d + 2)
-  else if (d !== 0) h = 60 * ((r - g) / d + 4)
-  if (h < 0) h += 360
-  return { h: Math.round(h), s: max === 0 ? 0 : Math.round((d / max) * 100) }
-}
-
-export function hsToHex(h, s) {
-  const channel = n => {
-    const k = (n + h / 60) % 6
-    const value = 1 - (s / 100) * Math.max(0, Math.min(k, 4 - k, 1))
-    return Math.round(value * 255).toString(16).padStart(2, '0')
-  }
-  return `#${channel(5)}${channel(3)}${channel(1)}`
-}
