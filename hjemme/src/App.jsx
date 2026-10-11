@@ -1,16 +1,22 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
+import { mirekToHex, hexToXy } from './color.js'
+import Rooms from './Rooms.jsx'
+import HueButton from './HueButton.jsx'
+import ColorSliders from './ColorSliders.jsx'
+import Dynamic from './Dynamic.jsx'
+import { hueApiV2, putLatest, stopDynamic, getDynamicState, fetchRooms } from './hue.js'
 
-const USERNAME = import.meta.env.VITE_HUE_USERNAME
 const ALL_LIGHTS_GROUP = '3f7d742d-7bbe-4abc-bc4e-593fe15783de'
-const NATTLYS1 = 'd539b9a8-8ece-4a4b-838b-354ae5375b37'
-const NATTLYS2 = '3d005f56-dbae-486a-afaf-feb45b657b2d'
+const NATTLYS = ['d539b9a8-8ece-4a4b-838b-354ae5375b37', '3d005f56-dbae-486a-afaf-feb45b657b2d']
 
 const defaultSettings = {
   on: { mirek: 300, brightness: 100 },
   night: { color: '#ff9933', brightness: 27 },
   orange: { color: '#ff6600', brightness: 100 },
-  sparkle: { mirek: 300, brightness: 50 }
+  sparkle: { mirek: 300, brightness: 50 },
+  rooms: {},
+  dynamic: { colors: ['#ff0066', '#6600ff', '#00ccff'], targets: ['all'], speed: 10, brightness: 70 }
 }
 
 async function loadSettingsFromApi() {
@@ -32,18 +38,6 @@ async function saveSettingsToApi(settings) {
 }
 
 const WAKE_NAME = 'hjemme solopp'
-
-async function hueApiV2(method, path, body) {
-  const res = await fetch(`/hue-api/clip/v2/resource${path}`, {
-    method,
-    headers: {
-      'hue-application-key': USERNAME,
-      'Content-Type': 'application/json'
-    },
-    body: body ? JSON.stringify(body) : undefined
-  })
-  return res.json()
-}
 
 async function getWakeInstance() {
   const instances = await hueApiV2('GET', '/behavior_instance')
@@ -96,118 +90,25 @@ function formatTime(hour, minute) {
 const WAKE_PRESETS = ['06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00']
 
 
-async function hueCommand(body) {
-  await fetch(`/hue-api/clip/v2/resource/grouped_light/${ALL_LIGHTS_GROUP}`, {
-    method: 'PUT',
-    headers: {
-      'hue-application-key': USERNAME,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  })
-}
+const allLightsPath = `/grouped_light/${ALL_LIGHTS_GROUP}`
+const hueCommand = (body) => hueApiV2('PUT', allLightsPath, body)
+const lightCommand = (lightId, body) => hueApiV2('PUT', `/light/${lightId}`, body)
 
-async function lightCommand(lightId, body) {
-  await fetch(`/hue-api/clip/v2/resource/light/${lightId}`, {
-    method: 'PUT',
-    headers: {
-      'hue-application-key': USERNAME,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  })
-}
-
-const allOff = () => hueCommand({ on: { on: false } })
-
-function mirekToHex(mirek) {
-  const t = (mirek - 153) / (500 - 153)
-  const r = 255
-  const g = Math.round(180 + (255 - 180) * (1 - t))
-  const b = Math.round(100 + (200 - 100) * (1 - t))
-  return `rgb(${r}, ${g}, ${b})`
-}
-
-function hexToXy(hex) {
-  const r = parseInt(hex.slice(1, 3), 16) / 255
-  const g = parseInt(hex.slice(3, 5), 16) / 255
-  const b = parseInt(hex.slice(5, 7), 16) / 255
-
-  const rr = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92
-  const gg = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92
-  const bb = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92
-
-  const X = rr * 0.4124 + gg * 0.3576 + bb * 0.1805
-  const Y = rr * 0.2126 + gg * 0.7152 + bb * 0.0722
-  const Z = rr * 0.0193 + gg * 0.1192 + bb * 0.9505
-
-  const sum = X + Y + Z
-  return sum === 0 ? { x: 0, y: 0 } : { x: X / sum, y: Y / sum }
-}
-
-function haptic() {
-  if (navigator.vibrate) navigator.vibrate(50)
-}
-
-function HueButton({ className, emoji, onPress, onOptions, style }) {
-  const timeout = useRef(null)
-  const didLongPress = useRef(false)
-  const clickCount = useRef(0)
-  const clickTimeout = useRef(null)
-
-  // Touch: long press = options, tap = action
-  const handleTouchStart = () => {
-    didLongPress.current = false
-    timeout.current = setTimeout(() => {
-      didLongPress.current = true
-      haptic()
-      onOptions()
-    }, 500)
-  }
-
-  const handleTouchEnd = (e) => {
-    e.preventDefault() // Prevent click from firing
-    clearTimeout(timeout.current)
-    if (!didLongPress.current) onPress()
-  }
-
-  const handleTouchCancel = () => clearTimeout(timeout.current)
-
-  // Mouse: double click = options, single click = action
-  const handleClick = () => {
-    clickCount.current++
-    if (clickCount.current === 1) {
-      clickTimeout.current = setTimeout(() => {
-        if (clickCount.current === 1) onPress()
-        clickCount.current = 0
-      }, 300)
-    } else if (clickCount.current === 2) {
-      clearTimeout(clickTimeout.current)
-      clickCount.current = 0
-      onOptions()
-    }
-  }
-
-  return (
-    <button
-      className={`hue-button ${className}`}
-      style={style}
-      onClick={handleClick}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchCancel}
-    >
-      {emoji}
-    </button>
-  )
-}
+const colorBody = s => ({ on: { on: true }, dimming: { brightness: s.brightness }, color: { xy: hexToXy(s.color) } })
+const ambientBody = s => ({ on: { on: true }, dimming: { brightness: s.brightness }, color_temperature: { mirek: s.mirek } })
+const modeBodies = { on: ambientBody, night: colorBody, orange: colorBody, sparkle: ambientBody }
+const LIVE_TRANSITION = { duration: 100 }
 
 const showSolopp = new URLSearchParams(window.location.search).get('solopp') === 'true'
+const tabs = showSolopp ? ['alt', 'rom', 'dynamisk'] : ['alt', 'rom']
 
 function App() {
   const [modal, setModal] = useState(null)
   const [settings, setSettings] = useState(defaultSettings)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [tab, setTab] = useState('alt')
+  const [dynamic, setDynamic] = useState({ running: false, targets: [] })
+  const [rooms, setRooms] = useState(null)
   const [wakeState, setWakeState] = useState({ enabled: false, time: '07:00', duration: 27, instanceId: null, loading: true })
 
   useEffect(() => {
@@ -216,6 +117,18 @@ function App() {
       setSettingsLoaded(true)
     })
   }, [])
+
+  useEffect(() => {
+    getDynamicState().then(setDynamic)
+  }, [])
+
+  useEffect(() => {
+    if (tab !== 'alt') fetchRooms().then(setRooms)
+  }, [tab])
+
+  const patchRoom = (roomId, patch) => {
+    setRooms(prev => prev.map(r => r.id === roomId ? { ...r, ...patch } : r))
+  }
 
   useEffect(() => {
     if (settingsLoaded) saveSettingsToApi(settings)
@@ -283,50 +196,46 @@ function App() {
     return 'custom'
   }
 
-  const allOn = () => hueCommand({
-    on: { on: true },
-    dimming: { brightness: settings.on.brightness },
-    color_temperature: { mirek: settings.on.mirek }
-  })
-
-  const nightMode = () => {
-    const xy = hexToXy(settings.night.color)
-    hueCommand({
-      on: { on: true },
-      dimming: { brightness: settings.night.brightness },
-      color: { xy }
-    })
+  const releaseDynamic = async (groupRid) => {
+    if (!dynamic.running) return
+    const overlaps = !groupRid || dynamic.targets.includes(groupRid) || dynamic.targets.includes(ALL_LIGHTS_GROUP)
+    if (!overlaps) return
+    setDynamic({ running: false, targets: [] })
+    await stopDynamic()
   }
 
-  const orangeMode = () => {
-    const xy = hexToXy(settings.orange.color)
-    hueCommand({
-      on: { on: true },
-      dimming: { brightness: settings.orange.brightness },
-      color: { xy }
-    })
-  }
-
-  const sparkleMode = async () => {
-    const nattlysBody = {
-      on: { on: true },
-      dimming: { brightness: settings.sparkle.brightness },
-      color_temperature: { mirek: settings.sparkle.mirek }
-    }
+  const allOff = async () => {
+    await releaseDynamic()
     await hueCommand({ on: { on: false } })
-    await Promise.all([
-      lightCommand(NATTLYS1, nattlysBody),
-      lightCommand(NATTLYS2, nattlysBody)
-    ])
+  }
+
+  const applyMode = async (mode) => {
+    const s = settings[mode]
+    await releaseDynamic()
+    if (mode === 'sparkle') {
+      await hueCommand({ on: { on: false } })
+      await Promise.all(NATTLYS.map(id => lightCommand(id, ambientBody(s))))
+    } else {
+      await hueCommand(modeBodies[mode](s))
+    }
+  }
+
+  const updateMode = async (mode, value) => {
+    updateSetting(mode, value)
+    await releaseDynamic()
+    const body = { ...modeBodies[mode](value), dynamics: LIVE_TRANSITION }
+    if (mode === 'sparkle') NATTLYS.forEach(id => putLatest(`/light/${id}`, body))
+    else putLatest(allLightsPath, body)
   }
 
   return (
-    <div className="container">
+    <div className="app">
+      {tab === 'alt' && <div className="container">
       <HueButton className="off" emoji="🌑" onPress={allOff} onOptions={() => openModal('off')} />
-      <HueButton className="on" emoji="🌕" onPress={allOn} onOptions={() => openModal('on')} style={{ backgroundColor: mirekToHex(settings.on.mirek) }} />
-      <HueButton className="night" emoji="🌛" onPress={nightMode} onOptions={() => openModal('night')} style={{ backgroundColor: settings.night.color }} />
-      <HueButton className="orange" emoji="" onPress={orangeMode} onOptions={() => openModal('orange')} style={{ backgroundColor: settings.orange.color }} />
-      {showSolopp && <HueButton className="sparkle" emoji="✨" onPress={sparkleMode} onOptions={() => openModal('sparkle')} style={{ backgroundColor: mirekToHex(settings.sparkle.mirek) }} />}
+      <HueButton className="on" emoji="🌕" onPress={() => applyMode('on')} onOptions={() => openModal('on')} style={{ backgroundColor: mirekToHex(settings.on.mirek) }} />
+      <HueButton className="night" emoji="🌛" onPress={() => applyMode('night')} onOptions={() => openModal('night')} style={{ backgroundColor: settings.night.color }} />
+      <HueButton className="orange" emoji="" onPress={() => applyMode('orange')} onOptions={() => openModal('orange')} style={{ backgroundColor: settings.orange.color }} />
+      {showSolopp && <HueButton className="sparkle" emoji="✨" onPress={() => applyMode('sparkle')} onOptions={() => openModal('sparkle')} style={{ backgroundColor: mirekToHex(settings.sparkle.mirek) }} />}
       {showSolopp && <HueButton
         className="wake"
         emoji={wakeState.enabled ? wakeState.time : ''}
@@ -334,6 +243,34 @@ function App() {
         onOptions={() => openModal('wake')}
         style={{ backgroundImage: 'url(/hjemme/solopp.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}
       />}
+      </div>}
+
+      {tab === 'rom' && (
+        <Rooms
+          rooms={rooms}
+          onRoomChange={patchRoom}
+          roomSettings={settings.rooms}
+          onRoomSettingChange={(roomId, value) => updateSetting('rooms', { ...settings.rooms, [roomId]: value })}
+          releaseDynamic={releaseDynamic}
+        />
+      )}
+
+      {tab === 'dynamisk' && (
+        <Dynamic
+          config={settings.dynamic}
+          onConfigChange={config => updateSetting('dynamic', config)}
+          running={dynamic.running}
+          onRunningChange={setDynamic}
+          rooms={rooms}
+          allLightsGroup={ALL_LIGHTS_GROUP}
+        />
+      )}
+
+      <nav className="tabs">
+        {tabs.map(t => (
+          <button key={t} className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t}</button>
+        ))}
+      </nav>
 
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
@@ -354,7 +291,7 @@ function App() {
                     min="153"
                     max="500"
                     value={settings.on.mirek}
-                    onChange={e => updateSetting('on', { ...settings.on, mirek: parseInt(e.target.value) })}
+                    onChange={e => updateMode('on', { ...settings.on, mirek: parseInt(e.target.value) })}
                   />
                 </label>
                 <div className="temp-labels">
@@ -368,7 +305,7 @@ function App() {
                     min="1"
                     max="100"
                     value={settings.on.brightness}
-                    onChange={e => updateSetting('on', { ...settings.on, brightness: parseInt(e.target.value) })}
+                    onChange={e => updateMode('on', { ...settings.on, brightness: parseInt(e.target.value) })}
                   />
                   <span className="value">{settings.on.brightness}%</span>
                 </label>
@@ -378,14 +315,7 @@ function App() {
             {modal === 'night' && (
               <>
                 <h2>🌛</h2>
-                <label className="setting-row">
-                  <span>farge</span>
-                  <input
-                    type="color"
-                    value={settings.night.color}
-                    onChange={e => updateSetting('night', { ...settings.night, color: e.target.value })}
-                  />
-                </label>
+                <ColorSliders value={settings.night.color} onChange={color => updateMode('night', { ...settings.night, color })} />
                 <label className="setting-row">
                   <span>styrke</span>
                   <input
@@ -393,7 +323,7 @@ function App() {
                     min="1"
                     max="100"
                     value={settings.night.brightness}
-                    onChange={e => updateSetting('night', { ...settings.night, brightness: parseInt(e.target.value) })}
+                    onChange={e => updateMode('night', { ...settings.night, brightness: parseInt(e.target.value) })}
                   />
                   <span className="value">{settings.night.brightness}%</span>
                 </label>
@@ -403,14 +333,7 @@ function App() {
             {modal === 'orange' && (
               <>
                 <h2></h2>
-                <label className="setting-row">
-                  <span>farge</span>
-                  <input
-                    type="color"
-                    value={settings.orange.color}
-                    onChange={e => updateSetting('orange', { ...settings.orange, color: e.target.value })}
-                  />
-                </label>
+                <ColorSliders value={settings.orange.color} onChange={color => updateMode('orange', { ...settings.orange, color })} />
                 <label className="setting-row">
                   <span>styrke</span>
                   <input
@@ -418,7 +341,7 @@ function App() {
                     min="1"
                     max="100"
                     value={settings.orange.brightness}
-                    onChange={e => updateSetting('orange', { ...settings.orange, brightness: parseInt(e.target.value) })}
+                    onChange={e => updateMode('orange', { ...settings.orange, brightness: parseInt(e.target.value) })}
                   />
                   <span className="value">{settings.orange.brightness}%</span>
                 </label>
@@ -435,7 +358,7 @@ function App() {
                     min="153"
                     max="500"
                     value={settings.sparkle.mirek}
-                    onChange={e => updateSetting('sparkle', { ...settings.sparkle, mirek: parseInt(e.target.value) })}
+                    onChange={e => updateMode('sparkle', { ...settings.sparkle, mirek: parseInt(e.target.value) })}
                   />
                 </label>
                 <div className="temp-labels">
@@ -449,7 +372,7 @@ function App() {
                     min="1"
                     max="100"
                     value={settings.sparkle.brightness}
-                    onChange={e => updateSetting('sparkle', { ...settings.sparkle, brightness: parseInt(e.target.value) })}
+                    onChange={e => updateMode('sparkle', { ...settings.sparkle, brightness: parseInt(e.target.value) })}
                   />
                   <span className="value">{settings.sparkle.brightness}%</span>
                 </label>

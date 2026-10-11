@@ -3,7 +3,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   padding: 1rem;
-  height: 100vh;
+  min-height: calc(100vh - 4rem);
   box-sizing: border-box;
   place-content: center;
 }
@@ -211,7 +211,146 @@
 
   .hue-button {
     width: 100%;
-    max-width: 320px;
+    max-width: min(320px, calc((100vh - 10rem) / 2));
     font-size: clamp(4rem, 15vw, 8rem);
   }
+
+  .hue-button.room-box {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+  }
+}
+
+.app {
+  padding-bottom: 4rem;
+}
+
+.tabs {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--background);
+  border-top: 1px solid var(--first);
+}
+
+.tab {
+  flex: 1;
+  padding: 1rem;
+  border: none;
+  background: none;
+  color: var(--second);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--first);
+}
+
+.panel {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.loading,
+.error {
+  padding: 2rem;
+  text-align: center;
+}
+
+.hue-button.room-box {
+  font-size: calc(10vmin - 0.5rem);
+  text-align: center;
+  word-break: break-word;
+}
+
+.toggle,
+.chip {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--first);
+  border-radius: 8px;
+  background: var(--background);
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.toggle.active,
+.chip.active {
+  background: var(--first);
+  color: var(--background);
+}
+
+.toggle.wide {
+  padding: 1rem;
+}
+
+.chips,
+.dynamic-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.dynamic-color {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dynamic-color input[type="color"] {
+  width: 60px;
+  height: 60px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.setting-row input[type="range"].gradient {
+  background: var(--track);
+}
+
+.setting-row input[type="range"].gradient::-webkit-slider-thumb {
+  width: 6px;
+  background: var(--background);
+  box-shadow: 0 0 0 2px var(--first);
+}
+
+.setting-row input[type="range"].gradient::-moz-range-thumb {
+  width: 6px;
+  background: var(--background);
+  box-shadow: 0 0 0 2px var(--first);
+}
+
+.setting-row input[type="range"].gradient::-moz-range-progress {
+  background: transparent;
+}
+
+.mode-switch {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mode-switch .chip {
+  flex: 1;
+}
+
+.dynamic-color .swatch {
+  width: 60px;
+  height: 60px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dynamic-color .swatch.active {
+  outline: 3px solid var(--first);
+  outline-offset: 2px;
 }

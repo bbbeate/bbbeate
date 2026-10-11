@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { hueSettingsApi } from './api/hue-settings.js'
 import { boomBlasterApi } from './api/boomBlaster.js'
+import { hueDynamicApi } from './api/hue-dynamic.js'
 
 export default defineConfig({
   envDir: '..',
@@ -15,6 +16,7 @@ export default defineConfig({
   plugins: [
     hueSettingsApi(),
     boomBlasterApi(),
+    hueDynamicApi(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
