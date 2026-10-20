@@ -1,5 +1,6 @@
 import ARKit
 import CoreMotion
+import os
 import SceneKit
 import SwiftUI
 
@@ -7,6 +8,7 @@ final class SkyModel: ObservableObject {
     @Published var moonOnScreen = true
     @Published var arrowAngle: Double = 0
     @Published var headingOffset = 0
+    @Published var recalibrating = false
 }
 
 struct SkyView: UIViewRepresentable {
@@ -32,6 +34,7 @@ struct SkyView: UIViewRepresentable {
 
     func updateUIView(_ view: ARSCNView, context: Context) {
         context.coordinator.update(state, showCamera: showCamera)
+        if model.recalibrating { context.coordinator.recalibrate() }
     }
 
     static func dismantleUIView(_ view: ARSCNView, coordinator: Coordinator) {
@@ -45,6 +48,8 @@ struct SkyView: UIViewRepresentable {
         static let headingSmoothing: Float = 0.02
         static let maxRotationRate = 0.6
         static let maxCameraTilt: Float = 0.9
+        static let resetSettleTime: TimeInterval = 0.5
+        static let resetTimeout: TimeInterval = 10
 
         let scene = SCNScene()
         let motion = CMMotionManager()
@@ -57,6 +62,7 @@ struct SkyView: UIViewRepresentable {
         private let sunLight = SCNNode()
         private let dome = SCNNode()
         private var headingCorrection: SIMD2<Float>?
+        private let resetRequestedAt = OSAllocatedUnfairLock<Date?>(initialState: nil)
 
         init(model: SkyModel) {
             self.model = model
@@ -98,6 +104,22 @@ struct SkyView: UIViewRepresentable {
             }
         }
 
+        func recalibrate() {
+            guard resetRequestedAt.withLock({ $0 }) == nil, let view, let config = view.session.configuration else { return }
+            let requestedAt = Date()
+            resetRequestedAt.withLock { $0 = requestedAt }
+            view.session.run(config, options: [.resetTracking])
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.resetTimeout) { [weak self] in
+                guard let self else { return }
+                let timedOut = self.resetRequestedAt.withLock { current in
+                    guard current == requestedAt else { return false }
+                    current = nil
+                    return true
+                }
+                if timedOut { self.model.recalibrating = false }
+            }
+        }
+
         private func startMotion() {
             guard CMMotionManager.availableAttitudeReferenceFrames().contains(.xTrueNorthZVertical) else { return }
             motion.deviceMotionUpdateInterval = 1.0 / 60
@@ -117,6 +139,11 @@ struct SkyView: UIViewRepresentable {
             let arAzimuth = atan2(cameraFront.x, -cameraFront.z)
             let sample = SIMD2(cos(trueAzimuth - arAzimuth), sin(trueAzimuth - arAzimuth))
 
+            let resetAt = resetRequestedAt.withLock { $0 }
+            if let resetAt {
+                guard Date().timeIntervalSince(resetAt) > Self.resetSettleTime else { return }
+                headingCorrection = nil
+            }
             let blended = headingCorrection.map { $0 + (sample - $0) * Self.headingSmoothing } ?? sample
             let correction = simd_normalize(blended)
             headingCorrection = correction
@@ -125,9 +152,12 @@ struct SkyView: UIViewRepresentable {
             sky.simdOrientation = simd_quatf(angle: angle, axis: [0, 1, 0])
 
             let degrees = Int(deg(Double(angle)).rounded())
+            if resetAt != nil { resetRequestedAt.withLock { $0 = nil } }
+            let finishedReset = resetAt != nil
             DispatchQueue.main.async { [weak self] in
-                guard let self, self.model.headingOffset != degrees else { return }
-                self.model.headingOffset = degrees
+                guard let self else { return }
+                if self.model.headingOffset != degrees { self.model.headingOffset = degrees }
+                if finishedReset { self.model.recalibrating = false }
             }
         }
 

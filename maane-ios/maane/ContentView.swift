@@ -65,6 +65,14 @@ struct ContentView: View {
                     .foregroundStyle(Theme.second)
             }
             Spacer()
+            if mode != .map {
+                Button(sky.recalibrating ? "kalibrerer..." : "kalibrer") { sky.recalibrating = true }
+                    .disabled(sky.recalibrating)
+                    .font(.subheadline)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .overlay(Capsule().stroke(Theme.first.opacity(0.5)))
+            }
         }
         .foregroundStyle(Theme.first)
         .padding(12)
