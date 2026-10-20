@@ -1,23 +1,12 @@
 import ARKit
+import CoreMotion
 import SceneKit
 import SwiftUI
 
 final class SkyModel: ObservableObject {
     @Published var moonOnScreen = true
     @Published var arrowAngle: Double = 0
-    @Published var headingOffset: Float = 0
-    weak var view: ARSCNView?
-
-    func calibrate(to target: Horizontal) {
-        guard let front = view?.pointOfView?.simdWorldFront else { return }
-        headingOffset = Float(rad(target.azimuth)) - atan2(front.x, -front.z)
-    }
-
-    func reset() {
-        headingOffset = 0
-        guard let view, let config = view.session.configuration else { return }
-        view.session.run(config, options: [.resetTracking])
-    }
+    @Published var headingOffset = 0
 }
 
 struct SkyView: UIViewRepresentable {
@@ -34,7 +23,6 @@ struct SkyView: UIViewRepresentable {
         view.autoenablesDefaultLighting = false
         view.automaticallyUpdatesLighting = false
         context.coordinator.view = view
-        model.view = view
 
         let config = ARWorldTrackingConfiguration()
         config.worldAlignment = .gravityAndHeading
@@ -48,13 +36,18 @@ struct SkyView: UIViewRepresentable {
 
     static func dismantleUIView(_ view: ARSCNView, coordinator: Coordinator) {
         view.session.pause()
+        coordinator.motion.stopDeviceMotionUpdates()
     }
 
     final class Coordinator: NSObject, ARSCNViewDelegate {
         static let skyRadius: Float = 50
         static let moonCategory = 2
+        static let headingSmoothing: Float = 0.02
+        static let maxRotationRate = 0.6
+        static let maxCameraTilt: Float = 0.9
 
         let scene = SCNScene()
+        let motion = CMMotionManager()
         weak var view: ARSCNView?
 
         private let model: SkyModel
@@ -63,6 +56,7 @@ struct SkyView: UIViewRepresentable {
         private let sun = SCNNode()
         private let sunLight = SCNNode()
         private let dome = SCNNode()
+        private var headingCorrection: SIMD2<Float>?
 
         init(model: SkyModel) {
             self.model = model
@@ -73,11 +67,11 @@ struct SkyView: UIViewRepresentable {
             buildHorizon()
             buildCardinals()
             buildDome()
+            startMotion()
         }
 
         func update(_ state: MoonState?, showCamera: Bool) {
             dome.isHidden = showCamera
-            sky.simdOrientation = simd_quatf(angle: model.headingOffset, axis: [0, 1, 0])
             guard let state else {
                 sky.isHidden = true
                 return
@@ -91,6 +85,7 @@ struct SkyView: UIViewRepresentable {
         func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
             guard let camera = renderer.pointOfView else { return }
             sky.simdPosition = camera.simdWorldPosition
+            correctHeading(cameraFront: camera.simdWorldFront)
             let local = camera.simdConvertPosition(moon.simdWorldPosition, from: nil)
             let projected = renderer.projectPoint(moon.worldPosition)
 
@@ -100,6 +95,39 @@ struct SkyView: UIViewRepresentable {
                 let angle = Double(atan2(-local.y, local.x))
                 if self.model.moonOnScreen != onScreen { self.model.moonOnScreen = onScreen }
                 if !onScreen, abs(self.model.arrowAngle - angle) > 0.02 { self.model.arrowAngle = angle }
+            }
+        }
+
+        private func startMotion() {
+            guard CMMotionManager.availableAttitudeReferenceFrames().contains(.xTrueNorthZVertical) else { return }
+            motion.deviceMotionUpdateInterval = 1.0 / 60
+            motion.showsDeviceMovementDisplay = true
+            motion.startDeviceMotionUpdates(using: .xTrueNorthZVertical)
+        }
+
+        private func correctHeading(cameraFront: SIMD3<Float>) {
+            guard let deviceMotion = motion.deviceMotion,
+                  deviceMotion.magneticField.accuracy != .uncalibrated,
+                  abs(cameraFront.y) < Self.maxCameraTilt else { return }
+            let rate = deviceMotion.rotationRate
+            guard (rate.x * rate.x + rate.y * rate.y + rate.z * rate.z).squareRoot() < Self.maxRotationRate else { return }
+
+            let r = deviceMotion.attitude.rotationMatrix
+            let trueAzimuth = Float(atan2(r.m32, -r.m31))
+            let arAzimuth = atan2(cameraFront.x, -cameraFront.z)
+            let sample = SIMD2(cos(trueAzimuth - arAzimuth), sin(trueAzimuth - arAzimuth))
+
+            let blended = headingCorrection.map { $0 + (sample - $0) * Self.headingSmoothing } ?? sample
+            let correction = simd_normalize(blended)
+            headingCorrection = correction
+
+            let angle = atan2(correction.y, correction.x)
+            sky.simdOrientation = simd_quatf(angle: angle, axis: [0, 1, 0])
+
+            let degrees = Int(deg(Double(angle)).rounded())
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.model.headingOffset != degrees else { return }
+                self.model.headingOffset = degrees
             }
         }
 

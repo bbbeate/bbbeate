@@ -6,7 +6,6 @@ struct ContentView: View {
     @StateObject private var sky = SkyModel()
     @State private var now = Date()
     @AppStorage("mode") private var mode = ViewMode.camera
-    @State private var calibrating = false
     @State private var riseSet: (rise: Date?, set: Date?) = (nil, nil)
 
     private let ticker = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
@@ -35,10 +34,7 @@ struct ContentView: View {
                 }
                 .padding()
 
-                if calibrating {
-                    calibration(state)
-                        .ignoresSafeArea()
-                } else if mode != .map, !sky.moonOnScreen {
+                if mode != .map, !sky.moonOnScreen {
                     EdgeArrow(angle: sky.arrowAngle)
                 }
             } else {
@@ -69,13 +65,6 @@ struct ContentView: View {
                     .foregroundStyle(Theme.second)
             }
             Spacer()
-            if mode != .map {
-                Button("kalibrer") { calibrating = true }
-                    .font(.subheadline)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .overlay(Capsule().stroke(Theme.first.opacity(0.5)))
-            }
         }
         .foregroundStyle(Theme.first)
         .padding(12)
@@ -104,48 +93,7 @@ struct ContentView: View {
     private var compassLine: String {
         let accuracy = location.headingAccuracy.map { "kompass ±\($0)°" } ?? "kompass ukjent"
         guard sky.headingOffset != 0 else { return accuracy }
-        let offset = Int(deg(Double(atan2(sin(sky.headingOffset), cos(sky.headingOffset)))).rounded())
-        return "\(accuracy) · justert \(offset > 0 ? "+" : "")\(offset)°"
-    }
-
-    private func calibrationTarget(_ state: MoonState) -> (name: String, position: Horizontal)? {
-        if state.moon.altitude > -1 { return ("månen", state.moon) }
-        if state.sun.altitude > -1 { return ("sola", state.sun) }
-        return nil
-    }
-
-    private func calibration(_ state: MoonState) -> some View {
-        let target = calibrationTarget(state)
-        return ZStack {
-            Color.black.opacity(0.001)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    guard let target else { return }
-                    sky.calibrate(to: target.position)
-                    calibrating = false
-                }
-
-            Crosshair()
-                .stroke(Theme.first, lineWidth: 1.5)
-                .frame(width: 70, height: 70)
-                .allowsHitTesting(false)
-
-            VStack(spacing: 10) {
-                Text(target.map { "sikt midt på \($0.name) og trykk" } ?? "både månen og sola er under horisonten")
-                HStack(spacing: 10) {
-                    Button("nullstill") {
-                        sky.reset()
-                        calibrating = false
-                    }
-                    Button("avbryt") { calibrating = false }
-                }
-                .font(.subheadline)
-            }
-            .foregroundStyle(Theme.first)
-            .padding(12)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .offset(y: 120)
-        }
+        return "\(accuracy) · justert \(sky.headingOffset > 0 ? "+" : "")\(sky.headingOffset)°"
     }
 
     private func refreshRiseSet() {
@@ -186,21 +134,6 @@ struct ViewPicker: View {
         }
         .padding(4)
         .background(.ultraThinMaterial, in: Capsule())
-    }
-}
-
-struct Crosshair: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path(ellipseIn: rect.insetBy(dx: rect.width * 0.3, dy: rect.height * 0.3))
-        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.minY + rect.height * 0.3))
-        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY - rect.height * 0.3))
-        path.move(to: CGPoint(x: rect.minX, y: rect.midY))
-        path.addLine(to: CGPoint(x: rect.minX + rect.width * 0.3, y: rect.midY))
-        path.move(to: CGPoint(x: rect.maxX, y: rect.midY))
-        path.addLine(to: CGPoint(x: rect.maxX - rect.width * 0.3, y: rect.midY))
-        return path
     }
 }
 
