@@ -15,6 +15,7 @@ personal apps at [bbbeate.space](https://bbbeate.space). pnpm, vite, gh-pages.
 | [space](space/) | 3d space explorer | vanilla js, pwa |
 | [leser](leser/) | pdf text extraction pipeline | python |
 | [bursdag](bursdag/) | birthday invite + rsvp w/ paint picker | vanilla js |
+| [maane-ios](maane-ios/) | moon finder: ar sky view w/ position + phase | swift, arkit |
 
 ## utilities
 
