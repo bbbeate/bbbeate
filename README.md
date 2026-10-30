@@ -14,7 +14,7 @@ personal apps at [bbbeate.space](https://bbbeate.space). pnpm, vite, gh-pages.
 | [spaces](spaces/) | 3d space visualization | vanilla js, pwa |
 | [space](space/) | 3d space explorer | vanilla js, pwa |
 | [leser](leser/) | pdf text extraction pipeline | python |
-| [bursdag](bursdag/) | birthday invite + rsvp w/ paint picker | vanilla js |
+| [bursdag](bursdag/) | birthday invite + rsvp w/ paint picker, also serves /allehelgensaften | vanilla js |
 
 ## utilities
 

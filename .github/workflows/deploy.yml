@@ -125,6 +125,8 @@ jobs:
         cp -r ./astro/dist/* combined_dist/astro/
         mkdir -p combined_dist/bursdag
         cp -r ./bursdag/dist/* combined_dist/bursdag/
+        mkdir -p combined_dist/allehelgensaften
+        cp -r ./bursdag/dist/allehelgensaften/* combined_dist/allehelgensaften/
         mkdir -p combined_dist/sirkel
         cp -r ./sirkel/dist/* combined_dist/sirkel/
         cp ./spaces/public/404.html combined_dist/404.html

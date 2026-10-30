@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>allehelgensaften</title>
+  <link rel="icon" type="image/png" href="/allehelgensaften.png">
+  <link rel="stylesheet" href="/src/bursdag.css">
+</head>
+<body class="allehelgensaften">
+  <div class="allehelgensaften-lightning"></div>
+  <a class="allehelgensaften-video-link" href="https://open.spotify.com/playlist/0DsViRmfl4MWrsECCesXBT?si=17ee7f49c8924809&amp;pt=e04ef780fb93e44415e2bd368432d8b6" target="_blank" rel="noopener" aria-label="spilleliste på spotify">
+    <video class="allehelgensaften-video" src="/allehelgensaften.mp4" autoplay muted loop playsinline></video>
+  </a>
+  <button class="allehelgensaften-mute" type="button" aria-label="lyd på" aria-pressed="true">
+    <svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+      <rect x="1" y="6" width="3" height="4"/>
+      <rect x="4" y="5" width="1" height="6"/>
+      <rect x="5" y="4" width="1" height="8"/>
+      <rect x="6" y="3" width="1" height="10"/>
+      <rect x="7" y="2" width="1" height="12"/>
+      <g class="allehelgensaften-mute-waves">
+        <rect x="9" y="6" width="1" height="4"/>
+        <rect x="11" y="4" width="1" height="8"/>
+        <rect x="13" y="2" width="1" height="12"/>
+      </g>
+      <g class="allehelgensaften-mute-x">
+        <rect x="9" y="5" width="1" height="1"/>
+        <rect x="10" y="6" width="1" height="1"/>
+        <rect x="11" y="7" width="2" height="2"/>
+        <rect x="13" y="9" width="1" height="1"/>
+        <rect x="14" y="10" width="1" height="1"/>
+        <rect x="14" y="5" width="1" height="1"/>
+        <rect x="13" y="6" width="1" height="1"/>
+        <rect x="10" y="9" width="1" height="1"/>
+        <rect x="9" y="10" width="1" height="1"/>
+      </g>
+    </svg>
+  </button>
+  <img class="bursdag-edge" src="/allehelgensaften.png" alt="">
+  <img class="bursdag-edge" src="/allehelgensaften.png" alt="">
+  <img class="bursdag-edge" src="/allehelgensaften.png" alt="">
+  <main class="bursdag">
+    <p class="bursdag-date">31. oktober</p>
+    <p class="bursdag-text" data-file="halloween-text.html">allehelgensaften &lt;3 beate</p>
+
+    <section class="rsvp" data-file="halloween-rsvp.json">
+      <button class="rsvp-toggle" type="button">kommer du?</button>
+      <form class="rsvp-form">
+        <input class="rsvp-input" name="name" type="text" placeholder="hvem" required maxlength="60" autocomplete="name">
+        <input class="rsvp-input" name="comment" type="text" placeholder="hva" maxlength="280">
+        <button class="rsvp-submit" type="submit">ok</button>
+      </form>
+      <p class="rsvp-status"></p>
+      <ul class="rsvp-list"></ul>
+    </section>
+  </main>
+  <script type="module" src="/src/bursdag.js"></script>
+  <script type="module" src="/src/rsvp.js"></script>
+  <script type="module" src="/src/text.js"></script>
+  <script type="module" src="/src/allehelgensaften.js"></script>
+</body>
+</html>
