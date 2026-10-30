@@ -359,3 +359,5 @@ body.allehelgensaften {
 .allehelgensaften-mute-x { display: none; }
 .allehelgensaften-mute.muted .allehelgensaften-mute-x { display: inline; }
 .allehelgensaften-mute.muted .allehelgensaften-mute-waves { display: none; }
+
+.allehelgensaften-countdown { font-variant-numeric: tabular-nums; }

@@ -87,3 +87,23 @@ if (video) {
   });
   renderMute();
 }
+
+const countdownEl = document.querySelector('.allehelgensaften-countdown');
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function renderCountdown() {
+  const left = Math.floor((new Date(countdownEl.dataset.until) - Date.now()) / 1000);
+  if (left <= 0) {
+    countdownEl.textContent = 'nå!';
+    return;
+  }
+  const hours = Math.floor(left / 3600);
+  const minutes = Math.floor((left % 3600) / 60);
+  countdownEl.textContent = `${hours}:${pad(minutes)}:${pad(left % 60)}`;
+}
+
+if (countdownEl) {
+  renderCountdown();
+  setInterval(renderCountdown, 1000);
+}
