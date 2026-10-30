@@ -1,5 +1,5 @@
 const GIST_ID = '994ceaf91c6e831a4db9b91a4609df99';
-const FILE = 'rsvp.json';
+const FILE = document.querySelector('.rsvp')?.dataset.file || 'rsvp.json';
 const TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 const API = `https://api.github.com/gists/${GIST_ID}`;
 

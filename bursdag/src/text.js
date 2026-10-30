@@ -1,5 +1,5 @@
 const GIST_ID = '994ceaf91c6e831a4db9b91a4609df99';
-const FILE = 'text.html';
+const FILE = document.querySelector('.bursdag-text')?.dataset.file || 'text.html';
 const TOKEN = import.meta.env.VITE_GITHUB_TOKEN;
 const PASS = import.meta.env.VITE_BURSDAG_PASS;
 const API = `https://api.github.com/gists/${GIST_ID}`;
