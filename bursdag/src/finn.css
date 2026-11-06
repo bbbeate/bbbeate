@@ -225,6 +225,70 @@ html, body {
   border-radius: 999px;
 }
 
+.karaoke { transition: opacity 1s; }
+.is-finale .karaoke { opacity: 0; }
+
+.karaoke-dancer {
+  position: fixed;
+  right: 1rem;
+  bottom: 7rem;
+  height: 25vh;
+  pointer-events: none;
+  transition: right 1.2s ease, bottom 1.2s ease, height 1.2s ease;
+}
+
+.karaoke-dancer img {
+  height: 100%;
+  transform-origin: 50% 100%;
+  animation: karaoke-dance 0.9s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+.is-playing .karaoke-dancer img { animation-play-state: running; }
+
+.is-finale .karaoke-dancer {
+  right: calc(50vw - 15.6vh);
+  bottom: 6vh;
+  height: 85vh;
+}
+
+.is-finale .karaoke-dancer img {
+  animation: karaoke-party 1.6s ease-in-out infinite, karaoke-disco 3s linear infinite;
+}
+
+.is-editing .karaoke-dancer { display: none; }
+
+@keyframes karaoke-dance {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg) translateY(-4%); }
+}
+
+@keyframes karaoke-party {
+  0%, 100% { transform: rotate(-8deg); }
+  25% { transform: translateY(-8%) scale(1.05); }
+  50% { transform: rotate(8deg); }
+  75% { transform: translateY(-8%) scaleX(-1); }
+}
+
+@keyframes karaoke-disco {
+  0%, 100% { filter: drop-shadow(0 0 1.5rem #ff4fd8); }
+  33% { filter: drop-shadow(0 0 1.5rem #4fd8ff); }
+  66% { filter: drop-shadow(0 0 1.5rem #ffe14f); }
+}
+
+.karaoke-controls { transition: opacity 0.4s; }
+
+@media (hover: hover) {
+  body:not(.is-tool) .karaoke-controls:not(:hover, :has(:focus-visible)) { opacity: 0; }
+}
+
+@media (hover: none) {
+  body:not(.is-tool, .is-touched) .karaoke-controls {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
 @media (max-width: 700px) {
   .is-editing .karaoke { width: 100%; height: 45%; }
   .karaoke-editor { top: 45%; width: 100%; border-left: 0; padding-top: 1rem; }

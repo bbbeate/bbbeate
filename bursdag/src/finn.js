@@ -42,6 +42,7 @@ const SHOW_AHEAD = 1.5
 const TIMINGS_KEY = 'finn-line-times-v2'
 const WORD_TIMINGS_KEY = 'finn-word-times'
 const SPEEDS = [1, 0.75, 0.5]
+const FINALE_DELAY = 1
 
 const syllables = word => Math.max(1, (word.toLowerCase().match(/[aeiouyæøå]+/g) || []).length)
 
@@ -155,6 +156,7 @@ const formatTime = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(s
 
 const render = () => {
   const position = audio.currentTime
+  document.body.classList.toggle('is-finale', position > lines.at(-1).end + FINALE_DELAY)
   seekInput.value = position
   timeEl.textContent = `${formatTime(position)} / ${formatTime(audio.duration || 0)}`
   const active = lines.findLast(line => position >= line.start)
@@ -199,11 +201,13 @@ const seek = time => {
 }
 
 audio.addEventListener('play', () => {
+  document.body.classList.add('is-playing')
   playBtn.textContent = 'pause'
   playBtn.setAttribute('aria-label', 'pause')
   requestAnimationFrame(tick)
 })
 audio.addEventListener('pause', () => {
+  document.body.classList.remove('is-playing')
   playBtn.textContent = 'play'
   playBtn.setAttribute('aria-label', 'spill')
 })
@@ -229,6 +233,15 @@ document.addEventListener('keydown', event => {
   if (event.key === 'ArrowLeft') seek(audio.currentTime - 3)
 })
 window.addEventListener('resize', () => { focusEl = null; render() })
+
+const CONTROLS_TOUCH_SECONDS = 3
+let touchTimer = null
+document.body.classList.toggle('is-tool', tapMode || editMode)
+document.addEventListener('touchstart', () => {
+  document.body.classList.add('is-touched')
+  clearTimeout(touchTimer)
+  touchTimer = setTimeout(() => document.body.classList.remove('is-touched'), CONTROLS_TOUCH_SECONDS * 1000)
+}, { passive: true })
 
 let cursor = 0
 
