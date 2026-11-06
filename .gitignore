@@ -29,3 +29,5 @@ hjemme-ios/**/xcuserdata/
 hjemme-ios/**/xcshareddata/
 hjemme/hue_settings.json
 .worktrees/
+
+.worktrees/
