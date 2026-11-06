@@ -25,7 +25,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         year: resolve(__dirname, '2026/index.html'),
-        allehelgensaften: resolve(__dirname, 'allehelgensaften/index.html')
+        allehelgensaften: resolve(__dirname, 'allehelgensaften/index.html'),
+        finn: resolve(__dirname, 'finn/index.html')
       }
     }
   },

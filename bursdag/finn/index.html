@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>finn boger 70</title>
+  <link rel="icon" type="image/png" href="/discoball.gif">
+  <link rel="stylesheet" href="/src/finn.css">
+</head>
+<body>
+  <main class="karaoke">
+    <div class="karaoke-lyrics">
+      <h1 class="karaoke-title">Helten er Finn Boger</h1>
+    </div>
+  </main>
+  <nav class="karaoke-controls">
+    <button class="karaoke-restart" type="button" aria-label="fra start">|&lt;</button>
+    <button class="karaoke-play" type="button" aria-label="spill">play</button>
+    <button class="karaoke-copy" type="button" hidden>copy</button>
+    <button class="karaoke-clear" type="button" hidden>clear</button>
+    <button class="karaoke-speed" type="button" hidden>1x</button>
+    <div class="karaoke-scrub">
+      <input class="karaoke-seek" type="range" min="0" max="1" step="0.01" value="0" aria-label="spol">
+      <span class="karaoke-time">0:00</span>
+    </div>
+  </nav>
+  <aside class="karaoke-editor" hidden></aside>
+  <p class="karaoke-hint" hidden></p>
+  <audio class="karaoke-audio" src="/finn_boger.m4a" preload="auto"></audio>
+  <script type="module" src="/src/finn.js"></script>
+</body>
+</html>
