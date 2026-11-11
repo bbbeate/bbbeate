@@ -1,4 +1,5 @@
 mod api;
+mod auth;
 mod db;
 mod spotify;
 mod sync;
