@@ -12,6 +12,7 @@ use std::path::PathBuf;
 use tower_http::services::ServeDir;
 use tower_http::cors::{CorsLayer, Any};
 
+use crate::auth;
 use crate::db::{self, TrackFilter};
 use crate::spotify::SpotifyClient;
 use crate::sync;
@@ -135,18 +136,13 @@ async fn get_meta(State(state): State<Arc<AppState>>) -> impl IntoResponse {
 }
 
 async fn get_spotify_client(state: &AppState) -> Result<SpotifyClient, String> {
-    let conn = Connection::open(&state.db_path).map_err(|e| e.to_string())?;
-    let refresh_token = db::get_config(&conn, "spotify_refresh_token")
-        .map_err(|e| e.to_string())?
-        .ok_or("no refresh token")?;
-    
     let mut spotify = SpotifyClient::new(
         state.spotify_client_id.clone(),
         state.spotify_client_secret.clone(),
         "http://127.0.0.1:1670/callback".to_string(),
     );
     
-    spotify.refresh_token(&refresh_token).await?;
+    auth::authorize(&state.db_path, &mut spotify).await?;
     Ok(spotify)
 }
 
