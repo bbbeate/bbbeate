@@ -1,7 +1,9 @@
 mod api;
+mod auth;
 mod db;
 mod spotify;
 mod sync;
+mod top50;
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
@@ -30,6 +32,10 @@ enum Commands {
         dry_run: bool,
         #[arg(long)]
         backfill: bool,
+    },
+    Top50 {
+        #[arg(long)]
+        dry_run: bool,
     },
     Auth,
     Stats,
@@ -150,6 +156,20 @@ async fn main() {
             stream.write_all(response.as_bytes()).ok();
 
             println!("auth complete!");
+        }
+
+        Commands::Top50 { dry_run } => {
+            let (client_id, client_secret) = get_spotify_creds();
+            let mut spotify = spotify::SpotifyClient::new(
+                client_id,
+                client_secret,
+                "http://127.0.0.1:1670/callback".to_string(),
+            );
+
+            if let Err(e) = top50::run_top50(&cli.db, &mut spotify, dry_run).await {
+                eprintln!("top50 failed: {}", e);
+                std::process::exit(1);
+            }
         }
 
         Commands::Stats => {
