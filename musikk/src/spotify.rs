@@ -461,6 +461,27 @@ impl SpotifyClient {
         Ok(page.items)
     }
 
+    pub async fn create_playlist(&self, name: &str) -> Result<String, String> {
+        #[derive(Deserialize)]
+        struct Created { id: String }
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        let user_id = self.get_user_id().await?;
+        let resp = self.client
+            .post(&format!("{}/users/{}/playlists", SPOTIFY_API_URL, user_id))
+            .bearer_auth(token)
+            .json(&serde_json::json!({ "name": name, "public": false }))
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if !resp.status().is_success() {
+            let text = resp.text().await.unwrap_or_default();
+            return Err(format!("create playlist failed: {}", text));
+        }
+        let created: Created = resp.json().await.map_err(|e| e.to_string())?;
+        Ok(created.id)
+    }
+
     pub async fn add_to_playlist(&self, playlist_id: &str, track_ids: &[String]) -> Result<(), String> {
         let token = self.access_token.as_ref().ok_or("no access token")?;
         let url = format!("{}/playlists/{}/tracks", SPOTIFY_API_URL, playlist_id);
