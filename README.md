@@ -6,7 +6,7 @@ personal apps at [bbbeate.space](https://bbbeate.space). pnpm, vite, gh-pages.
 
 | app | what | stack |
 |-----|------|-------|
-| [musikk](musikk/) | spotify library browser with bpm/energy filters | rust + react |
+| [musikk](musikk/) | spotify library browser with bpm/energy filters, nightly top 50 playlist sync | rust + react |
 | [liste](liste/) | simple list app with gist storage | react |
 | [hjemme](hjemme/) | hue light controller | react, pwa |
 | [hvaskjer](hvaskjer/) | news aggregator | react |

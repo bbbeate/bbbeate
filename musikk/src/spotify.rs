@@ -155,7 +155,7 @@ impl SpotifyClient {
     }
 
     pub fn auth_url(&self) -> String {
-        let scopes = "user-library-read playlist-read-private playlist-read-collaborative user-modify-playback-state user-read-playback-state user-read-currently-playing";
+        let scopes = "user-library-read user-top-read playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public user-modify-playback-state user-read-playback-state user-read-currently-playing";
         format!(
             "{}?client_id={}&response_type=code&redirect_uri={}&scope={}",
             SPOTIFY_AUTH_URL,
@@ -453,6 +453,34 @@ impl SpotifyClient {
         }
 
         Ok(all)
+    }
+
+    pub async fn get_top_tracks(&self, time_range: &str) -> Result<Vec<SpotifyTrack>, String> {
+        let url = format!("{}/me/top/tracks?limit=50&time_range={}", SPOTIFY_API_URL, time_range);
+        let page: Paged<SpotifyTrack> = self.get(&url).await?;
+        Ok(page.items)
+    }
+
+    pub async fn add_to_playlist(&self, playlist_id: &str, track_ids: &[String]) -> Result<(), String> {
+        let token = self.access_token.as_ref().ok_or("no access token")?;
+        let url = format!("{}/playlists/{}/tracks", SPOTIFY_API_URL, playlist_id);
+
+        for chunk in track_ids.chunks(100) {
+            let uris: Vec<String> = chunk.iter().map(|id| format!("spotify:track:{}", id)).collect();
+            let resp = self.client
+                .post(&url)
+                .bearer_auth(token)
+                .json(&serde_json::json!({ "uris": uris }))
+                .send()
+                .await
+                .map_err(|e| e.to_string())?;
+
+            if !resp.status().is_success() {
+                let text = resp.text().await.unwrap_or_default();
+                return Err(format!("add to playlist failed: {}", text));
+            }
+        }
+        Ok(())
     }
 
     pub async fn get_audio_features_batch(&self, ids: &[String]) -> Result<Vec<SpotifyAudioFeatures>, String> {

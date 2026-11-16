@@ -31,3 +31,6 @@ hjemme/hue_settings.json
 .worktrees/
 
 .worktrees/
+
+# worktrees
+.worktrees/
