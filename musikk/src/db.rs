@@ -313,8 +313,9 @@ pub fn query_tracks(conn: &Connection, filter: &TrackFilter) -> rusqlite::Result
     };
     sql.push_str(&format!(" ORDER BY {} DESC", sort_col));
 
-    let limit = filter.limit.unwrap_or(100).min(1000);
-    sql.push_str(&format!(" LIMIT {}", limit));
+    if let Some(limit) = filter.limit {
+        sql.push_str(&format!(" LIMIT {}", limit));
+    }
 
     let params_ref: Vec<&dyn rusqlite::ToSql> = params.iter().map(|p| p.as_ref()).collect();
     let mut stmt = conn.prepare(&sql)?;
