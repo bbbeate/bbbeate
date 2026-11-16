@@ -51,16 +51,6 @@ jobs:
         VITE_GITHUB_TOKEN: ${{ secrets.TOKEN_GIST }}
       run: pnpm run build
 
-    - name: Install dependencies for tunes
-      working-directory: ./tunes
-      run: pnpm install --frozen-lockfile
-
-    - name: Build tunes
-      working-directory: ./tunes
-      env:
-        VITE_SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-      run: pnpm run build
-
     - name: Install dependencies for spaces
       working-directory: ./spaces
       run: pnpm install --frozen-lockfile
@@ -115,8 +105,6 @@ jobs:
         cp -r ./space/dist/* combined_dist/
         mkdir -p combined_dist/liste
         cp -r ./liste/dist/* combined_dist/liste/
-        mkdir -p combined_dist/tunes
-        cp -r ./tunes/dist/* combined_dist/tunes/
         mkdir -p combined_dist/spaces
         cp -r ./spaces/dist/* combined_dist/spaces/
         mkdir -p combined_dist/hvaskjer

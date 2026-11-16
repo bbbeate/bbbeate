@@ -10,7 +10,6 @@ personal apps at [bbbeate.space](https://bbbeate.space). pnpm, vite, gh-pages.
 | [liste](liste/) | simple list app with gist storage | react |
 | [hjemme](hjemme/) | hue light controller | react, pwa |
 | [hvaskjer](hvaskjer/) | news aggregator | react |
-| [tunes](tunes/) | music discovery | react |
 | [spaces](spaces/) | 3d space visualization | vanilla js, pwa |
 | [space](space/) | 3d space explorer | vanilla js, pwa |
 | [leser](leser/) | pdf text extraction pipeline | python |
