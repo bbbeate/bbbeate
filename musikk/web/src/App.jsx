@@ -386,12 +386,10 @@ function App() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, track_ids: trackIds })
     })
-    const data = await res.json()
     if (!res.ok) {
-      window.alert(data.error)
+      window.alert((await res.json()).error)
       return
     }
-    window.open(data.url, '_blank')
     clearSelection()
   }
 
