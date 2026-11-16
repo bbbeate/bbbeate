@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import './App.css'
 
+const MAX_QUEUE = 500
 const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
 const ALL_FILTERS = [
@@ -202,7 +203,6 @@ function App() {
     if (filters.sources.length) params.set('sources', filters.sources.join(','))
     if (filters.genres.length) params.set('genres', filters.genres.join(','))
     params.set('sort', sort)
-    params.set('limit', '500')
 
     const res = await fetch('/api/tracks?' + params.toString())
     const data = await res.json()
@@ -371,6 +371,10 @@ function App() {
   }
 
   const queueSelected = async () => {
+    if (selectedTracks.size > MAX_QUEUE) {
+      window.alert(`kan ikke queue mer enn ${MAX_QUEUE} låter`)
+      return
+    }
     for (const id of selectedTracks) {
       await fetch(`/api/player/queue/${id}`, { method: 'POST' })
     }
