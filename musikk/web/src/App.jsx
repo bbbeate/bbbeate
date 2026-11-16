@@ -377,6 +377,22 @@ function App() {
     clearSelection()
   }
 
+  const createPlaylist = async () => {
+    const name = window.prompt('playlist name')?.trim()
+    if (!name) return
+    const trackIds = tracks.map(t => t.spotify_id).filter(id => selectedTracks.has(id))
+    const res = await fetch('/api/playlists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, track_ids: trackIds })
+    })
+    if (!res.ok) {
+      window.alert((await res.json()).error)
+      return
+    }
+    clearSelection()
+  }
+
   const updateFilter = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
@@ -653,6 +669,7 @@ function App() {
             <>
               <span>{selectedTracks.size} selected</span>
               <button onClick={queueSelected}>queue all</button>
+              <button onClick={createPlaylist}>playlist</button>
               <button onClick={selectAll}>all</button>
               <button onClick={clearSelection}>x</button>
             </>

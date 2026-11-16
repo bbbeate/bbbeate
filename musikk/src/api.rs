@@ -39,6 +39,7 @@ pub async fn serve(state: AppState, port: u16) {
         .route("/api/player/next", post(skip_next))
         .route("/api/player/prev", post(skip_prev))
         .route("/api/player/seek/:position", post(seek_player))
+        .route("/api/playlists", post(create_playlist))
         .route("/api/sync", post(trigger_sync))
         .route("/callback", get(auth_callback))
         .nest_service("/", ServeDir::new("static").append_index_html_on_directories(true))
@@ -179,6 +180,29 @@ async fn queue_track(State(state): State<Arc<AppState>>, Path(id): Path<String>)
                 Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
             }
         }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+#[derive(Deserialize)]
+struct CreatePlaylist {
+    name: String,
+    track_ids: Vec<String>,
+}
+
+async fn create_playlist(State(state): State<Arc<AppState>>, Json(body): Json<CreatePlaylist>) -> impl IntoResponse {
+    let name = body.name.trim();
+    if name.is_empty() || body.track_ids.is_empty() {
+        return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "name and track_ids required"}))).into_response();
+    }
+    let result = async {
+        let spotify = get_spotify_client(&state).await?;
+        let id = spotify.create_playlist(name).await?;
+        spotify.add_to_playlist(&id, &body.track_ids).await?;
+        Ok::<String, String>(id)
+    }.await;
+    match result {
+        Ok(id) => Json(serde_json::json!({"id": id, "url": format!("https://open.spotify.com/playlist/{}", id)})).into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
     }
 }
