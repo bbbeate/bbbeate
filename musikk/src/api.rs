@@ -12,6 +12,7 @@ use std::path::PathBuf;
 use tower_http::services::ServeDir;
 use tower_http::cors::{CorsLayer, Any};
 
+use crate::auth;
 use crate::db::{self, TrackFilter};
 use crate::spotify::SpotifyClient;
 use crate::sync;
@@ -38,6 +39,7 @@ pub async fn serve(state: AppState, port: u16) {
         .route("/api/player/next", post(skip_next))
         .route("/api/player/prev", post(skip_prev))
         .route("/api/player/seek/:position", post(seek_player))
+        .route("/api/playlists", post(create_playlist))
         .route("/api/sync", post(trigger_sync))
         .route("/callback", get(auth_callback))
         .nest_service("/", ServeDir::new("static").append_index_html_on_directories(true))
@@ -135,18 +137,13 @@ async fn get_meta(State(state): State<Arc<AppState>>) -> impl IntoResponse {
 }
 
 async fn get_spotify_client(state: &AppState) -> Result<SpotifyClient, String> {
-    let conn = Connection::open(&state.db_path).map_err(|e| e.to_string())?;
-    let refresh_token = db::get_config(&conn, "spotify_refresh_token")
-        .map_err(|e| e.to_string())?
-        .ok_or("no refresh token")?;
-    
     let mut spotify = SpotifyClient::new(
         state.spotify_client_id.clone(),
         state.spotify_client_secret.clone(),
         "http://127.0.0.1:1670/callback".to_string(),
     );
     
-    spotify.refresh_token(&refresh_token).await?;
+    auth::authorize(&state.db_path, &mut spotify).await?;
     Ok(spotify)
 }
 
@@ -183,6 +180,29 @@ async fn queue_track(State(state): State<Arc<AppState>>, Path(id): Path<String>)
                 Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
             }
         }
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
+    }
+}
+
+#[derive(Deserialize)]
+struct CreatePlaylist {
+    name: String,
+    track_ids: Vec<String>,
+}
+
+async fn create_playlist(State(state): State<Arc<AppState>>, Json(body): Json<CreatePlaylist>) -> impl IntoResponse {
+    let name = body.name.trim();
+    if name.is_empty() || body.track_ids.is_empty() {
+        return (StatusCode::BAD_REQUEST, Json(serde_json::json!({"error": "name and track_ids required"}))).into_response();
+    }
+    let result = async {
+        let spotify = get_spotify_client(&state).await?;
+        let id = spotify.create_playlist(name).await?;
+        spotify.add_to_playlist(&id, &body.track_ids).await?;
+        Ok::<String, String>(id)
+    }.await;
+    match result {
+        Ok(id) => Json(serde_json::json!({"id": id, "url": format!("https://open.spotify.com/playlist/{}", id)})).into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error": e}))).into_response(),
     }
 }

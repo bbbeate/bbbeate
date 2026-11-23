@@ -1,3 +1,4 @@
+use crate::auth;
 use crate::db::{self, Track};
 use crate::spotify::{SpotifyClient, ReccobeatsClient};
 use rusqlite::Connection;
@@ -16,15 +17,7 @@ pub async fn run_sync(
     dry_run: bool,
     backfill: bool,
 ) -> Result<SyncResult, String> {
-    // open db just to get refresh token
-    let refresh_token = {
-        let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
-        db::get_config(&conn, "spotify_refresh_token")
-            .map_err(|e| e.to_string())?
-            .ok_or("no refresh token - run 'musikk auth' first")?
-    };
-
-    let token = spotify.refresh_token(&refresh_token).await?;
+    auth::authorize(db_path, spotify).await?;
 
     let user_id = spotify.get_user_id().await?;
     println!("syncing library for user: {}", user_id);
@@ -223,13 +216,6 @@ pub async fn run_sync(
     if dry_run {
         println!("dry run - not saving to database");
         return Ok(SyncResult { added: 0, updated: 0, unavailable: 0 });
-    }
-
-    // save new refresh token if provided
-    if let Some(new_refresh) = token.refresh_token {
-        let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
-        db::set_config(&conn, "spotify_refresh_token", &new_refresh)
-            .map_err(|e| e.to_string())?;
     }
 
     // get list of tracks that need features (check db)

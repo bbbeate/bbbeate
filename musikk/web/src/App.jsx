@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import './App.css'
 
+const MAX_QUEUE = 500
 const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
 const ALL_FILTERS = [
@@ -202,7 +203,6 @@ function App() {
     if (filters.sources.length) params.set('sources', filters.sources.join(','))
     if (filters.genres.length) params.set('genres', filters.genres.join(','))
     params.set('sort', sort)
-    params.set('limit', '500')
 
     const res = await fetch('/api/tracks?' + params.toString())
     const data = await res.json()
@@ -371,8 +371,28 @@ function App() {
   }
 
   const queueSelected = async () => {
+    if (selectedTracks.size > MAX_QUEUE) {
+      window.alert(`kan ikke queue mer enn ${MAX_QUEUE} låter`)
+      return
+    }
     for (const id of selectedTracks) {
       await fetch(`/api/player/queue/${id}`, { method: 'POST' })
+    }
+    clearSelection()
+  }
+
+  const createPlaylist = async () => {
+    const name = window.prompt('playlist name')?.trim()
+    if (!name) return
+    const trackIds = tracks.map(t => t.spotify_id).filter(id => selectedTracks.has(id))
+    const res = await fetch('/api/playlists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, track_ids: trackIds })
+    })
+    if (!res.ok) {
+      window.alert((await res.json()).error)
+      return
     }
     clearSelection()
   }
@@ -653,6 +673,7 @@ function App() {
             <>
               <span>{selectedTracks.size} selected</span>
               <button onClick={queueSelected}>queue all</button>
+              <button onClick={createPlaylist}>playlist</button>
               <button onClick={selectAll}>all</button>
               <button onClick={clearSelection}>x</button>
             </>

@@ -6,15 +6,14 @@ personal apps at [bbbeate.space](https://bbbeate.space). pnpm, vite, gh-pages.
 
 | app | what | stack |
 |-----|------|-------|
-| [musikk](musikk/) | spotify library browser with bpm/energy filters | rust + react |
+| [musikk](musikk/) | spotify library browser with bpm/energy filters, nightly top 50 playlist sync | rust + react |
 | [liste](liste/) | simple list app with gist storage | react |
 | [hjemme](hjemme/) | hue light controller | react, pwa |
 | [hvaskjer](hvaskjer/) | news aggregator | react |
-| [tunes](tunes/) | music discovery | react |
 | [spaces](spaces/) | 3d space visualization | vanilla js, pwa |
 | [space](space/) | 3d space explorer | vanilla js, pwa |
 | [leser](leser/) | pdf text extraction pipeline | python |
-| [bursdag](bursdag/) | birthday invite + rsvp w/ paint picker | vanilla js |
+| [bursdag](bursdag/) | birthday invite + rsvp w/ paint picker, also serves /allehelgensaften | vanilla js |
 | [maane-ios](maane-ios/) | moon finder: ar sky view w/ position + phase | swift, arkit |
 
 ## utilities
